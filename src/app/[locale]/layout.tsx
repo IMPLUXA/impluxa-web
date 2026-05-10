@@ -56,6 +56,19 @@ export default async function LocaleLayout({
             {children}
           </main>
         </NextIntlClientProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Impluxa",
+              url: "https://impluxa.com",
+              logo: "https://impluxa.com/icon.png",
+              sameAs: ["https://github.com/IMPLUXA"],
+            }),
+          }}
+        />
       </body>
     </html>
   );
