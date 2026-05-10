@@ -1,7 +1,26 @@
+"use client";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { HeroFallback } from "./hero-fallback";
+
+const Hero3D = dynamic(() => import("./hero-3d").then((m) => m.Hero3D), {
+  ssr: false,
+  loading: () => <HeroFallback />,
+});
+
 export function Hero() {
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   return (
     <section className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden px-6">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(232,220,196,0.06),transparent_60%)]" />
+      {reducedMotion ? <HeroFallback /> : <Hero3D />}
       <div className="relative z-10 max-w-4xl text-center">
         <p className="text-ash mb-6 font-mono text-xs tracking-[0.3em] uppercase">
           Infrastructure
