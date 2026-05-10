@@ -13,6 +13,8 @@ export function LocaleSwitcher() {
         <button
           key={l}
           onClick={() => router.replace(pathname, { locale: l })}
+          aria-label={l === "es-LA" ? "Cambiar a español" : "Switch to English"}
+          aria-current={l === locale ? "true" : undefined}
           className={l === locale ? "text-bone" : "text-ash hover:text-bone"}
         >
           {l === "es-LA" ? "ES" : "EN"}
