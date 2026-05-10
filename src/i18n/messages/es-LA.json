@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "product": "Producto",
+    "industries": "Industrias",
+    "pricing": "Precio",
+    "contact": "Contacto",
+    "cta": "Empezar"
+  },
+  "hero": {
+    "kicker": "Infrastructure",
+    "title": "IMPLUXA",
+    "tagline": "Infraestructura para los negocios del mañana.",
+    "ctaPrimary": "Solicitar demo",
+    "ctaSecondary": "Ver cómo funciona"
+  }
+}

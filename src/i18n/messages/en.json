@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "product": "Product",
+    "industries": "Industries",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "cta": "Get started"
+  },
+  "hero": {
+    "kicker": "Infrastructure",
+    "title": "IMPLUXA",
+    "tagline": "Infrastructure for the businesses of tomorrow.",
+    "ctaPrimary": "Request demo",
+    "ctaSecondary": "See how it works"
+  }
+}
