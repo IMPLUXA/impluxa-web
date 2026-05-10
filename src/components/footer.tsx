@@ -1,3 +1,6 @@
+import { Link } from "@/i18n/routing";
+import { LocaleSwitcher } from "./locale-switcher";
+
 export function Footer() {
   return (
     <footer className="border-stone/30 bg-onyx border-t px-6 py-16">
@@ -12,13 +15,13 @@ export function Footer() {
           <a href="https://github.com/IMPLUXA" className="hover:text-bone">
             GitHub
           </a>
-          <a href="/legal/privacidad" className="hover:text-bone">
+          <Link href="/legal/privacidad" className="hover:text-bone">
             Privacidad
-          </a>
-          <a href="/legal/terminos" className="hover:text-bone">
+          </Link>
+          <Link href="/legal/terminos" className="hover:text-bone">
             Términos
-          </a>
-          <span className="text-ash font-mono">ES | EN</span>
+          </Link>
+          <LocaleSwitcher />
         </div>
       </div>
       <div className="border-stone/30 text-ash mx-auto mt-12 max-w-5xl border-t pt-6 text-xs">

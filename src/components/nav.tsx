@@ -1,6 +1,7 @@
 "use client";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { LocaleSwitcher } from "./locale-switcher";
 
 export function Nav() {
   const t = useTranslations("nav");
@@ -46,7 +47,7 @@ export function Nav() {
         </a>
       </div>
       <div className="flex items-center gap-4">
-        <span className="text-ash font-mono text-xs">ES | EN</span>
+        <LocaleSwitcher />
         <a
           href="#contacto"
           className="bg-bone text-onyx hover:bg-cream rounded-md px-4 py-2 text-sm font-medium transition"
