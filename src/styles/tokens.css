@@ -1,0 +1,23 @@
+/* src/styles/tokens.css */
+@layer base {
+  :root {
+    --color-onyx: 10 10 10;
+    --color-marble: 26 26 26;
+    --color-stone: 74 74 74;
+    --color-bone: 232 220 196;
+    --color-cream: 240 230 210;
+    --color-ash: 136 136 136;
+
+    --font-display: var(--font-cormorant), Georgia, serif;
+    --font-sans: var(--font-inter), system-ui, sans-serif;
+    --font-mono: var(--font-jetbrains), monospace;
+
+    --space-2: 0.125rem; --space-4: 0.25rem; --space-8: 0.5rem;
+    --space-12: 0.75rem; --space-16: 1rem; --space-24: 1.5rem;
+    --space-32: 2rem; --space-48: 3rem; --space-64: 4rem;
+    --space-96: 6rem; --space-128: 8rem;
+
+    --radius-sm: 0.25rem; --radius-md: 0.5rem;
+    --radius-lg: 0.75rem; --radius-xl: 1rem;
+  }
+}
