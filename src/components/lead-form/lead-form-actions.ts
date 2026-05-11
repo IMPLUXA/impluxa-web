@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { leadSchema } from "./lead-schema";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { getLeadLimiter } from "@/lib/ratelimit";
-import { getServiceSupabase } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { sendLeadNotification } from "@/lib/resend";
 
 export type LeadResult =
@@ -37,7 +37,7 @@ export async function submitLead(formData: FormData): Promise<LeadResult> {
   const ok = await verifyTurnstile(data.turnstileToken, ip);
   if (!ok) return { ok: false, error: "Verificación de seguridad fallida." };
 
-  const sb = getServiceSupabase();
+  const sb = getSupabaseServiceClient();
   const { data: row, error } = await sb
     .from("leads")
     .insert({
