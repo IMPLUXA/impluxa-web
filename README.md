@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# impluxa-web
 
-## Getting Started
+Marketing landing for [impluxa.com](https://impluxa.com) — SaaS modular multi-tenant para digitalizar pymes en LATAM.
 
-First, run the development server:
+## Stack
+
+Next.js 16 · React 19 · TypeScript · Tailwind v4 · React Three Fiber · next-intl · Supabase · Cloudflare Turnstile · Resend · Vercel
+
+## Setup local
 
 ```bash
+git clone https://github.com/IMPLUXA/impluxa-web
+cd impluxa-web
+cp .env.local.example .env.local
+# Llenar las env vars (ver sección abajo)
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Env vars
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Ver `.env.local.example`. Servicios requeridos: Supabase, Cloudflare Turnstile.
+Opcionales: Resend (notificación email), Upstash Redis (rate limit), Plausible (analytics).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Comando            | Hace                                         |
+| ------------------ | -------------------------------------------- |
+| `npm run dev`      | Dev server con turbopack                     |
+| `npm run build`    | Build de producción                          |
+| `npm run lint`     | ESLint                                       |
+| `npm test`         | Vitest (8 tests: zod schema + server action) |
+| `npx tsc --noEmit` | Typecheck                                    |
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Push a `main` → Vercel deploy automático. Preview en cada PR.
+DNS: Cloudflare en modo DNS-only (gray cloud). Vercel maneja TLS.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estructura
 
-## Deploy on Vercel
+```
+src/
+├── app/[locale]/       Next.js App Router con i18n
+├── components/
+│   ├── hero/           Hero 3D (R3F) + SVG fallback
+│   ├── sections/       Problem, HowItWorks, Industries, Modules, etc.
+│   └── lead-form/      Form + Server Action + zod schema
+├── lib/
+│   ├── supabase/       Service-role client (server-only)
+│   ├── turnstile.ts    Cloudflare CAPTCHA validation
+│   ├── ratelimit.ts    Upstash rate limit (optional)
+│   └── resend.ts       Email notification (optional)
+├── i18n/               next-intl config + messages
+└── middleware.ts       Locale routing
+supabase/migrations/    DDL versionado
+tests/                  Vitest unit tests
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Spec & Plan
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Design Spec](docs/superpowers/specs/2026-05-09-impluxa-landing-design.md)
+- [Implementation Plan](docs/superpowers/plans/2026-05-09-impluxa-landing.md)
+
+## Licencia
+
+Proprietary © Impluxa
