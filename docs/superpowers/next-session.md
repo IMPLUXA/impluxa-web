@@ -1,81 +1,110 @@
-# Next Session — Retomar FASE 1
+# Next Session — Arrancar FASE 1
 
-**Última actualización:** 2026-05-10 (Pablo se fue a dormir)
+**Última actualización:** 2026-05-11 (Pablo se fue a dormir, dejó todo armado)
 
-## Donde quedamos
+## 🔑 Palabra clave para retomar
 
-FASE 0 (landing impluxa.com) **completada y en producción**. Iniciamos planificación de FASE 1 (SaaS multi-tenant).
+> **"arrancar fase 1"** (o equivalente como "continuemos con impluxa fase 1", "seguimos con impluxa")
 
-Pablo respondió las 6 decisiones de scope (ver `project_impluxa.md` en memory). Quedan 2 cosas blocking antes de escribir spec + plan + ejecutar.
+Cuando Pablo escriba eso en chat nuevo, Claude:
 
-## Pablo necesita traer al retomar
+1. Lee `C:\Users\Pablo\.claude\projects\C--Users-Pablo\memory\project_impluxa.md` (auto-cargado)
+2. Lee este archivo
+3. Confirma contexto en ~5 líneas
+4. Empieza a escribir spec FASE 1 (sin más preguntas, todo está decidido)
 
-### 1. MercadoPago — status del Access Token
+---
 
-Pablo elegió MP desde FASE 1A pero tenía cuenta personal, no business API.
+## Status FASE 0
 
-Necesita ir a https://www.mercadopago.com.ar/developers:
+✅ EN PRODUCCIÓN — impluxa.com live, TLS activo, tag v0.1.0.
 
-- Verificar que su cuenta sea business
-- Crear aplicación "Impluxa" (solución: pagos online + suscripciones)
-- Conseguir **Access Token sandbox** + **Public Key sandbox**
+## Status FASE 1 — Todo listo para empezar
 
-Si la verificación tarda 1-3 días → arrancamos FASE 1A con billing manual, MP queda condicionado.
+### Decisiones lockeadas
 
-### 2. Contenido Hakuna Matata (dijo tener listo, respuesta 2 = A)
+1. 3 sub-fases corridas + Hakuna como tenant real
+2. Subdomain primero, custom domain = módulo de upgrade después
+3. Templates fijos + tuning de colores/fuentes/imágenes
+4. Hakuna online en FASE 1A
+5. MercadoPago desde 1A (sandbox configurado)
+6. Responsive desde día 1
 
-Pablo necesita pasar:
+### MercadoPago sandbox
 
-- Logo Hakuna Matata (PNG transparente)
-- Copy: hero, about, servicios + precios, testimonios, contacto
-- 5-10 fotos del salón
-- Colores de marca (opcional, sino se eligen del logo)
-- ¿Subdomain `hakunamatata.impluxa.com` o dominio propio?
+- App "Impluxa" creada, credenciales en `.env.local`
+- Verificado con ping a `/users/me` (active, AR/MLA)
+- Listo para integrar suscripciones de prueba
 
-Puede pasarlo via Google Drive, WeTransfer, GitHub, o pegado en chat.
+### Contenido Hakuna Matata
 
-## Lo que Claude hará apenas Pablo traiga eso
+✅ **TODO RECOPILADO** en `project_impluxa.md` (ver sección "CONTENIDO HAKUNA MATATA"):
 
-1. Escribir spec en `D:\impluxa-web\docs\superpowers\specs\2026-05-11-impluxa-saas-fase1.md`
-2. Escribir plan en `D:\impluxa-web\docs\superpowers\plans\2026-05-11-impluxa-saas-fase1.md`
-3. Pablo aprueba plan
-4. Subagent-driven execution (igual que FASE 0)
+- Marca, logo identificado (PNG transparente con leones)
+- 6 servicios
+- Combos populares: **Hakuna Matata + Rey León**
+- Contacto, dirección, turnos, WhatsApp
+- 5 testimonios reales
+- 14 secciones de pautas (títulos)
+- Calendar widget de referencia
 
-## Cómo retomar la conversación
+### Pending pero NO bloqueante (se completan vía dashboard después)
 
-Pablo puede:
+- Precios exactos combos (están en PDF `FESTEJA COMO UN NIÑO.pdf` — pdftoppm no instalado en máquina, leer mañana de otra forma)
+- Texto detallado de 14 pautas de contratación (están al final de PDF `MAYO-AGOSTO 2026.pdf`)
+- Paleta exacta de colores extraída del logo
 
-**Opción A — Chat nuevo (recomendado):**
-Abrí un chat nuevo (no necesita fecha en el título) y decí algo como:
+---
 
-> "Continuemos con Impluxa FASE 1. Ya tengo MP y el contenido de Hakuna Matata."
+## Plan inmediato cuando Pablo retome
 
-Claude va a leer la memory `project_impluxa.md` y este archivo, y sabrá exactamente dónde estamos.
+### Paso 1: Spec
 
-**Opción B — Continuar este chat:**
-Funciona pero el contexto está cargado con toda la historia de FASE 0. El chat nuevo es más limpio.
+Claude escribe `D:\impluxa-web\docs\superpowers\specs\2026-05-11-impluxa-saas-fase1.md` con:
 
-## Decisiones FASE 1 ya tomadas
+- Arquitectura completa (DB schema, RLS policies, routing middleware)
+- Auth flow (Supabase Auth + tenant resolver)
+- Modelo de datos: tenants, users, sites, modules, leads_tenant, subscriptions, plans
+- Templates: estructura de `Site.content_json` + customization knobs
+- Dashboard cliente: 5-6 pantallas con wireframes ASCII
+- Admin dashboard: 3-4 pantallas
+- MercadoPago: subscriptions API + webhooks + recovery
+- Custom domain como módulo (FASE 2 sin bloquear 1A-1B-1C)
+- Onboarding flow paso a paso
+- Sub-fases 1A/1B/1C con DoD
 
-1. ✅ 3 sub-fases corridas (1A + 1B + 1C) + Hakuna como tenant real
-2. ✅ Subdomain + custom domain desde día 1
-3. ✅ Templates fijos + tuning de colores/fuentes/imágenes
-4. ✅ Hakuna Matata online en 1A
-5. ✅ MercadoPago desde 1A (condicionado a API access)
-6. ✅ Responsive desde día 1
+### Paso 2: Plan
 
-## Arquitectura ya decidida
+Claude escribe `D:\impluxa-web\docs\superpowers\plans\2026-05-11-impluxa-saas-fase1.md`
+con ~50-60 tasks ejecutables igual formato que FASE 0.
 
-- Mismo repo `impluxa-web`, mismo Vercel project
-- Middleware host-based routing
-- Supabase RLS row-level multi-tenancy
-- Supabase Auth (email + magic link)
-- Templates en `src/templates/{rubro}/`
-- MercadoPago subscriptions
+### Paso 3: Aprobación
 
-## Estimación
+Pablo revisa, ajusta si quiere, aprueba.
 
-- FASE 1A: ~2 días (DB + auth + 1 template + dashboard mínimo + Hakuna)
-- FASE 1B: ~1 día (onboarding self-serve + 2-3 templates + admin + emails)
-- FASE 1C: ~1 día (MP automation + custom domains + polish)
-- **Total realista:** 3-5 días con buena comunicación
+### Paso 4: Ejecución
+
+Subagent-driven igual que FASE 0:
+
+- Implementer subagent → Spec reviewer → Code quality reviewer → Next task
+- Commits atómicos con `git push` periódicos
+- Cada sub-fase culmina con un release usable
+
+---
+
+## MCPs disponibles (importantes para FASE 1)
+
+- **Supabase MCP** ✅ — apply_migration, list_tables, get_advisors
+- **Vercel MCP** ✅ — list_projects, deployments
+- **Cloudflare MCP** ✅ NUEVO — DNS, KV, R2, D1, Workers (útil FASE 1C para módulo custom domains)
+- **MercadoPago MCP** opcional — `claude mcp add --transport http mercadopago https://mcp.mercadopago.com/mcp` (testing y docs)
+- **GitHub MCP** ✅ — repo management
+
+---
+
+## Estimación final FASE 1
+
+- 1A: ~2 días
+- 1B: ~1 día
+- 1C: ~1 día
+- **Total: 3-5 días con buena comunicación** (mismo ritmo que FASE 0)
