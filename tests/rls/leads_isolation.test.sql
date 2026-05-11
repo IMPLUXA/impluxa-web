@@ -35,6 +35,8 @@ declare
 begin
   select count(*) into v_count from public.leads_tenant;
   assert v_count = 1, 'expected 1 lead visible for tenant A, got ' || v_count;
+  assert (select name from public.leads_tenant limit 1) = 'Lead A1',
+    'visible lead must belong to tenant A';
 end $$;
 
 rollback;
