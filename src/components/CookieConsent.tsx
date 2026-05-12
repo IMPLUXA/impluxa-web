@@ -49,6 +49,13 @@ export function CookieConsent() {
   const dismiss = useCallback((value: ConsentValue) => {
     writeStored(value);
     setVisible(false);
+    // Broadcast so consent-gated subscribers (Analytics, Plausible) mount/unmount
+    // immediately within the current page lifecycle. Fix for cyber-neo F2.
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("consent-change", { detail: value }),
+      );
+    }
   }, []);
 
   useEffect(() => {

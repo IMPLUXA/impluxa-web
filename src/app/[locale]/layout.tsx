@@ -6,7 +6,7 @@ import { Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { Nav } from "@/components/nav";
 import { CookieConsent } from "@/components/CookieConsent";
-import { Analytics } from "@vercel/analytics/react";
+import { ConsentedAnalytics } from "@/components/ConsentedAnalytics";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -72,14 +72,9 @@ export default async function LocaleLayout({
             }),
           }}
         />
-        <Analytics />
-        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
-          <script
-            defer
-            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
-            src="https://plausible.io/js/script.js"
-          />
-        )}
+        <ConsentedAnalytics
+          plausibleDomain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+        />
       </body>
     </html>
   );
