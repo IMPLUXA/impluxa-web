@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 const STORAGE_KEY = "cookie-consent";
 
@@ -21,11 +23,12 @@ function writeStored(v: ConsentValue) {
   try {
     window.localStorage.setItem(STORAGE_KEY, v);
   } catch {
-    // ignore: storage disabled / quota
+    // storage disabled / quota — silently ignore
   }
 }
 
 export function CookieConsent() {
+  const t = useTranslations("cookieConsent");
   // Mounted gate avoids SSR/CSR hydration mismatch — banner is purely client.
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -48,7 +51,6 @@ export function CookieConsent() {
     setVisible(false);
   }, []);
 
-  // Esc rejects; Tab is trapped within the dialog.
   useEffect(() => {
     if (!visible) return;
     const onKey = (e: KeyboardEvent) => {
@@ -89,20 +91,19 @@ export function CookieConsent() {
     <div
       ref={dialogRef}
       role="dialog"
-      aria-modal="false"
+      aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={descId}
       className="fixed right-0 bottom-4 left-0 z-50 mx-auto w-[calc(100%-1.5rem)] max-w-2xl rounded-lg border border-stone-700 bg-stone-900/95 p-4 text-sm text-stone-100 shadow-xl backdrop-blur dark:border-stone-700 dark:bg-stone-900/95"
     >
       <h2 id={titleId} className="mb-1 font-semibold">
-        Cookies
+        {t("title")}
       </h2>
       <p id={descId} className="text-stone-200">
-        Usamos cookies para mejorar tu experiencia. Más info en nuestra{" "}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/privacy" className="underline hover:text-white">
-          Política de Privacidad
-        </a>
+        {t("body")}{" "}
+        <Link href="/privacy" className="underline hover:text-white">
+          {t("privacyLink")}
+        </Link>
         .
       </p>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -111,7 +112,7 @@ export function CookieConsent() {
           onClick={() => dismiss("rejected")}
           className="rounded border border-stone-500 px-3 py-1.5 text-stone-100 hover:bg-stone-800"
         >
-          Rechazar
+          {t("reject")}
         </button>
         <button
           ref={acceptRef}
@@ -119,7 +120,7 @@ export function CookieConsent() {
           onClick={() => dismiss("accepted")}
           className="rounded bg-white px-3 py-1.5 font-medium text-stone-900 hover:bg-stone-200"
         >
-          Aceptar
+          {t("accept")}
         </button>
       </div>
     </div>

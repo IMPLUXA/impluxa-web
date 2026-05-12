@@ -12,5 +12,12 @@
     "tagline": "Infraestructura para los negocios del mañana.",
     "ctaPrimary": "Solicitar demo",
     "ctaSecondary": "Ver cómo funciona"
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "body": "Usamos cookies para mejorar tu experiencia. Más info en nuestra",
+    "privacyLink": "Política de Privacidad",
+    "accept": "Aceptar",
+    "reject": "Rechazar"
   }
 }

@@ -1,10 +1,38 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import esMessages from "@/i18n/messages/es-LA.json";
+
+// next-intl's createNavigation imports next/navigation which vitest can't
+// resolve in jsdom env. Stub the routing module with a plain anchor Link.
+vi.mock("@/i18n/routing", () => ({
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
 import { CookieConsent } from "@/components/CookieConsent";
 
 const STORAGE_KEY = "cookie-consent";
+
+function renderBanner() {
+  return render(
+    <NextIntlClientProvider locale="es-LA" messages={esMessages}>
+      <CookieConsent />
+    </NextIntlClientProvider>,
+  );
+}
 
 describe("CookieConsent banner", () => {
   beforeEach(() => {
@@ -17,9 +45,10 @@ describe("CookieConsent banner", () => {
   });
 
   it("renders banner on first visit with dialog role + ARIA labelling", async () => {
-    render(<CookieConsent />);
+    renderBanner();
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAttribute("aria-modal", "true");
     const labelledBy = dialog.getAttribute("aria-labelledby");
     const describedBy = dialog.getAttribute("aria-describedby");
     expect(labelledBy).toBeTruthy();
@@ -29,7 +58,7 @@ describe("CookieConsent banner", () => {
   });
 
   it("shows Spanish default copy and privacy link", async () => {
-    render(<CookieConsent />);
+    renderBanner();
     expect(
       await screen.findByText(/Usamos cookies para mejorar tu experiencia/i),
     ).toBeInTheDocument();
@@ -39,21 +68,23 @@ describe("CookieConsent banner", () => {
     expect(link).toHaveAttribute("href", expect.stringContaining("privac"));
   });
 
-  it("does NOT render when localStorage key already set to 'accepted'", () => {
+  it("does NOT render when localStorage key already set to 'accepted'", async () => {
     window.localStorage.setItem(STORAGE_KEY, "accepted");
-    render(<CookieConsent />);
+    renderBanner();
+    await Promise.resolve();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("does NOT render when localStorage key already set to 'rejected'", () => {
+  it("does NOT render when localStorage key already set to 'rejected'", async () => {
     window.localStorage.setItem(STORAGE_KEY, "rejected");
-    render(<CookieConsent />);
+    renderBanner();
+    await Promise.resolve();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("Aceptar button stores 'accepted' and unmounts banner", async () => {
     const user = userEvent.setup();
-    render(<CookieConsent />);
+    renderBanner();
     const accept = await screen.findByRole("button", { name: /aceptar/i });
     await user.click(accept);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe("accepted");
@@ -62,7 +93,7 @@ describe("CookieConsent banner", () => {
 
   it("Rechazar button stores 'rejected' and unmounts banner", async () => {
     const user = userEvent.setup();
-    render(<CookieConsent />);
+    renderBanner();
     const reject = await screen.findByRole("button", { name: /rechazar/i });
     await user.click(reject);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe("rejected");
@@ -71,7 +102,7 @@ describe("CookieConsent banner", () => {
 
   it("Enter on focused Aceptar activates accept", async () => {
     const user = userEvent.setup();
-    render(<CookieConsent />);
+    renderBanner();
     const accept = await screen.findByRole("button", { name: /aceptar/i });
     accept.focus();
     await user.keyboard("{Enter}");
@@ -80,7 +111,7 @@ describe("CookieConsent banner", () => {
 
   it("Esc key rejects consent", async () => {
     const user = userEvent.setup();
-    render(<CookieConsent />);
+    renderBanner();
     await screen.findByRole("dialog");
     await user.keyboard("{Escape}");
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe("rejected");
@@ -89,7 +120,7 @@ describe("CookieConsent banner", () => {
 
   it("focus is trapped: Tab from last focusable cycles back to first", async () => {
     const user = userEvent.setup();
-    render(<CookieConsent />);
+    renderBanner();
     const dialog = await screen.findByRole("dialog");
 
     const focusables = Array.from(
