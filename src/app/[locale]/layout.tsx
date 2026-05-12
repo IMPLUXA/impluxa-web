@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { Nav } from "@/components/nav";
+import { CookieConsent } from "@/components/CookieConsent";
 import { Analytics } from "@vercel/analytics/react";
 
 const cormorant = Cormorant_Garamond({
@@ -56,6 +57,7 @@ export default async function LocaleLayout({
           <main id="contenido" className="pt-20">
             {children}
           </main>
+          <CookieConsent />
         </NextIntlClientProvider>
         <script
           type="application/ld+json"
