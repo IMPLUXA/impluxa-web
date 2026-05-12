@@ -46,3 +46,6 @@ supabase/.temp/
 
 # lighthouse reports
 coverage/lighthouse/
+
+# local tooling (MCP Sentinel project-level allowlist created by agents — global lives at ~/.claude/)
+.security/
