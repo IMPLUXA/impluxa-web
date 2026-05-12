@@ -6,6 +6,18 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     exclude: ["tests/e2e/**", "node_modules/**"],
+    coverage: {
+      reporter: ["text", "html", "json-summary"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
+        "src/**/*.d.ts",
+        "src/app/**/page.tsx",
+        "src/app/**/layout.tsx",
+      ],
+      reportsDirectory: "./coverage",
+    },
   },
   resolve: {
     alias: {
