@@ -18,12 +18,13 @@
 
 None yet — `gsd-plan-phase` for v0.3.0 is the immediate next step.
 
-## Resolved decisions (2026-05-11)
+## Resolved decisions (2026-05-11 / 2026-05-12)
 
 - [x] **Sentry tier:** Free tier (5k errors/mo, 30d retention). Upgrade to Developer paid when ≥5 paying customers.
 - [x] **Uptime monitor:** UptimeRobot free (50 monitors, 5min interval). Upgrade to Better Stack when ≥10 customers + public status page needed for sales.
 - [x] **Cookie consent:** Self-built minimal banner (ES default, Tailwind, no third-party). Cookiebot reconsider when traffic > 50k/mo.
 - [x] **Bus factor:** 1Password Families with emergency-access escrow (configurable wait period) + runbooks documented in `docs/runbooks/`. Plus secondary admin on Cloudflare DNS if Pablo identifies trusted technical person (open follow-up — not blocking).
+- [x] **Supabase tier (2026-05-12):** **Upgraded to Pro $25/mes** in v0.3.0 (NOT deferred to v0.5.0). Reason: Free tier does NOT include automated backups, which blocks Hakuna live launch. Pro includes daily backups with 7d restore window + 8GB DB + 100GB storage + 100k MAU. PITR add-on ($100/mes) deferred until ≥10 paying customers. See `D:\segundo-cerebro\wiki\aprendizaje\Supabase Free no incluye backups — hallazgo crítico.md`.
 
 ## Open decisions (deferred, decide before v0.5.0)
 

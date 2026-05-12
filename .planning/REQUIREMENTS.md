@@ -95,7 +95,7 @@
 
 - NFR-4.1 Error tracking via Sentry (v0.3.0+)
 - NFR-4.2 Uptime monitoring via external service (v0.3.0+)
-- NFR-4.3 Supabase PITR validated quarterly (v0.3.0 setup)
+- NFR-4.3 Supabase Pro daily backups (7d restore window) enabled and validated quarterly via restore drill (v0.3.0). PITR granular add-on ($100/mo) deferred until ≥10 customers.
 - NFR-4.4 Runbook documented in `docs/runbooks/` per critical operation (DR, billing, custom domain)
 - NFR-4.5 MercadoPago webhooks idempotent via dedup key + DLQ for failures (v0.5.0)
 
