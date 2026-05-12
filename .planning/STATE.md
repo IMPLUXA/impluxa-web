@@ -18,13 +18,16 @@
 
 None yet — `gsd-plan-phase` for v0.3.0 is the immediate next step.
 
-## Open decisions (need user input)
+## Resolved decisions (2026-05-11)
 
-- [ ] Confirm Sentry tier (free tier sufficient for v0.3.0?)
-- [ ] Confirm uptime monitor vendor (Better Stack vs UptimeRobot vs UptimeKuma self-hosted)
-- [ ] Confirm cookie consent vendor (Cookiebot vs self-built minimal)
-- [ ] Confirm AFIP integration approach for v0.5.0 (TusFacturas API vs direct AFIP)
-- [ ] Confirm secondary admin for bus factor (a trusted person or Pablo only with code escrow)
+- [x] **Sentry tier:** Free tier (5k errors/mo, 30d retention). Upgrade to Developer paid when ≥5 paying customers.
+- [x] **Uptime monitor:** UptimeRobot free (50 monitors, 5min interval). Upgrade to Better Stack when ≥10 customers + public status page needed for sales.
+- [x] **Cookie consent:** Self-built minimal banner (ES default, Tailwind, no third-party). Cookiebot reconsider when traffic > 50k/mo.
+- [x] **Bus factor:** 1Password Families with emergency-access escrow (configurable wait period) + runbooks documented in `docs/runbooks/`. Plus secondary admin on Cloudflare DNS if Pablo identifies trusted technical person (open follow-up — not blocking).
+
+## Open decisions (deferred, decide before v0.5.0)
+
+- [ ] AFIP integration approach for v0.5.0 (TusFacturas API vs direct AFIP SOAP vs manual invoicing for first N customers)
 
 ## Open risks (acknowledged, not yet mitigated)
 
