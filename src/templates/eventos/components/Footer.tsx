@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { EventosDesign } from "../schema";
 
 export function Footer({
@@ -33,6 +34,15 @@ export function Footer({
         >
           Impluxa
         </a>
+        {" · "}
+        <Link
+          href="/privacy"
+          aria-label="Política de Privacidad"
+          className="underline focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+          style={{ outlineColor: design.colors.background }}
+        >
+          Privacidad
+        </Link>
       </p>
     </footer>
   );
