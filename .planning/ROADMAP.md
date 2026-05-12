@@ -60,6 +60,7 @@
 - [ ] **C4** — Runbooks (`docs/runbooks/`): incident response, DR Supabase, DNS rollback, Vercel deploy rollback
 - [ ] **C5** — Cookie consent banner (minimal, ES default)
 - [ ] **C6** — Privacy policy v1 in ES (footer link, basic LGPD/AAIP commitments)
+- ~~**C7** — 1Password Families setup + escrow~~ → **DEFERRED to v0.5.0** (decision 2026-05-12, see STATE.md "Resolved decisions" + risk accepted)
 
 ### Quality gates (innegotiable)
 
