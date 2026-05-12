@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/tenants/resolve";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { getTemplate } from "@/templates/registry";
 
 export const revalidate = 60;
+
+/**
+ * Pre-render all published tenant slugs at build time.
+ * Fallback (revalidate=60) handles new tenants after deploy.
+ */
+export async function generateStaticParams() {
+  const { getSupabaseServiceClient: getSvc } =
+    await import("@/lib/supabase/service");
+  const supabase = getSvc();
+  const { data } = await supabase
+    .from("tenants")
+    .select("slug")
+    .eq("status", "published");
+  return (data ?? []).map((t: { slug: string }) => ({ slug: t.slug }));
+}
 
 export default async function TenantPage({
   params,
@@ -45,9 +61,31 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
   const tenant = await resolveTenantBySlug(slug);
   if (!tenant) return {};
-  return { title: tenant.name };
+
+  const supabase = getSupabaseServiceClient();
+  const { data: site } = await supabase
+    .from("sites")
+    .select("seo_json")
+    .eq("tenant_id", tenant.id)
+    .single();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const seo = (site?.seo_json ?? {}) as Record<string, any>;
+  const description: string =
+    seo.description ?? `Sitio oficial de ${tenant.name}`;
+
+  return {
+    title: tenant.name,
+    description,
+    robots: { index: true, follow: true },
+    openGraph: {
+      title: tenant.name,
+      description,
+      type: "website",
+    },
+  };
 }

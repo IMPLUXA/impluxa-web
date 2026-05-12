@@ -18,6 +18,17 @@ const CSP = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      // Supabase storage (default project URL pattern)
+      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "*.supabase.in" },
+      // Allow any HTTPS host — tenant logos can be on any CDN.
+      // Restrict to specific hostnames if security policy requires it.
+      { protocol: "https", hostname: "**" },
+    ],
+    formats: ["image/avif", "image/webp"],
+  },
   async headers() {
     return [
       {

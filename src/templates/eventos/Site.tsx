@@ -1,13 +1,20 @@
+import dynamic from "next/dynamic";
 import { Hero } from "./components/Hero";
 import { AboutStrip } from "./components/AboutStrip";
 import { Servicios } from "./components/Servicios";
 import { Combos } from "./components/Combos";
 import { Calendar } from "./components/Calendar";
 import { Testimonios } from "./components/Testimonios";
-import { Pautas } from "./components/Pautas";
 import { Contacto } from "./components/Contacto";
 import { Footer } from "./components/Footer";
 import type { EventosContent, EventosDesign, EventosMedia } from "./schema";
+
+// Dynamic import — Pautas is a "use client" accordion below the fold.
+// Defers its JS from the initial bundle, reducing TBT on mobile.
+const Pautas = dynamic(
+  () => import("./components/Pautas").then((m) => ({ default: m.Pautas })),
+  { ssr: true },
+);
 
 export interface EventosSiteProps {
   content: EventosContent;

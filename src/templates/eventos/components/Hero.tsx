@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { EventosContent, EventosDesign, EventosMedia } from "../schema";
 
 export function Hero({
@@ -26,11 +27,14 @@ export function Hero({
       }}
     >
       {media.logo_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={media.logo_url}
           alt={tenantName ? `Logo de ${tenantName}` : "Logo"}
+          width={320}
+          height={160}
+          priority
           className="mx-auto mb-8 h-32 w-auto md:h-40"
+          sizes="(max-width: 768px) 200px, 320px"
         />
       )}
       <h1

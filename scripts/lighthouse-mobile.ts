@@ -4,14 +4,14 @@
  *
  * Runs Lighthouse mobile profile against a URL and asserts category thresholds.
  *
- * Requires: npm i -D lighthouse chrome-launcher (added by C1/A6 setup task)
+ * Requires: npm i -D lighthouse chrome-launcher (added by A6)
  *
  * Usage:
  *   npx tsx scripts/lighthouse-mobile.ts http://localhost:3000 hakunamatata --min-perf=90 --min-a11y=95 --min-bp=95 --min-seo=95
  *
  * Args:
  *   1 — URL to audit (required)
- *   2 — host header override (optional, useful for testing tenant subdomain locally)
+ *   2 — host header override (optional, sends Host: <slug>.impluxa.com)
  *
  * Flags:
  *   --min-perf=N (default 90)
@@ -25,8 +25,10 @@
  *   1 — at least one threshold not met
  *   2 — lighthouse run failed
  *
- * NOTE: This is a scaffold. Activates fully after A6 installs `lighthouse` + `chrome-launcher`.
- * Until installed, this script exits 2 with install instructions.
+ * Windows note: headless Chrome cannot reach localhost on some Windows
+ * configurations (Windows Defender, Hyper-V networking). If scores are all 0
+ * with finalUrl=chrome-error://chromewebdata/, see docs/runbooks/performance.md
+ * for the manual Chrome DevTools fallback procedure.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -73,8 +75,17 @@ async function main() {
     process.exit(2);
   }
 
+  // Windows-friendly Chrome flags: disable GPU, no sandbox, disable extensions.
+  // --disable-dev-shm-usage prevents crashes in constrained environments.
   const chrome = await chromeLauncher.launch({
-    chromeFlags: ["--headless=new", "--no-sandbox"],
+    chromeFlags: [
+      "--headless=new",
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-extensions",
+      "--no-first-run",
+    ],
   });
 
   try {
@@ -102,14 +113,34 @@ async function main() {
       process.exit(2);
     }
 
-    const cats = result.lhr.categories;
+    const { lhr } = result;
+
+    // Detect Chrome network error (all scores 0, finalUrl is chrome-error://)
+    if (lhr.finalUrl?.startsWith("chrome-error://")) {
+      console.error(
+        [
+          "✗ Chrome headless could not reach the URL: " + url,
+          "  finalUrl: " + lhr.finalUrl,
+          "",
+          "  Windows fix options:",
+          "  1. Run npm run start in PowerShell, open Chrome > DevTools > Lighthouse > Mobile",
+          "     Record scores manually per docs/runbooks/performance.md",
+          "  2. Run the audit inside WSL2: use the WSL IP of the Windows host",
+          "     e.g.: npx tsx scripts/lighthouse-mobile.ts http://$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):3000 hakunamatata",
+          "  3. Deploy to staging and point the script at the staging URL",
+        ].join("\n"),
+      );
+      process.exit(2);
+    }
+
+    const cats = lhr.categories;
     const perf = Math.round((cats.performance?.score ?? 0) * 100);
     const a11y = Math.round((cats.accessibility?.score ?? 0) * 100);
     const bp = Math.round((cats["best-practices"]?.score ?? 0) * 100);
     const seo = Math.round((cats.seo?.score ?? 0) * 100);
 
     mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, JSON.stringify(result.lhr, null, 2));
+    writeFileSync(out, JSON.stringify(lhr, null, 2));
 
     console.log(`lighthouse mobile  ${url}`);
     console.log(
@@ -130,7 +161,8 @@ async function main() {
       perf >= minPerf && a11y >= minA11y && bp >= minBp && seo >= minSeo;
     process.exit(ok ? 0 : 1);
   } finally {
-    await chrome.kill();
+    // Ignore EPERM on Windows temp dir cleanup
+    await chrome.kill().catch(() => {});
   }
 }
 
