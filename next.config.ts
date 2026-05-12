@@ -67,4 +67,7 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   },
   // Disable telemetry from the Sentry build plugin itself.
   telemetry: false,
+  // Route Sentry traffic through our origin so ad-blockers don't drop events
+  // and *.ingest.sentry.io doesn't need to be in CSP connect-src long-term.
+  tunnelRoute: "/monitoring",
 });
