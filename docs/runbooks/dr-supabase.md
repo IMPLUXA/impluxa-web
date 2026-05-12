@@ -129,3 +129,68 @@ Answer these BEFORE clicking anything:
 - Backup docs: https://supabase.com/docs/guides/platform/backups
 - Decision log: `D:\segundo-cerebro\wiki\aprendizaje\Supabase Free no incluye backups — hallazgo crítico.md`
 - This runbook: `docs/runbooks/dr-supabase.md`
+
+---
+
+## Trigger
+
+- Suspected data loss or corruption reported by Pablo or a customer
+- Supabase Dashboard project health red, or repeated 5xx from PostgREST
+- Migration applied to production produced unexpected schema drift
+- Compromised credentials suspected (key leak, unauthorized writes in `activity_log`)
+- Supabase regional outage at https://status.supabase.com affecting sa-east-1
+
+## Detection
+
+How we notice an incident on the database layer:
+
+1. Customer report ("perdí leads", "no me deja guardar") via WhatsApp
+2. Sentry error spike on Supabase client calls (once C1 configured)
+3. Manual SQL spot-check shows missing rows or unexpected schema
+4. Supabase Dashboard → project health → red
+5. Audit of `activity_log` reveals writes from an unknown actor
+
+## Diagnosis
+
+First 5 things to check:
+
+1. **Confirm the incident class** — data loss, corruption, compromise, or platform outage. Map to the procedure below.
+2. **Identify last known good state** — timestamp. Cross-reference against `activity_log` or app logs.
+3. **Check backup availability** — Supabase Dashboard → Database → Backups. Confirm last scheduled backup is < 25h old.
+4. **Quantify the loss window** — what data will be lost if we restore to the last backup? Estimate row counts in affected tables.
+5. **Check Supabase platform status** — https://status.supabase.com to rule out a regional issue.
+
+## Recovery
+
+The detailed restore steps are documented above in **"Procedure: Restore from scheduled backup"**, **"Procedure: Total platform outage"**, and **"Procedure: Compromised credentials"**. Use the section matching the incident class identified in Diagnosis step 1.
+
+Quick index:
+
+- Data loss/corruption → "Procedure: Restore from scheduled backup" (SEV-1 over production, SEV-2 via branch project)
+- Platform outage → "Procedure: Total platform outage (Supabase down)"
+- Compromised credentials → "Procedure: Compromised credentials"
+
+## Verification
+
+After any restore or recovery action:
+
+- `npx tsx scripts/verify-pablo-jwt.ts` passes (Pablo can authenticate)
+- `hakunamatata.impluxa.com` renders and shows the expected dashboard
+- Row counts in `leads_tenant`, `tenants`, `auth.users` match the expected restore point
+- `npm run build` locally passes with no schema drift errors
+- No new errors in Sentry for 15 min after recovery
+- `activity_log` shows no unauthorized writes after the recovery timestamp
+
+## Post-mortem
+
+Mandatory within 48h for any SEV-1 restore. Use the skeleton in `incident-response.md`. Specific questions for database incidents:
+
+- What was the data loss window in rows and in business value (leads lost, customers affected)?
+- Was the corruption caused by a migration, application bug, or human action via dashboard?
+- Could PITR have reduced the loss window enough to justify enabling the $100/mo add-on?
+- Were backups recent enough? Should retention be extended beyond the 7d Pro default?
+- Action item candidates: enable PITR if ≥10 paying customers or financial data sensitivity; add periodic `pg_dump` to R2 as a third-party backup copy; review migration review process.
+
+## Last drill date
+
+YYYY-MM-DD — not yet drilled (next quarterly drill: 2026-08-12, per "Monthly verification checklist" above)
