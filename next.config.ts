@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -55,4 +56,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withSentryConfig(withNextIntl(nextConfig), {
+  // Suppress upload logs in CI; auth-token gates real source map upload.
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Auto-instrument server runtime via the bundler plugin.
+  autoInstrumentServerFunctions: true,
+  // Hide the Sentry SDK origin from clients (browser source maps still upload).
+  hideSourceMaps: true,
+  // Disable telemetry from the Sentry build plugin itself.
+  telemetry: false,
+});
