@@ -9,6 +9,7 @@ export function Footer({
 }) {
   return (
     <footer
+      role="contentinfo"
       className="px-6 py-8 text-center text-sm"
       style={{
         background: design.colors.text,
@@ -16,11 +17,20 @@ export function Footer({
       }}
     >
       <p>
-        © {new Date().getFullYear()} {tenantName}
+        <span aria-hidden="true">© </span>
+        <span className="sr-only">Copyright </span>
+        {new Date().getFullYear()} {tenantName}
       </p>
-      <p className="mt-2 opacity-70">
+      <p className="mt-2">
         Sitio creado con{" "}
-        <a href="https://impluxa.com" className="underline">
+        <a
+          href="https://impluxa.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Impluxa (se abre en una nueva pestaña)"
+          className="underline focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+          style={{ outlineColor: design.colors.background }}
+        >
           Impluxa
         </a>
       </p>

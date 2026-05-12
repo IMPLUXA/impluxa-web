@@ -102,9 +102,12 @@ export const defaultContent: EventosContent = {
 
 export const defaultDesign: EventosDesign = {
   colors: {
-    primary: "#1E88E5",
-    secondary: "#90CAF9",
+    // A11y: bumped from #1E88E5 → #1565C0 to reach ≥4.5:1 against #FFFFFF
+    primary: "#1565C0",
+    // A11y: bumped from #90CAF9 (1.7:1) → #5C8BB8 to reach ≥3:1 as UI border on #FFFFFF
+    secondary: "#5C8BB8",
     background: "#FFFFFF",
+    // accent #FFC107 only used as decorative fill behind dark text — kept as-is
     accent: "#FFC107",
     text: "#0F172A",
   },
