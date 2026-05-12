@@ -13,8 +13,7 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   const user = await requireUser();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const role = (user.app_metadata as any)?.role;
+  const role = user.app_metadata?.role;
   if (role !== "admin") redirect("/login?error=forbidden");
   return user;
 }

@@ -11,13 +11,14 @@ const Body = z.object({
   owner_email: z.string().email(),
 });
 
+const TRIAL_DAYS_MS = 14 * 86_400_000;
+
 export async function POST(req: NextRequest) {
   const ssr = await getSupabaseServerClient();
   const {
     data: { user },
   } = await ssr.auth.getUser();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (!user || (user.app_metadata as any)?.role !== "admin") {
+  if (!user || user.app_metadata?.role !== "admin") {
     return NextResponse.json(
       { ok: false, error: "forbidden" },
       { status: 403 },
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
       name,
       template_key,
       status: "draft",
-      trial_ends_at: new Date(Date.now() + 14 * 86_400_000).toISOString(),
+      trial_ends_at: new Date(Date.now() + TRIAL_DAYS_MS).toISOString(),
       created_by: user.id,
     })
     .select()
@@ -58,27 +59,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: te.message }, { status: 400 });
 
   // 2. Seed site with template defaults
-  await svc.from("sites").insert({
+  const { error: se } = await svc.from("sites").insert({
     tenant_id: tenant.id,
     content_json: template.defaultContent(),
     design_json: template.defaultDesign(),
     media_json: template.defaultMedia(),
     seo_json: { title: name },
   });
+  if (se)
+    return NextResponse.json({ ok: false, error: se.message }, { status: 500 });
 
   // 3. Trial subscription
-  await svc.from("subscriptions").insert({
+  const { error: sube } = await svc.from("subscriptions").insert({
     tenant_id: tenant.id,
     plan_key: "trial",
     status: "trial",
-    current_period_end: new Date(Date.now() + 14 * 86_400_000).toISOString(),
+    current_period_end: new Date(Date.now() + TRIAL_DAYS_MS).toISOString(),
   });
+  if (sube)
+    return NextResponse.json(
+      { ok: false, error: sube.message },
+      { status: 500 },
+    );
 
   // 4. Invite or link owner
-  const {
-    data: { users: existing },
-  } = await svc.auth.admin.listUsers();
-  let ownerId = existing.find((u) => u.email === owner_email)?.id;
+  const { data: listData, error: le } = await svc.auth.admin.listUsers();
+  if (le)
+    return NextResponse.json({ ok: false, error: le.message }, { status: 500 });
+  let ownerId = listData.users.find((u) => u.email === owner_email)?.id;
   if (!ownerId) {
     const { data: inv, error: ie } = await svc.auth.admin.inviteUserByEmail(
       owner_email,
