@@ -28,6 +28,12 @@ export async function POST(req: NextRequest) {
   ]);
   if (e1 || e2) return NextResponse.json({ ok: false }, { status: 403 });
 
-  __resetCache();
+  // Fetch tenant slug to invalidate only the affected cache entry (FR-1.4)
+  const { data: tenant } = await sb
+    .from("tenants")
+    .select("slug")
+    .eq("id", parsed.data.tenant_id)
+    .single();
+  __resetCache(tenant?.slug);
   return NextResponse.json({ ok: true, published_at: now });
 }

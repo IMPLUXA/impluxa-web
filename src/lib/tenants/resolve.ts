@@ -6,8 +6,12 @@ type CacheEntry = { value: Tenant | null; expiresAt: number };
 const cache = new Map<string, CacheEntry>();
 const TTL_MS = 60_000;
 
-export function __resetCache() {
-  cache.clear();
+export function __resetCache(slug?: string) {
+  if (slug !== undefined) {
+    cache.delete(slug);
+  } else {
+    cache.clear();
+  }
 }
 
 const TENANT_COLS =

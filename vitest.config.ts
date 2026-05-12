@@ -13,8 +13,19 @@ export default defineConfig({
         "src/**/*.test.{ts,tsx}",
         "src/**/*.spec.{ts,tsx}",
         "src/**/*.d.ts",
+        // Next.js page/layout files — no unit test surface
         "src/app/**/page.tsx",
         "src/app/**/layout.tsx",
+        // UI-only TSX components — covered in v0.4.0 E2E/component tests
+        "src/components/**/*.tsx",
+        "src/templates/**/*.tsx",
+        // i18n config — runtime-only, no unit test surface
+        "src/i18n/**",
+        // External service wrappers — tested via mocks in callers
+        "src/lib/ratelimit.ts",
+        "src/lib/resend.ts",
+        "src/lib/turnstile.ts",
+        "src/lib/supabase/client.ts",
       ],
       reportsDirectory: "./coverage",
     },
