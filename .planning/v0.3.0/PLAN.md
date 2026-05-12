@@ -6,6 +6,7 @@ wave: 1
 version: v0.3.0
 name: "FASE 1B — Cimientos vendibles + Hakuna live"
 status: active
+amendments: AMENDMENTS.md # post gsd-plan-checker — 5 critical fixes + risk register updates. AMENDMENTS.md wins on conflict.
 effort_estimate_days: 10-12
 owner: Pablo + Claude
 created: 2026-05-11
