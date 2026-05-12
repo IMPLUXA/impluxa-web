@@ -7,11 +7,21 @@ export const metadata: Metadata = {
     "Política de Privacidad de Impluxa — qué datos recabamos, con qué finalidad, terceros que intervienen y tus derechos.",
   alternates: {
     canonical: "https://impluxa.com/privacy",
+    languages: {
+      "es-LA": "https://impluxa.com/privacy",
+      en: "https://impluxa.com/en/privacy",
+    },
   },
   robots: { index: true, follow: true },
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const isEnglish = locale === "en";
   return (
     <>
       <article className="px-6 py-24">
@@ -25,6 +35,29 @@ export default function PrivacyPage() {
           <p className="text-ash mt-4 font-mono text-xs">
             Última actualización: 12 de mayo de 2026
           </p>
+
+          {isEnglish && (
+            <div
+              lang="en"
+              className="text-bone/80 border-bone/20 mt-8 rounded border-l-2 bg-stone-900/40 p-4 text-sm leading-relaxed"
+            >
+              <p className="text-ash font-mono text-xs tracking-[0.2em] uppercase">
+                English notice
+              </p>
+              <p className="mt-2">
+                An English translation of this Privacy Policy is planned for
+                v0.4.0. The legally binding text is the Spanish version below.
+                For clarification, contact{" "}
+                <a
+                  href="mailto:pablo@impluxa.com"
+                  className="underline hover:text-white"
+                >
+                  pablo@impluxa.com
+                </a>
+                .
+              </p>
+            </div>
+          )}
 
           <div className="text-bone/80 mt-12 space-y-12 text-sm leading-relaxed">
             <p>
