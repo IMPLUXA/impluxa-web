@@ -10,7 +10,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https:",
   "font-src 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.sentry.io https://*.ingest.sentry.io",
   "frame-src https://challenges.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",
