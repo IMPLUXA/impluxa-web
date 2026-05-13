@@ -29,9 +29,15 @@ const hasTestDB = Boolean(TEST_URL && TEST_ANON_KEY && TEST_SERVICE_KEY);
 describe.skipIf(!hasTestDB)(
   "RLS cross-tenant isolation [requires SUPABASE_TEST_URL]",
   () => {
-    // Clients (initialized only if env vars are present)
-    let anonClient: ReturnType<typeof createClient>;
-    let serviceClient: ReturnType<typeof createClient>;
+    // Clients (initialized only if env vars are present).
+    // We deliberately type as `any` here: this integration test calls a real
+    // Supabase test DB and does NOT have generated Database types imported.
+    // Strict typing would require maintaining `Database` types just for this
+    // test file. Backlog v0.3.1: generate + import Database types.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let anonClient: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let serviceClient: any;
 
     // Test tenant IDs seeded in test DB
     let tenantAId: string;
