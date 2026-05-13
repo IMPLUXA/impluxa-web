@@ -60,24 +60,24 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
   if (host === APP_HOST) {
-    url.pathname = `/_app${url.pathname}`;
+    url.pathname = `/app${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
   if (host === ADMIN_HOST) {
-    url.pathname = `/_admin${url.pathname}`;
+    url.pathname = `/admin${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
   if (host.endsWith(TENANT_SUFFIX)) {
     const slug = host.slice(0, -TENANT_SUFFIX.length);
     if (!slug || slug === "www") return NextResponse.next();
-    url.pathname = `/_tenant/${slug}${url.pathname === "/" ? "" : url.pathname}`;
+    url.pathname = `/tenant/${slug}${url.pathname === "/" ? "" : url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
   // Custom domain (future): route to tenant domain lookup
-  url.pathname = `/_tenant_domain/${encodeURIComponent(host)}${url.pathname}`;
+  url.pathname = `/tenant_domain/${encodeURIComponent(host)}${url.pathname}`;
   return NextResponse.rewrite(url);
 }
 

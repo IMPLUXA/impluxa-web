@@ -14,7 +14,7 @@ import AxeBuilder from "@axe-core/playwright";
  */
 
 const TARGET_URL = process.env.A11Y_TARGET_URL ?? "http://localhost:3000";
-const HAKUNA_PATH = process.env.A11Y_HAKUNA_PATH ?? "/_tenant/hakunamatata";
+const HAKUNA_PATH = process.env.A11Y_HAKUNA_PATH ?? "/tenant/hakunamatata";
 
 test.describe("eventos template — WCAG 2.2 AA conformance", () => {
   test("Hakuna render has zero axe-core violations", async ({ page }) => {
@@ -34,7 +34,6 @@ test.describe("eventos template — WCAG 2.2 AA conformance", () => {
       .analyze();
 
     if (results.violations.length > 0) {
-       
       console.log(
         "axe violations:\n" + JSON.stringify(results.violations, null, 2),
       );

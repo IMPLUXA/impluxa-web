@@ -1,5 +1,5 @@
 /**
- * _tenant/[slug]/layout.tsx
+ * tenant/[slug]/layout.tsx
  *
  * Shell layout for all tenant sites. Provides:
  * - <html lang="es"> for SEO
