@@ -15,7 +15,7 @@ export function Footer() {
           <a href="https://github.com/IMPLUXA" className="hover:text-bone">
             GitHub
           </a>
-          <Link href="/legal/privacidad" className="hover:text-bone">
+          <Link href="/privacy" className="hover:text-bone">
             Privacidad
           </Link>
           <Link href="/legal/terminos" className="hover:text-bone">

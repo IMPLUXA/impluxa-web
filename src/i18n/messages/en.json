@@ -12,5 +12,12 @@
     "tagline": "Infrastructure for the businesses of tomorrow.",
     "ctaPrimary": "Request demo",
     "ctaSecondary": "See how it works"
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "body": "We use cookies to improve your experience. More info in our",
+    "privacyLink": "Privacy Policy",
+    "accept": "Accept",
+    "reject": "Reject"
   }
 }

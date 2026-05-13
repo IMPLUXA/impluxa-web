@@ -10,8 +10,8 @@ const insertChain = {
   select: vi.fn().mockReturnThis(),
   single: vi.fn().mockResolvedValue({ data: { id: "uuid" }, error: null }),
 };
-vi.mock("@/lib/supabase/server", () => ({
-  getServiceSupabase: () => ({ from: () => insertChain }),
+vi.mock("@/lib/supabase/service", () => ({
+  getSupabaseServiceClient: () => ({ from: () => insertChain }),
 }));
 vi.mock("@/lib/resend", () => ({
   sendLeadNotification: vi.fn().mockResolvedValue(undefined),
