@@ -1,6 +1,10 @@
 import { requireAdmin } from "@/lib/auth/guard";
 import Link from "next/link";
 
+// Auth-gated route -- must be dynamic (uses cookies via Supabase SSR client).
+// Without this, Next 16 throws "Page changed from static to dynamic at runtime".
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {

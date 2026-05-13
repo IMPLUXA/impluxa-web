@@ -3,6 +3,10 @@ import { getCurrentTenant } from "@/lib/tenants/membership";
 import { Sidebar } from "@/components/app/Sidebar";
 import { redirect } from "next/navigation";
 
+// Auth-gated route -- must be dynamic (uses cookies via Supabase SSR client).
+// Without this, Next 16 throws "Page changed from static to dynamic at runtime".
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: {
