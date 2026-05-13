@@ -59,6 +59,15 @@ export async function middleware(req: NextRequest) {
 
   const url = req.nextUrl.clone();
 
+  // Shared root-level paths that exist at /<path> (not /<host-prefix>/<path>):
+  // login, signup, auth callback, APIs, monitoring tunnel, static metadata.
+  // These must NOT be rewritten under the host-specific prefix.
+  const SHARED_ROOT =
+    /^\/(login|signup|api|monitoring|robots\.txt|sitemap\.xml)(\/|$)/;
+  if (SHARED_ROOT.test(url.pathname)) {
+    return NextResponse.next();
+  }
+
   if (host === APP_HOST) {
     url.pathname = `/app${url.pathname}`;
     return NextResponse.rewrite(url);
