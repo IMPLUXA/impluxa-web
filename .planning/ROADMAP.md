@@ -8,14 +8,111 @@
 
 ## Milestones overview
 
-| Tag            | Name                                                | Effort         | Status               |
-| -------------- | --------------------------------------------------- | -------------- | -------------------- |
-| v0.1.0         | FASE 0 — Marketing landing                          | —              | ✅ Done (in prod)    |
-| v0.2.0-alpha.1 | FASE 1A — Multi-tenant core                         | —              | ✅ Done (not pushed) |
-| **v0.3.0**     | **FASE 1B — Cimientos vendibles + Hakuna live**     | **10-12 days** | 🚧 Active            |
-| v0.4.0         | FASE 1C — Multi-template + admin wizard + LGPD/AAIP | 10-12 days     | ⏳ Queued            |
-| v0.5.0         | FASE 1D — MercadoPago hardened + fiscal AR/BR       | 12-14 days     | ⏳ Queued            |
-| v0.6.0         | FASE 1E — Custom domains (POST-PMF, optional)       | 5-7 days       | 💤 Deferred          |
+| Tag            | Name                                                | Effort       | Status               |
+| -------------- | --------------------------------------------------- | ------------ | -------------------- |
+| v0.1.0         | FASE 0 — Marketing landing                          | —            | ✅ Done (in prod)    |
+| v0.2.0-alpha.1 | FASE 1A — Multi-tenant core                         | —            | ✅ Done (not pushed) |
+| **v0.2.5**     | **FASE 1A.5 — Auth Blindado Multi-Tenant**          | **2-3 days** | 🚧 Active            |
+| v0.3.0         | FASE 1B — Cimientos vendibles + Hakuna live         | 10-12 days   | ⏸️ Blocked by v0.2.5 |
+| v0.4.0         | FASE 1C — Multi-template + admin wizard + LGPD/AAIP | 10-12 days   | ⏳ Queued            |
+| v0.5.0         | FASE 1D — MercadoPago hardened + fiscal AR/BR       | 12-14 days   | ⏳ Queued            |
+| v0.6.0         | FASE 1E — Custom domains (POST-PMF, optional)       | 5-7 days     | 💤 Deferred          |
+
+---
+
+## v0.2.5 — FASE 1A.5: Auth Blindado Multi-Tenant
+
+**Inserción 2026-05-13** — fase descubierta tras audit de Security Engineer + TypeScript Reviewer durante intento de fix de auth flow. El consenso del arsenal (Backend Architect + Identity & Trust Architect + Senior PM + Software Architect) recomienda fase dedicada en vez de scope expansion de v0.3.0. Razones: bisectability futura, ADR causal chain limpia (ADR-0005 supersedes 0004 + amends 0003), industry precedent (Auth0/Clerk/Stytch/Supabase versionan auth aparte por blast radius total), audit trail defendible para SOC2/pentest futuro.
+
+**Goal:** Modelo de auth multi-tenant blindado-futuro. Tenant subdomains 100% aislados de session cookies. SSO interno app↔admin. OTP código (no magic link). Soporte custom domains v0.6.0 sin tocar auth.
+
+**Bloqueante para v0.3.0** — sin auth funcionando no se puede pasar el smoke test B5 (login → dashboard → publish).
+
+### Phase scope
+
+#### D. Topología de hosts + cookies host-only
+
+- [ ] **D1** — Nuevo subdominio `auth.impluxa.com` (Cloudflare CNAME → Vercel + dominio agregado al proyecto Vercel + SSL ready)
+- [ ] **D2** — Cookies host-only en `app.impluxa.com`, `admin.impluxa.com`, `auth.impluxa.com` (NO `.impluxa.com`). Helper `withCrossDomain` deprecado.
+- [ ] **D3** — Middleware: hosts whitelist explícita para auth cookies; tenants reciben `NextResponse.next()` sin cookies de sesión
+- [ ] **D4** — E2E test que verifica que `tenant.impluxa.com` NUNCA recibe `sb-access-token` ni `sb-refresh-token`
+
+#### E. OTP código de 6 dígitos
+
+- [ ] **E1** — UI login: form de 2 pasos (email → código) en lugar de magic link
+- [ ] **E2** — Backend: `signInWithOtp` con `emailRedirectTo: null` + `verifyOtp({ type: 'email' })`
+- [ ] **E3** — Resend template custom para código (sin link), branded Impluxa
+- [ ] **E4** — Deprecate `/api/auth/callback` route (queda como redirect de seguridad temporal)
+
+#### F. SSO ticket app↔admin
+
+- [ ] **F1** — Endpoint `auth.impluxa.com/auth/sso/issue` — emite JWT corto (TTL 30s, jti random, aud=target host)
+- [ ] **F2** — Endpoint `<target>/auth/sso/consume` en app + admin — verifica firma + nonce + aud + jti no-reusado
+- [ ] **F3** — Tabla Supabase `sso_tickets_used (jti pk, consumed_at)` para anti-replay, TTL cleanup 60s
+- [ ] **F4** — Botón "Ir a Admin" en app dashboard + recíproco en admin → handoff sin re-login
+
+#### G. JWT claim active_tenant_id + RLS rewrite
+
+- [ ] **G1** — Migración Supabase: agregar claim `active_tenant_id` via hook custom o app metadata
+- [ ] **G2** — RLS rewrite: todas las policies leen `auth.jwt() ->> 'active_tenant_id'` (no EXISTS tenant_members)
+- [ ] **G3** — Endpoint tenant switcher: re-emite JWT con nuevo `active_tenant_id` si membership válido
+- [ ] **G4** — RLS isolation test cross-tenant después del rewrite (Pablo con N memberships no puede leer tenant B desde sesión tenant A)
+
+#### H. Admin MFA + step-up auth
+
+- [ ] **H1** — Supabase MFA TOTP habilitado para usuarios con rol admin
+- [ ] **H2** — `admin.impluxa.com` requiere MFA challenge ANTES de servir cualquier ruta
+- [ ] **H3** — Step-up: al hacer SSO handoff a admin, re-prompt MFA si la sesión origen no la pasó hace < 5min
+
+#### I. Audit log con hash chain
+
+- [ ] **I1** — Tabla `audit_log` (actor_user_id, actor_session_id, acting_as_tenant_id, acting_as_role, action, resource_type, resource_id, ip, user_agent, request_id, timestamp, prev_record_hash)
+- [ ] **I2** — Server-side stamp en cada boundary crossing: tenant switch, admin elevation, capability token mint/use, role change, SSO handoff
+- [ ] **I3** — Webhook Supabase Auth events → audit sink
+- [ ] **I4** — Read-only viewer en `admin.impluxa.com/audit` (paginado, filtros básicos)
+
+#### J. Hardening de los HIGH/MED del review
+
+- [ ] **J1** — Validación `next` query param en callback contra open redirect (`startsWith("/") && !startsWith("//") && !startsWith("/\\")`)
+- [ ] **J2** — `Cache-Control: no-store` defensivo en response del middleware + callback
+- [ ] **J3** — Slug regex validation `^[a-z0-9][a-z0-9-]{0,62}$` antes de rewrite a `/tenant/<slug>`
+- [ ] **J4** — Guardas explícitos al init: throw con mensaje claro si `NEXT_PUBLIC_SUPABASE_URL` falta
+- [ ] **J5** — Rate limit + Turnstile en endpoint OTP request (anti email enumeration)
+
+#### K. ADR + documentación
+
+- [ ] **K1** — ADR-0005 "Auth Re-architecture" — supersedes ADR-0004, amends ADR-0003
+- [ ] **K2** — `docs/runbooks/auth-incident-response.md` (sesión revocada, token compromised, MFA reset)
+- [ ] **K3** — CHANGELOG.md entry v0.2.5
+
+### Quality gates (innegotiable)
+
+- [ ] E2E test cross-tenant cookie isolation pasa: `tenant.impluxa.com` NUNCA recibe `sb-*` cookies
+- [ ] OTP flow funciona end-to-end (request → email → code → verify → session set)
+- [ ] SSO app↔admin handoff funciona sin re-login (excepto MFA challenge cuando aplica)
+- [ ] RLS isolation test passa: user con N memberships NO puede leer tenant B desde sesión scopeada a tenant A
+- [ ] Admin MFA enforced — sin TOTP no se puede acceder a admin.impluxa.com
+- [ ] Audit log captura los 100% de boundary crossings en test E2E
+- [ ] Security review (Security Engineer agent) verdict = no HIGH issues
+- [ ] TypeScript review (typescript-reviewer agent) verdict = no HIGH issues
+- [ ] ADR-0005 escrito + reviewed
+- [ ] Tag `v0.2.5` + GitHub release con changelog
+- [ ] Learning note en `D:\segundo-cerebro\wiki\aprendizaje\v0.2.5 Auth Blindado Impluxa.md`
+
+### Out of v0.2.5 scope (postergado)
+
+- Passkeys/WebAuthn → v0.4.0+
+- Device management UI (lista sesiones, revoke) → v0.4.0+
+- Capability tokens para preview-as-owner → v0.4.0+ (caso de uso aparece con multi-template)
+- Session pinning a IP/UA → v0.5.0+ (con telemetría real para no romper mobile)
+- SOC2 evidence export → v0.5.0+
+
+### Dependencias
+
+- v0.2.0-alpha.1 ✅ (FASE 1A multi-tenant core)
+- Cloudflare DNS access (Pablo)
+- Vercel project access (Pablo)
+- Supabase project access (Pablo)
 
 ---
 
@@ -50,7 +147,8 @@
   - Cloudflare: CNAME `*` → `cname.vercel-dns.com` (DNS only, no proxy)
   - Vercel: add `*.impluxa.com` domain to project, validate SSL
 - [ ] **B4** — Insert Pablo as `owner` of `hakunamatata` tenant via SQL
-- [ ] **B5** — Smoke test e2e: visit `hakunamatata.impluxa.com` → submit lead → login `app.impluxa.com` → see lead → edit slogan → publish → reload public site → see change
+- [ ] **B5** — Smoke test e2e: visit `hakunamatata.impluxa.com` → submit lead → login `app.impluxa.com` (vía nuevo OTP flow de v0.2.5) → see lead → edit slogan → publish → reload public site → see change
+- [ ] **B5.1** — **Auth integration smoke (variante C del Senior PM agent):** verificar que el flow B5 funciona sobre la base de v0.2.5: cookie scope correcto, OTP code login, SSO app↔admin si Pablo navega, audit log captura el login, RLS aísla data del tenant Hakuna correctamente. Si v0.2.5 quality gates pasaron, esto es smoke test ≤ 30 min.
 
 #### C. Observability + ops (Critic gap)
 

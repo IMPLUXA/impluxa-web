@@ -12,13 +12,19 @@
 
 ## Active milestone
 
-`v0.3.0` — FASE 1B: Cimientos vendibles + Hakuna live (0% started — about to begin)
+`v0.2.5` — FASE 1A.5: Auth Blindado Multi-Tenant (0% started — about to begin, inserted 2026-05-13 after security audit revealed 4 HIGH issues + arsenal architects designed the proper model)
+
+`v0.3.0` blocked until v0.2.5 closes.
 
 ## Active phase
 
-None yet — `gsd-plan-phase` for v0.3.0 is the immediate next step.
+None yet — `/gsd-spec-phase v0.2.5` is the immediate next step to formalize the SPEC.md based on the Backend Architect + Identity & Trust Architect outputs (already in `.planning/v0.2.5/SPEC.md` as v1).
 
-## Resolved decisions (2026-05-11 / 2026-05-12)
+## Resolved decisions (2026-05-13 / 2026-05-12 / 2026-05-11)
+
+- [x] **Auth model re-architecture (2026-05-13):** descubierto durante intento de fix de auth flow; agent review encontró 4 HIGH issues (open redirect, cookie cross-tenant leak, no-store missing, setAll reassign). Backend Architect + Identity Architect diseñaron modelo blindado completo. Senior PM + Software Architect votaron unánime por fase dedicada **v0.2.5** en vez de scope expansion. Tag separado, ADR-0005, industry-aligned pattern (Auth0/Clerk/Stytch/Supabase).
+
+## Resolved decisions previas (2026-05-11 / 2026-05-12)
 
 - [x] **Sentry tier:** Free tier (5k errors/mo, 30d retention). Upgrade to Developer paid when ≥5 paying customers.
 - [x] **Uptime monitor:** UptimeRobot free (50 monitors, 5min interval). Upgrade to Better Stack when ≥10 customers + public status page needed for sales.
