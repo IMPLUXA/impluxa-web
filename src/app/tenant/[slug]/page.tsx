@@ -9,16 +9,26 @@ export const revalidate = 60;
 /**
  * Pre-render all published tenant slugs at build time.
  * Fallback (revalidate=60) handles new tenants after deploy.
+ *
+ * Wrapped in try/catch so the build still succeeds in environments
+ * without live DB credentials (e.g. CI). New tenants are rendered
+ * on demand via ISR.
  */
 export async function generateStaticParams() {
-  const { getSupabaseServiceClient: getSvc } =
-    await import("@/lib/supabase/service");
-  const supabase = getSvc();
-  const { data } = await supabase
-    .from("tenants")
-    .select("slug")
-    .eq("status", "published");
-  return (data ?? []).map((t: { slug: string }) => ({ slug: t.slug }));
+  try {
+    const { getSupabaseServiceClient: getSvc } =
+      await import("@/lib/supabase/service");
+    const supabase = getSvc();
+    const { data, error } = await supabase
+      .from("tenants")
+      .select("slug")
+      .eq("status", "published");
+    if (error) return [];
+    return (data ?? []).map((t: { slug: string }) => ({ slug: t.slug }));
+  } catch {
+    // No DB creds at build time (CI): defer all rendering to runtime ISR.
+    return [];
+  }
 }
 
 export default async function TenantPage({
