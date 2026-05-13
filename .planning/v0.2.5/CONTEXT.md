@@ -161,14 +161,15 @@ Modelo de auth multi-tenant blindado. Trust boundaries explícitas: identity (au
 - React Email component compilado en build, versionado en git.
 - Idioma: ES default (mercado target Argentina/Brasil). EN como backup para futuro. PT-BR cuando aparezca primer cliente brasileño.
 
-### D12 — Auth middleware runtime
+### D12 — Auth middleware runtime ⚠️ AMENDED 2026-05-13 por D15
 
-**Maestro consultado:** Backend Architect
+**Maestros consultados:** Backend Architect (original) + gsd-phase-researcher (amendment vía Next.js 16.2.6 docs)
 
-**Decisión:**
+**Decisión original (deprecated):** Edge runtime con `jose` library para JWT verify.
 
-- Edge runtime con `jose` library para JWT verify.
-- NO Node runtime (cold start cost + pierde geo-distribution).
+**Decisión vigente (amended D15):** Node runtime con `jose` library — Next.js 16 renombró `middleware.ts` → `proxy.ts` y forzó Node runtime para el archivo proxy. Edge ya no es opción.
+
+**Trade-off aceptado:** +30-50ms cold start vs versión Edge. Aceptable (no bloqueante).
 
 ### D13 — Wave order para execute-phase
 
@@ -181,6 +182,90 @@ Modelo de auth multi-tenant blindado. Trust boundaries explícitas: identity (au
 - **W3 (parallel):** Auth flows (OTP + SSO ticket) + Resend templates + audit_log writes + MFA enrollment UI + tenant switcher UI
 - **W4:** E2E tests (cross-tenant isolation, OTP flow, SSO handoff, MFA gating, RLS isolation, audit log integrity)
 - **Pre-execute audit:** Database Optimizer ya validó que el schema actual de `tenant_members` es compatible. Schema additions = solo `user_session_state` nueva.
+
+### D15 — Rename `middleware.ts` → `proxy.ts` (Next.js 16 file convention)
+
+**Maestro consultado:** gsd-phase-researcher (Next.js 16.2.6 docs)
+
+**Decisión:**
+
+- Renombrar `src/middleware.ts` → `src/proxy.ts` durante v0.2.5 W3.
+- Adaptar exports + matcher config a la nueva file convention.
+- ADR-0005 documenta el rename + impacto sobre D12 (Node runtime forzado).
+- Reversible cuando Next.js vuelva a soportar Edge en proxy (no es horizon visible).
+
+### D16 — OTP email delivery mechanism
+
+**Maestro consultado:** gsd-phase-researcher (Supabase Auth Hooks docs)
+
+**Decisión:**
+
+- **Send Email Hook + Resend SDK + React Email** (opción B).
+- Hook intercepta envío y rutea vía Resend con template compilado en build (D11).
+- NO custom SMTP en Supabase Dashboard (opción A) — pierde control de templates.
+- Dependencias W1: `npm install @react-email/components react-email standardwebhooks`.
+
+### D17 — SSO ticket consume mechanism
+
+**Maestro consultado:** gsd-phase-researcher (Supabase admin API docs)
+
+**Decisión:**
+
+- `auth.admin.generateLink({type: 'magiclink', email})` + auto-consume server-side por el endpoint `/auth/sso/consume`.
+- NO `admin.createSession` directamente — está marcada `[ASSUMED]` en supabase-js 2.105 (no verificada en docs).
+- Migración a `createSession` permitida en execute-phase si se verifica que existe en runtime; cambio aislado a 1 endpoint.
+
+### D18 — Resend `from` domain para OTP emails
+
+**Maestro consultado:** gsd-phase-researcher
+
+**Decisión:**
+
+- `from: "Impluxa Auth <auth@impluxa.com>"`.
+- NO compartir con `noreply@impluxa.com` (esos van a notificaciones product/marketing).
+- Branding consistente + audit trail separado en Resend dashboard.
+
+### D19 — Audit log partition management
+
+**Maestro consultado:** gsd-phase-researcher
+
+**Decisión:**
+
+- Manual monthly partition rotation vía Supabase scheduled function (cron `0 0 1 * *`).
+- Función SQL: crea próxima partición mes+1, attach a tabla padre, detach particiones >90d (mueven a warm storage).
+- NO `pg_partman` extension — overkill para volumen pre-GA. Migrar si volumen real >100k events/mes.
+
+### D20 — `custom_access_token_hook` failure policy ⚠️ CRÍTICA
+
+**Maestros consultados:** gsd-phase-researcher (recomendó fail-open) + **Security Engineer** (corrigió a fail-closed + break-glass, CVSS High en fail-open)
+
+**Decisión:**
+
+- **Fail-closed por default** para TODOS los roles cuando el hook lanza excepción.
+- Login normal con hook roto = login rechazado con error genérico (no expone interno).
+- **Break-glass admin path** separado:
+  - Endpoint `admin.impluxa.com/auth/break-glass` (NO publico en docs/UI normal)
+  - Requiere: service_role key + IP allowlist (IP fija de Pablo configurada en env) + MFA TOTP completo
+  - Emite JWT con claim `emergency_admin=true` + TTL 15min + scoped a paths admin
+  - RLS policies admin: `(claim.emergency_admin = true) OR (claim.active_tenant_id IS NOT NULL)`
+- **Healthcheck del hook** cada 60s vía Supabase scheduled function → si falla 3 veces consecutivas, dispara alert a email Pablo (Resend).
+- **Razón:** fail-open crea clase de JWT sin claim que RLS policies nunca contemplaron → CVSS High. Industria (Auth0, Clerk, Supabase nativo) usa fail-closed para claims de tenancy.
+
+### D21 — Env guard scope
+
+**Maestro consultado:** gsd-phase-researcher
+
+**Decisión:**
+
+- Fail-fast guard al boot del proxy/server cubre TODAS las nuevas env vars de v0.2.5:
+  - `NEXT_PUBLIC_SUPABASE_URL` (ya en SPEC FR-AUTH-8 J4)
+  - `SSO_JWT_SECRET` (jose signing)
+  - `UPSTASH_REDIS_REST_URL`
+  - `UPSTASH_REDIS_REST_TOKEN`
+  - `RESEND_API_KEY`
+  - `SEND_EMAIL_HOOK_SECRET` (firma del webhook Send Email Hook)
+  - `BREAK_GLASS_ALLOWED_IPS` (CSV de IPs autorizadas para D20)
+- Mensaje de error claro indica qué env var falta + dónde se configura (Vercel dashboard).
 
 ### D14 — ADR strategy
 
