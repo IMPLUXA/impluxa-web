@@ -7,13 +7,24 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ---
 
-## [0.2.5-rc] — 2026-05-15 (en branch `v0.2.5-auth-hardening`)
+## [0.2.5] — 2026-05-15
 
 Sprint **Auth Blindado Multi-Tenant**. Endurece la capa de autenticación y
 autorización antes de onboardear el segundo tenant productivo. Mitiga 5 amenazas
 del threat model (T-v025-01 hasta T-v025-10) y cierra los 9 requirements
-FR-AUTH-1 a FR-AUTH-9. Trabajo todavía pre-merge — esta entrada se promueve a
-`## [0.2.5]` al hacer merge a `main` + tag.
+FR-AUTH-1 a FR-AUTH-9.
+
+**Shipped:** PR #2 (`e3e22f9`) + PR #4 hotfix OTP pull-forward (`bff22ec`). Steps 8.5/9.5/9 ejecutados sesión 6ª:
+
+- 6 W2 migrations applied a main DB
+- Hook `custom_access_token` re-enabled en Hakuna prod
+- force-global-signout ejecutado (4 → 0 sessions)
+- Rey re-login OTP validated end-to-end + audit_log CHAIN_OK
+
+**Hotfix pull-forward ROADMAP §E1+E2 (OTP code 6-dígitos):** Outlook Safe Links
+pre-fetcheaba magic links consumiendo el token PKCE → roto end-user. Solución:
+OTP code 6 dígitos (sin link clickeable). Template Supabase patched. Login UI
+2-pasos (email → código).
 
 ### Added — Database layer (Wave 2)
 
