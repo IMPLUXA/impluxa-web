@@ -8,15 +8,16 @@
 
 ## Milestones overview
 
-| Tag            | Name                                                | Effort       | Status               |
-| -------------- | --------------------------------------------------- | ------------ | -------------------- |
-| v0.1.0         | FASE 0 — Marketing landing                          | —            | ✅ Done (in prod)    |
-| v0.2.0-alpha.1 | FASE 1A — Multi-tenant core                         | —            | ✅ Done (not pushed) |
-| **v0.2.5**     | **FASE 1A.5 — Auth Blindado Multi-Tenant**          | **2-3 days** | 🚧 Active            |
-| v0.3.0         | FASE 1B — Cimientos vendibles + Hakuna live         | 10-12 days   | ⏸️ Blocked by v0.2.5 |
-| v0.4.0         | FASE 1C — Multi-template + admin wizard + LGPD/AAIP | 10-12 days   | ⏳ Queued            |
-| v0.5.0         | FASE 1D — MercadoPago hardened + fiscal AR/BR       | 12-14 days   | ⏳ Queued            |
-| v0.6.0         | FASE 1E — Custom domains (POST-PMF, optional)       | 5-7 days     | 💤 Deferred          |
+| Tag            | Name                                                | Effort       | Status                                                                        |
+| -------------- | --------------------------------------------------- | ------------ | ----------------------------------------------------------------------------- |
+| v0.1.0         | FASE 0 — Marketing landing                          | —            | ✅ Done (in prod)                                                             |
+| v0.2.0-alpha.1 | FASE 1A — Multi-tenant core                         | —            | ✅ Done (not pushed)                                                          |
+| **v0.2.5**     | **FASE 1A.5 — Auth Blindado Multi-Tenant**          | **2-3 days** | 🚧 PR #2 OPEN (39 commits) — esperando Rey smoketest+merge                    |
+| **v0.2.6**     | **FASE 1A.6 — RLS Burn + 2nd Tenant Onboarding**    | **2-3 days** | 📋 Planning DONE (PR open, 7 commits) — esperando v0.2.5 merge + Rey OK 3 OQs |
+| v0.3.0         | FASE 1B — Cimientos vendibles + Hakuna live         | 10-12 days   | ⏸️ Blocked by v0.2.5 + v0.2.6                                                 |
+| v0.4.0         | FASE 1C — Multi-template + admin wizard + LGPD/AAIP | 10-12 days   | ⏳ Queued                                                                     |
+| v0.5.0         | FASE 1D — MercadoPago hardened + fiscal AR/BR       | 12-14 days   | ⏳ Queued                                                                     |
+| v0.6.0         | FASE 1E — Custom domains (POST-PMF, optional)       | 5-7 days     | 💤 Deferred                                                                   |
 
 ---
 
@@ -32,8 +33,8 @@
 
 #### D. Topología de hosts + cookies host-only
 
-- [ ] **D1** — Nuevo subdominio `auth.impluxa.com` (Cloudflare CNAME → Vercel + dominio agregado al proyecto Vercel + SSL ready)
-- [ ] **D2** — Cookies host-only en `app.impluxa.com`, `admin.impluxa.com`, `auth.impluxa.com` (NO `.impluxa.com`). Helper `withCrossDomain` deprecado.
+- [x] **D1** — Nuevo subdominio `auth.impluxa.com` (Cloudflare CNAME → Vercel + dominio agregado al proyecto Vercel + SSL ready) — DONE sesión 4ª 2026-05-14 decision #3 vía Cloudflare API + Vercel API
+- [x] **D2** — Cookies host-only en `app.impluxa.com`, `admin.impluxa.com`, `auth.impluxa.com` (NO `.impluxa.com`). Helper `withCrossDomain` deprecado — DONE sesión 5ª commit `e672f79` (callback hardening). CS-2 audits sesión 6ª confirmaron helper REMOVIDO del código real (solo en docs).
 - [ ] **D3** — Middleware: hosts whitelist explícita para auth cookies; tenants reciben `NextResponse.next()` sin cookies de sesión
 - [ ] **D4** — E2E test que verifica que `tenant.impluxa.com` NUNCA recibe `sb-access-token` ni `sb-refresh-token`
 
@@ -81,9 +82,9 @@
 
 #### K. ADR + documentación
 
-- [ ] **K1** — ADR-0005 "Auth Re-architecture" — supersedes ADR-0004, amends ADR-0003
-- [ ] **K2** — `docs/runbooks/auth-incident-response.md` (sesión revocada, token compromised, MFA reset)
-- [ ] **K3** — CHANGELOG.md entry v0.2.5
+- [x] **K1** — ADR-0005 "Auth Re-architecture" — supersedes ADR-0004, amends ADR-0003 — DONE commit `8e06617`. Plus sesión 6ª: ADR-0007 hash chain (`37031ad`), ADR-0008 SMTP Resend (`654e29f`), ADR-0009 Sentinel workaround (`17258e4`).
+- [ ] **K2** — `docs/runbooks/auth-incident-response.md` (sesión revocada, token compromised, MFA reset) — pendiente. Cubre `incident-response.md` general pero NO específico auth.
+- [ ] **K3** — CHANGELOG.md entry v0.2.5 — pendiente, generar al merge de PR #2.
 
 ### Quality gates (innegotiable)
 
@@ -113,6 +114,68 @@
 - Cloudflare DNS access (Pablo)
 - Vercel project access (Pablo)
 - Supabase project access (Pablo)
+
+---
+
+## v0.2.6 — FASE 1A.6: RLS Burn + 2nd Tenant Onboarding
+
+**Inserción 2026-05-15 sesión 6ª** — phase descubierto por arrancar autónomamente con consejo BA+SE bajo regla #24 (Lord Claudia avanza constantemente). Phase queda planning DONE, esperando PR #2 v0.2.5 merge + 3 OQs estratégicas Rey antes de ejecutar Waves W0-W4.
+
+**Goal:** Burn las RLS v1 PERMISSIVE policies (4 tablas) que coexisten como fail-safe post-v0.2.5. Onboarding 2do tenant (sub-option Rey: real CS-1a vs flag-gated dry-run CS-1b).
+
+**Bloqueante para v0.3.0** — sin v0.2.5 merged + v0.2.6 burned, RLS layer ambiguous para 2do tenant productivo.
+
+### Phase scope LOCKED (D1-D6 sesión 6ª)
+
+Ver `.planning/v0.2.6/CONTEXT.md` para D1-D6 LOCKED por consejo unánime:
+
+- **D1** Rollback Option B (frozen `pg_dump` snapshot in `_rollback_snapshots/`)
+- **D2** Single atomic migration (4 DROP POLICY en 1 transaction)
+- **D3** NO DB-layer kill switch (5-layer mitigation stack del SE)
+- **D4** Hook custom_access_token re-enable OUTSIDE phase boundary (pre-phase Rey ASK)
+- **D5** Read-only telemetry script `observe-rls-burn-readiness.ts` (NO canary endpoint)
+- **D6** Single PR squash-merge
+
+### Wave structure (ver `.planning/v0.2.6/PLAN.md`)
+
+- **W0** pre-phase Rey-gated (hook re-enable + bundle 3 OQs strategic ASK)
+- **W1** instrumentation (audit_log writers para `claim_missing` + `active_tenant_null`)
+- **W2** burn migration draft + frozen snapshot + dry-run preview branch
+- **W3** 24h observability + readiness report → Rey ASK
+- **W4** burn apply prod + 1h post-burn intensive monitoring + ADR-0005 v1.1 + squash-PR
+
+### OQs PENDING Rey strategic
+
+- **OQ-3** CS-1a (real 2nd tenant LIVE, pulls DNS wildcard from v0.3.0) vs CS-1b (flag-gated dry-run, Senior PM lean)
+- **OQ-4** 24h window T0 clock final (BA tentative: hook re-enable timestamp)
+- **OQ-8** CS-3 callback `/api/auth/callback` 410 Gone (data-dependent on Resend last-30d)
+- **Hard FR-RLS-BURN-2** burn-day OK (gravedad #21.a)
+
+### Quality gates v0.2.6
+
+- [ ] 24h observability gate completado con cero `claim_missing` events de usuarios reales
+- [ ] Burn migration aplica sin asserts fallar
+- [ ] Rollback procedure verified en preview branch (dry-run)
+- [ ] Hakuna magic link login + tenant data load PASS post-burn
+- [ ] ADR-0005 v1.1 amended con cutover record (date + commit + observability summary)
+- [ ] Tag `v0.2.6` + GitHub release con changelog
+
+### Files commited sesión 6ª (branch `feature/v0.2.6-rls-burn-onboarding`)
+
+- `.planning/v0.2.6/SPEC.md` — Hard scope + Candidate scope CS-1..CS-7 + Open Questions LOCKED status
+- `.planning/v0.2.6/RESEARCH.md` — Patrones de burn, telemetry hypothesis, rollback options
+- `.planning/v0.2.6/SECURITY-REVIEW.md` — 5-layer mitigation stack + GRAVE delta + CS-2 NO-GRAVE
+- `.planning/v0.2.6/PLAN.md` — 5 Waves + 18 Tasks + dependencies
+- `.planning/v0.2.6/CONTEXT.md` — D1-D6 LOCKED + sign-off matrix + anti-patterns
+- `scripts/observe-rls-burn-readiness.ts` — readiness gate check tool
+- `docs/runbooks/v0.2.6-rls-burn-rollback.md` — rollback procedure DRAFT
+
+### Dependencias
+
+- v0.2.5 PR #2 merged (gravedad #21.f)
+- W2 W2 migrations applied to main DB (gravedad #21.a)
+- Hook custom_access_token re-enabled in Hakuna prod (gravedad #21.a)
+- Rey OK explicit en 3 OQs strategic + burn-day
 
 ---
 
