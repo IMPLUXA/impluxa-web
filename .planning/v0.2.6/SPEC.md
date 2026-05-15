@@ -86,6 +86,15 @@ These items are _natural neighbors_ of the burn but are NOT locked. Listed for R
 
 ADR-0005 references `withCrossDomain` as deprecated post-v0.2.5. Burn it from the codebase (removal + deprecation note). T1 reversible.
 
+**Pre-removal audits (sesión 6ª 2026-05-15, 3/4 done):**
+
+- ✅ Audit 1 (grep usage): `withCrossDomain` aparece SOLO en docs de planning (`SPEC.md`, `SECURITY-REVIEW.md`, `ROADMAP.md` §D2). NO HAY usage en `src/` ni `supabase/` ni `scripts/`. Helper YA fue removido del código o nunca implementado más allá del flag deprecation.
+- ✅ Audit 2 (env COOKIE_DOMAIN check): NO HAY `COOKIE_DOMAIN` ni `cookieDomain` ni `NEXT_PUBLIC_COOKIE_DOMAIN` en código. Solo aparece en SECURITY-REVIEW.md.
+- ✅ Audit 3 (cookie Domain= literal hardcoded): grep `domain:\s*['"]\.` retorna NO MATCHES. Cero cookie con Domain explícito set.
+- ⏳ Audit 4 (DB sites query — host_pattern distribution): pendiente Hook re-enable + Rey OK, requiere SELECT contra prod Hakuna. Esperado: solo `path-based` rows para Hakuna.
+
+**Veredicto preliminar:** CS-2 puede CLOSED sin cambio de código real, solo update docs (`ROADMAP.md` §D2 marcar deprecation completed). Valid pendiente Audit 4 DB query (próxima sesión post hook reenable).
+
 ### CS-3 — Burn `/api/auth/callback` route
 
 ROADMAP v0.2.5 §E4: "Deprecate `/api/auth/callback` route (queda como redirect de seguridad temporal)". v0.2.6 candidate: actually remove the route. **Risk:** any cached email link from pre-OTP era still points at this URL. Mitigation: keep route as 410 Gone with logging for 1 release, then remove in v0.2.7.
