@@ -7,6 +7,58 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ---
 
+## [Unreleased] — v0.2.5 PR #2 esperando merge
+
+PR #2 https://github.com/IMPLUXA/impluxa-web/pull/2 — 39 commits sobre `986830d`.
+
+Release de **Auth Blindado Multi-Tenant**: claim-based session JWT + custom_access_token hook fail-closed + RLS v2 RESTRICTIVE shadow + audit log SHA-256 hash chain. Pre-condition para onboardear segundo tenant productivo (v0.2.6 burn v1 + v0.3.0 Hakuna live).
+
+### Added
+
+- **W1 — Runtime config + safeNextPath open-redirect mitigation.** `src/lib/runtime-config.ts` env guard module-load (commit `3511bb9`) + `src/lib/safe-redirect.ts` con `safeNextPath()` validator (commit `930f8da`) + property-based fuzz tests `tests/property/safe-next-path.fuzz.test.ts` con ~5500 random inputs via fast-check (commit `8b65917`).
+- **W2 — DB migrations claim-based RLS v2.** 6 migrations atomic (commits `2fa51b7`, `c620810`, `8612f4a`, `f5ac2b9`, `92acb8e`, `8f0addf`):
+  - `user_session_state` table (D1)
+  - `current_active_tenant()` helper (D5)
+  - `custom_access_token_hook` fail-closed (D5, D20)
+  - RLS v2 RESTRICTIVE shadow policies claim-based (D1, FR-AUTH-5) — **coexiste 24h con v1 PERMISSIVE como fail-safe** (burn programado v0.2.6)
+  - `audit_log` partitioned + SHA-256 hash chain + `append_audit()` SECURITY DEFINER (D4, D9, FR-AUTH-7)
+  - `audit_log` partition rotation cron double-buffer (D19)
+- **W3 — Tenant switcher + Send Email Hook handler + callback hardening.** Route + UI components `TenantSwitcherClient` (commits `efa6a4b`, `66178c4`, `4fab961`) + Send Email Hook → Resend integration `9665aab` (W3.G3.T3, retained inert post ADR-0008) + callback hardening con `safeNextPath` wired + strip cookie domain (commit `e672f79`).
+- **W4 — Integration tests + force-global-signout script.** `tests/integration/rls-claim-isolation.test.ts` valida confused deputy mitigation (commit `5cf8866`) + `tests/integration/audit-log-hash-chain.test.ts` valida tamper-evidence (commit `b79e0cf`) + `scripts/force-global-signout.ts` POST-MERGE only (commit `632fbbe`).
+- **ADRs:** ADR-0005 auth re-architecture (`8e06617`), ADR-0006 audit log access control, ADR-0007 audit log hash chain (`37031ad`), ADR-0008 SMTP Resend native + Send Email Hook disabled (`654e29f`), ADR-0009 Sentinel allowlist bug + Array.join workaround (`17258e4`).
+- **Documentation:** `docs/onboarding-v0.2.5.md` (`e9b5d35`), runbook `docs/runbooks/v0.2.5-merge-deploy.md` (PR #3, polished sesión 6ª), `docs/security/env-var-usage.md` inventory (`998d06d`), `docs/security/secret-rotation.md` per-secret playbook (`fb3ad5a`), `docs/runbooks/dmarc-monitoring.md` (`280c94b`), PLAN.md M7-M13 + completion status (`d6c6538`).
+
+### Changed
+
+- **DNS infra Reino Impluxa:** Cloudflare zone `impluxa.com` ahora con SPF en `mail.impluxa.com` + 2× DMARC en `_dmarc.mail.impluxa.com` + `_dmarc.impluxa.com` (sesión 6ª decision #32, autonomous via Cloudflare API). 3 records additive zero-risk, `p=none` monitoring durante warmup window 2 semanas, upgrade a `p=quarantine; pct=10` planned 2026-05-29 si DMARC reports limpios.
+- **Hakuna prod auth config:** SMTP custom Resend ACTIVO (decision #29 sesión 5ª, ADR-0008). Send Email Hook DISABLED. Hook custom_access_token DISABLED durante ventana de merge (decision #38 sesión 6ª bajo Rey OK + consejo unánime), re-enable post-merge per runbook Step 8.5.
+
+### Removed
+
+- `withCrossDomain` helper — confirmado removido del código real via CS-2 audits sesión 6ª (NO usage en `src/`, `supabase/`, `scripts/`).
+- `hook-send-email-rotation-20260515.txt` archivo local stale (decision #33 sesión 6ª, source-of-truth queda en Supabase).
+
+### Security
+
+- **5 amenazas mitigadas, 9 FR-AUTH cerrados** (FR-AUTH-1 a FR-AUTH-9). Diseño en ADR-0005.
+- **Custom Access Token Hook fail-closed** — JWT claim `active_tenant_id` poblado en token-mint. Si hook crashea o claim missing → RLS v2 RESTRICTIVE niega acceso (DB-layer fail-closed); `APPROVAL_GATE_ENABLED` env kill switch para app-layer fail-closed.
+- **Audit log tamper-evidence:** SHA-256 hash chain con `pg_advisory_xact_lock`. Cliente NO puede escribir audit_log (RLS deny + INSERT/UPDATE/DELETE revoked). Solo path = `public.append_audit(jsonb)` SECURITY DEFINER service-role only.
+- **Open-redirect mitigation:** `safeNextPath()` con 9 properties validadas via fuzz (~5500 random inputs).
+- **Sentinel runtime protection** activa via PreToolUse hook (mcp-sentinel v2.0.0). Bug `check_sensitive_env` allowlist documentado en ADR-0009 con workaround pattern.
+
+### Migration notes
+
+Pre-merge hygiene (runbook PR #3):
+
+1. Step 0 — DISABLE hook custom_access_token (gravedad #21.a). DONE sesión 6ª 2026-05-15 (decision #38).
+2. Step 2 — Smoketest login Chrome (NO Brave PKCE bug).
+3. Step 5 — Squash-merge.
+4. Step 6 — Tag `v0.2.5`.
+5. Step 8.5 — Apply 6 W2 migrations a main + re-enable hook custom_access_token (gravedad #21.a).
+6. Step 9 — `force-global-signout` con `KING_SIGNED=true` (irreversible, ~30s downtime percibido).
+
+---
+
 ## [0.3.0] — 2026-05-12
 
 Release de endurecimiento (hardening) sobre la base multi-tenant `v0.2.0-alpha.1`.
