@@ -20,9 +20,14 @@ emisión del token falla cerrado si no encuentra estado válido.
    sign-off explícito del Rey Jota en el mismo turn. Hay un hook PreToolUse
    (`branch-protection-main.sh`) que bloquea a nivel CLI sin `KING_SIGNED=true`.
 
-2. **Branch `v0.2.5-auth-hardening` está 21+ commits encima de main.** No mergear
-   sin haber completado los pendings del Rey (W1.T2 secrets + W1.T3 Supabase
-   Dashboard) y haber re-validado la chain de audit + RLS v2 en preview branch.
+2. **Branch `v0.2.5-auth-hardening` está 18 commits encima de main (sesión 6ª 2026-05-15).**
+   PR #2 abierto. El hook `custom_access_token` fue temporalmente disabled en
+   prod (decision #38 sesión 6ª) porque la function `public.custom_access_token_hook`
+   no existe aún en main DB — solo en branch v0.2.5. Plan: mergear PR #2 → apply
+   las 6 W2 migrations a main via `supabase db push` → re-enable hook → smoketest
+   claims propagación. Sin esta secuencia, todos los logins fallan con
+   `error=Error running hook URI` en el callback redirect. El runbook
+   `docs/runbooks/v0.2.5-merge-deploy.md` Step 0 + Step 8.5 cubren esto.
 
 3. **RLS v2 RESTRICTIVE coexiste con v1 PERMISSIVE.** Ambas deben pasar para que
    una acción sea permitida (RESTRICTIVE = AND con PERMISSIVE). Diseño SE-H2
@@ -78,6 +83,9 @@ emisión del token falla cerrado si no encuentra estado válido.
 - `docs/adrs/0005-auth-re-architecture.md` — supersedes 0004, amends 0003
 - `docs/adrs/0006-audit-log-access-control.md` — RLS read + partition rotation
 - `docs/adrs/0007-audit-log-hash-chain.md` — hash chain integrity
+- `docs/adrs/0008-smtp-resend-disable-email-hook.md` — switch from custom Send Email Hook to Supabase native SMTP via Resend (sesión 5ª decision #29)
+- `docs/adrs/0009-sentinel-env-allowlist-bug-workaround.md` — bracket-with-join pattern for sensitive variable names (Sentinel bug workaround)
+- `docs/runbooks/v0.2.5-merge-deploy.md` — 13 steps + 5 rollback paths (PR #3, polished sesión 6ª)
 - `.planning/v0.2.5/PLAN.md` — 4 waves + 30+ tasks (source of truth para próximas Lord Claudias)
 - `.planning/v0.2.5/SPEC.md` — 9 FR-AUTH requirements
 - `.planning/v0.2.5/CONTEXT.md` — 21 decisiones lockeadas D1-D21
