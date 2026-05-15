@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { safeNextPath } from "@/lib/auth/safe-redirect";
 
 /**
  * Auth callback for magic link / OAuth flows.
@@ -9,15 +10,19 @@ import { createServerClient } from "@supabase/ssr";
  * cookies set by Supabase via exchangeCodeForSession() must be attached to
  * the NextResponse explicitly.
  *
- * The previous implementation used the shared getSupabaseServerClient() which
- * relies on cookies() and silently swallows the write error in a try/catch.
- * Result: exchange succeeded server-side, but the browser never received the
- * session cookie -> the user landed back on /login.
+ * Hardening:
+ * - `next` query param is sanitized with `safeNextPath()` (T-v025-08 open
+ *   redirect): rejects `//`, `\\`, control chars, and non-absolute paths.
+ * - The cookie `domain` option from Supabase is stripped (T-v025-01) so the
+ *   browser scopes cookies to the current Host header only — same hardening
+ *   the proxy/middleware layer applies in `src/lib/supabase/proxy-client.ts`.
+ *   Without this, the initial session cookie set on callback would land under
+ *   `domain=.impluxa.com` and leak across tenant subdomains.
  */
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") || "/";
+  const next = safeNextPath(searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=missing_code`);
@@ -34,9 +39,22 @@ export async function GET(req: NextRequest) {
           return req.cookies.getAll();
         },
         setAll(toSet) {
-          toSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
+          for (const { name, value, options } of toSet) {
+            if (options === undefined) {
+              response.cookies.set(name, value);
+              continue;
+            }
+            const { domain: _drop, ...rest } = options as Record<
+              string,
+              unknown
+            > & { domain?: string };
+            void _drop;
+            response.cookies.set(
+              name,
+              value,
+              rest as Parameters<typeof response.cookies.set>[2],
+            );
+          }
         },
       },
     },

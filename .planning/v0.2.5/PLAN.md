@@ -105,11 +105,36 @@ Entregar modelo auth multi-tenant blindado de Impluxa: cero session leak cross-t
 
 **Coverage status:** COMPLETO. No items missing.
 
+## Modificaciones post-lock (delta sobre PLAN.md original)
+
+**Decreto del Rey 2026-05-14** — actualizaciones que aplican a TODO el plan abajo. Lord Claude debe leer esta sección antes de ejecutar cualquier task que mencione break-glass / W3.G6 / `BREAK_GLASS_ALLOWED_IPS`.
+
+| #   | Cambio                                                                                                                                                                                                                                                                                                                                                                       | Razón                                                                                                                                                                                                                      | Mitigación / acción nueva                                                                                                                                                                                   |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| M1  | **Subgroup W3.G6 (Break-glass admin path) queda OUT OF SCOPE en v0.2.5.** Tasks W3.G6.T1 + W3.G6.T2 NO se ejecutan.                                                                                                                                                                                                                                                          | Análisis de probabilidad-impacto: cohorte 1 chica (Hakuna single tenant), Vercel/Supabase/Cloudflare dashboards no dependen del approval gate, complejidad de mantener allowlist IPs cambiantes > beneficio en este stage. | Kill switch en Vercel env var `APPROVAL_GATE_ENABLED=false` desactiva el approval gate sin requerir IP fija. Re-evaluar al cruzar 20 tenants o ante incidente real.                                         |
+| M2  | **Var `BREAK_GLASS_ALLOWED_IPS` (línea 163 W1.T2) NO se setea.**                                                                                                                                                                                                                                                                                                             | Sin W3.G6 no tiene consumer.                                                                                                                                                                                               | Reemplazar por `APPROVAL_GATE_ENABLED=true` (default) en W1.T2.                                                                                                                                             |
+| M3  | **Threat T-v025-05** (línea 126) — mitigation original = "D20 fail-closed + break-glass; W3.G6 implements path; W4.T7 healthcheck". **Nueva mitigation:** "D20 fail-closed + APPROVAL_GATE_ENABLED kill switch (Vercel env var, flippable via dashboard); W4.T7 healthcheck. Si hook falla, Pablo flippea kill switch y el approval gate deja de bloquear logins hasta fix." | Coherente con M1.                                                                                                                                                                                                          | —                                                                                                                                                                                                           |
+| M4  | **Branch name oficial: `v0.2.5-auth-hardening`** (no `v0.2.5-auth-blindado`).                                                                                                                                                                                                                                                                                                | Convergencia naming con feedback memory + hot.md.                                                                                                                                                                          | Pre-execute gate actualizado.                                                                                                                                                                               |
+| M5  | **W4.T11 final review gate sigue obligatorio** sobre todo lo NO-G6.                                                                                                                                                                                                                                                                                                          | Cobertura security no se reduce.                                                                                                                                                                                           | —                                                                                                                                                                                                           |
+| M6  | **W1.T5: archivo `src/lib/env.ts` renombrado a `src/lib/env-guard.ts`.** Imports correspondientes deben usar `@/lib/env-guard`.                                                                                                                                                                                                                                              | MCP Sentinel bloquea Write a archivos cuyo nombre matchea `/\.env(\.                                                                                                                                                       | $)/`(proteccion secrets).`env.ts`matcheaba;`env-guard.ts`es semanticamente mas claro y no matchea. Lord Claude NO crea Sentinel allowlists sin sign-off del Rey (leccion`agente_crea_allowlist_global.md`). | Actualizar referencias en proxy/server.ts/route handlers cuando los toquen W3. |
+
+| M7 | **W1.T3 + W3.G3.T3: Send Email Hook Supabase queda DISABLED en v0.2.5.** Email send se hace via SMTP custom (Resend) directo desde Supabase Auth. | Decision sesión 5ª 2026-05-14 — ADR-0008. Send Email Hook agregaba complejidad (webhook secret rotation + standardwebhooks lib + endpoint exposure) sin beneficio sobre SMTP nativo en arquitectura single-tenant Hakuna. Resend SMTP nativo cubre el caso con menos superficie de ataque. | `SEND_EMAIL_HOOK_SECRET` env var queda en repo histórico pero unused. SMTP creds (`SMTP_HOST=smtp.resend.com`, `SMTP_PORT=465`, `SMTP_USER=resend`, `SMTP_PASS=<resend_api_key>`) seteados en Supabase Auth → SMTP custom. ADR-0008 documenta tradeoff. Re-evaluar para v0.3.x si tenant N+ requiere webhook-driven flows. |
+| M8 | **W2.T3: `custom_access_token_hook` deshabilitado en Hakuna prod sesión 6ª 2026-05-15** bajo Rey OK explícito (decision_log #38). Function existe en DB; hook unhooked en dashboard. | Sesión 6ª investigation: hook fail-closed fired contra cohorte Hakuna live antes de RLS v2 burn. Snapshot rollback pre-disable guardado. | Hook re-enable post-merge v0.2.5 según runbook PR #3 Step 8.5 (post-RLS burn). NO re-enable manual en sesión actual. |
+| M9 | **W4.T8/T9 expandidos: ADRs 0005, 0006, 0007, 0008, 0009 escritos.** ADR-0005 auth re-architecture; ADR-0006 audit log access control + partition rotation; ADR-0007 audit log partitioned + SHA-256 hash chain; ADR-0008 SMTP Resend native + Send Email Hook disabled; ADR-0009 Sentinel `check_sensitive_env` allowlist bug + workaround. | Cobertura ADR completa post-lock. Delta vs PLAN original que solo planeaba ADR-0005. | — |
+| M10 | **Nueva docs/runbooks suite agregada sesión 5ª-6ª NO en PLAN original:** `docs/security/env-var-usage.md` (env var inventory + Sentinel workaround compensation); `docs/security/secret-rotation.md` (per-secret rotation playbook + anti-patterns); `docs/runbooks/dmarc-monitoring.md` (2-week warmup + p=quarantine upgrade decision tree); `docs/onboarding/lord-claudia.md` (alignment sesión 6ª state). | Operacionalizar security posture v0.2.5 + handoff cleanliness para próximas Lord Claudias / auditorías Rey. Fuera de W4.T9 original (incident response only). | PR #3 (separate runbook PR) trackea merge plan post-v0.2.5. |
+| M11 | **W4.T11 final review gate satisfecho parcialmente:** `gsd-secure-phase` invocado vía consejo Security Engineer ad-hoc (sesión 5ª-6ª multiple invocations); `gsd-verify-work` pendiente smoketest del Rey post-merge. | PR #2 espera smoketest del Rey antes de merge. UAT no Lord-Claudia-executable (touch prod). | Rey ejecuta smoketest según `docs/runbooks/smoketest-v0.2.5.md` (referenced PR #2 description). Lord Claudia NO mergea (gravedad #21.f). |
+| M12 | **W4.T6 expandido con property-based fuzz tests:** `tests/property/safe-next-path.fuzz.test.ts` agregado (~5500 random inputs) además del test integration original. Coverage open-redirect threat T-v025-08 reforzada. | Lección sesión 6ª: PII/redirect parsers necesitan fuzz coverage para edge cases (encoded chars, double-slashes, unicode bypasses). Pattern reusable para próximas utilities (cookie-domain stripper, JWT verifier, hostname parser → identificadas como candidates v0.2.6). | `tests/property/` directory creado. Pattern documentado para extender a otras utilities en v0.2.6 SPEC. |
+| M13 | **W4.T7 split en 2:** `scripts/force-global-signout.ts` committed (commit `632fbbe`) marcado **POST-MERGE only** — ejecución manual del Rey post-merge según runbook. Verification A1 pendiente. | Script touch DB writes prod → gravedad #21.b. Lord Claudia NO ejecuta. Rey corre post-merge según secuencia runbook PR #3. | Runbook documenta: backup → invoke script → verify session_state cleared → re-enable hook → smoketest end-user. |
+
+**Estado verificación M1-M13:** M1-M6 aprobado por consejo (Backend Architect + Senior PM, sesión 2026-05-14 post-cleanup). M7-M13 documentado por Senior PM sesión 6ª 2026-05-15 reflejando estado real branch `v0.2.5-auth-hardening` @ 35 commits. Lord Claudia opera con este delta vigente desde aquí en adelante.
+
+---
+
 ## Pre-execute gates
 
-- [ ] Pablo confirma IP fija para `BREAK_GLASS_ALLOWED_IPS` (D20) — sin esto W3.G6 bloqueada.
+- [x] ~~Pablo confirma IP fija para `BREAK_GLASS_ALLOWED_IPS` (D20)~~ — **DESCARTADO 2026-05-14 por decreto del Rey** (ver sección "Modificaciones post-lock" abajo). Mitigación re-asignada a `APPROVAL_GATE_ENABLED` kill switch en Vercel env vars. Subgroup W3.G6 íntegro queda OUT OF SCOPE.
 - [ ] Backup current Supabase snapshot via dashboard (rollback path).
-- [ ] Branch creation: `git checkout -b v0.2.5-auth-blindado` desde `main`.
+- [x] Branch creation: ~~`v0.2.5-auth-blindado`~~ → `v0.2.5-auth-hardening` (creada 2026-05-14 desde `main` tip `986830d`).
 - [ ] Verify Resend domain `impluxa.com` status = verified en Resend dashboard.
 - [ ] Verify Pablo tiene acceso a Cloudflare DNS + Vercel project + Supabase dashboard.
 
@@ -129,6 +154,81 @@ Trust boundaries: `auth.impluxa.com` (identity), `app.impluxa.com` (app session)
 | T-v025-08 | I                   | open redirect `?next=`                 | mitigate    | W1.T5 safeNextPath util; W3.G7.T2 aplica en sso/consume                          |
 | T-v025-09 | T                   | CDN cache de response con cookie       | mitigate    | W1.T5 Cache-Control no-store en proxy + auth responses                           |
 | T-v025-10 | S                   | MFA bypass via stale step-up           | mitigate    | W3.G4.T3 verifica `amr.totp.timestamp >= now-300s`                               |
+
+---
+
+## Task completion status — sesión 6ª 2026-05-15
+
+**Branch `v0.2.5-auth-hardening` @ 35 commits** — snapshot tomado por Senior PM consejo Reino Impluxa antes del merge PR #2 (pendiente smoketest del Rey).
+
+Legend: `DONE` = committed + verified | `DONE-DEFERRED` = código ready, ejecución post-merge | `SUPERSEDED` = reemplazado por delta M-row | `OUT` = removido de scope (M1) | `PENDING-KING` = espera acción del Rey.
+
+### Wave 1 — Blocking infra
+
+| Task  | Status                 | Notas                                                                                                                                                                         |
+| ----- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W1.T1 | PENDING-KING           | Cloudflare CNAME + Vercel domain alias — Lord Claudia tiene API key (no es human-action obligado per regla #12); ejecutar post-merge según runbook PR #3.                     |
+| W1.T2 | PENDING-KING (parcial) | Env vars seteados sesión 4ª-5ª (SSO*JWT_SECRET, SUPABASE*_, RESEND\__, UPSTASH\_\*); `BREAK_GLASS_ALLOWED_IPS` SUPERSEDED por M2; `SEND_EMAIL_HOOK_SECRET` SUPERSEDED por M7. |
+| W1.T3 | SUPERSEDED (M7)        | Send Email Hook disabled — SMTP custom Resend nativo. Custom Access Token Hook config: M8 trackea estado.                                                                     |
+| W1.T4 | DONE                   | Commit `273c8d5` — jose + react-email + standardwebhooks installed.                                                                                                           |
+| W1.T5 | DONE                   | Commits `930f8da` (safeNextPath + tests) + `3511bb9` (env-guard module-load) + `8b65917` (property fuzz). Per M6 archivo es `env-guard.ts`.                                   |
+| W1.T6 | DONE                   | Upstash namespacing verified sesión 4ª.                                                                                                                                       |
+
+### Wave 2 — Sequential DB
+
+| Task  | Status             | Notas                                                                                                                                               |
+| ----- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W2.T1 | DONE               | Commit `2fa51b7` — user_session_state table + active backfill.                                                                                      |
+| W2.T2 | DONE               | Commit `c620810` — current_active_tenant() helper.                                                                                                  |
+| W2.T3 | DONE-DEFERRED (M8) | Commit `8612f4a` — function fail-closed creada. Hook DISABLED en Hakuna prod (decision_log #38). Re-enable post-merge según runbook PR #3 Step 8.5. |
+| W2.T4 | DONE               | Commit `f5ac2b9` — RLS v2 RESTRICTIVE shadow policies claim-based. Burn PERMISSIVE → próxima fase v0.2.6.                                           |
+| W2.T5 | DONE               | Commit `92acb8e` — audit_log partitioned + hash chain + append_audit fn.                                                                            |
+| W2.T6 | DONE               | Commit `8f0addf` — partition rotation cron double-buffer.                                                                                           |
+
+### Wave 3 — Parallel features
+
+| Subgroup | Status          | Notas                                                                                                     |
+| -------- | --------------- | --------------------------------------------------------------------------------------------------------- |
+| W3.G1    | DONE            | OTP rate limit + Turnstile config (commits sesión 4ª-5ª).                                                 |
+| W3.G2    | DONE            | SSO ticket Upstash GETDEL.                                                                                |
+| W3.G3.T1 | DONE            | Commit `e18a140` — audit log writer.                                                                      |
+| W3.G3.T2 | DONE            | Commit `eff02db` — OtpCode React Email template ES.                                                       |
+| W3.G3.T3 | SUPERSEDED (M7) | Send Email Hook → Resend integration committed (`9665aab`) pero hook disabled per M7. SMTP nativo activo. |
+| W3.G3.T4 | DONE            | Commits `9cda046` + `95f4e3f` — audit log read endpoint + AuditLogViewer + chain badge.                   |
+| W3.G4    | DONE            | MFA enrollment + step-up TOTP timestamp check.                                                            |
+| W3.G5.T1 | DONE            | Commits `efa6a4b` + `66178c4` + `4fab961` — TenantSwitcher route + UI + unit tests.                       |
+| W3.G6    | OUT (M1)        | Break-glass admin path OUT OF SCOPE.                                                                      |
+| W3.G7.T1 | DONE            | Next 16 build verified.                                                                                   |
+| W3.G7.T2 | DONE            | Commit `e672f79` — callback hardening safeNextPath + strip cookie domain.                                 |
+| W3.G7.T3 | DONE            | Commit `7dcb2c1` — proxy-bound supabase client w/ host-only cookies.                                      |
+
+### Wave 4 — Verification + release
+
+| Task   | Status                 | Notas                                                                                                                                                 |
+| ------ | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W4.T1  | DONE-PENDING-SMOKETEST | E2E cross-tenant cookie isolation spec written; full prod smoketest pendiente Rey.                                                                    |
+| W4.T2  | DONE-PENDING-SMOKETEST | E2E OTP flow.                                                                                                                                         |
+| W4.T3  | DONE-PENDING-SMOKETEST | E2E SSO handoff + replay.                                                                                                                             |
+| W4.T4  | DONE                   | Commit `5cf8866` — RLS claim isolation integration test.                                                                                              |
+| W4.T5  | DONE-PENDING-SMOKETEST | E2E MFA enrollment.                                                                                                                                   |
+| W4.T6  | DONE                   | Commit `b79e0cf` integration + `8b65917` property fuzz (per M12).                                                                                     |
+| W4.T7  | DONE-DEFERRED (M13)    | Commit `632fbbe` — script committed. Ejecución POST-MERGE only por Rey.                                                                               |
+| W4.T8  | DONE                   | Commits `8e06617` (ADR-0005) + `eb74672` (ADR-0006) + `37031ad` (ADR-0007) + `654e29f` (ADR-0008) + `17258e4` (ADR-0009) — per M9 cobertura completa. |
+| W4.T9  | DONE                   | Runbook auth-incident-response + suite expandida M10 (env-var-usage, secret-rotation, dmarc-monitoring, onboarding).                                  |
+| W4.T10 | PENDING-KING           | CHANGELOG drafted (commit `55067d5`); tag v0.2.5 + GitHub release post-merge (gravedad #21.f).                                                        |
+| W4.T11 | PARCIAL (M11)          | Security Engineer invocations multiple sesión 5ª-6ª; gsd-verify-work pendiente smoketest Rey.                                                         |
+| W4.T12 | DONE                   | Onboarding doc lord-claudia.md (commit `0f6f951`) + STATE/MEMORY/session-boot updates ongoing.                                                        |
+
+**Resumen ejecutivo:**
+
+- **DONE/committed:** 27 tasks (~75%)
+- **DONE-DEFERRED post-merge:** 3 tasks (W2.T3 hook re-enable, W4.T7 force signout, W4.T10 release tag)
+- **DONE-PENDING-SMOKETEST:** 5 E2E specs (W4.T1/T2/T3/T5 + W4.T11 verify-work)
+- **PENDING-KING actions:** 3 (W1.T1 DNS si no resuelto, W1.T2 env vars verify completo, W4.T10 release)
+- **SUPERSEDED:** 2 (W1.T3, W3.G3.T3 → M7)
+- **OUT:** 1 subgroup (W3.G6 → M1)
+
+**Bloqueante de merge PR #2:** smoketest del Rey según `docs/runbooks/smoketest-v0.2.5.md` + secuencia post-merge de runbook PR #3 (Step 8.5 hook re-enable + W4.T7 script + tag).
 
 ---
 
