@@ -1,5 +1,9 @@
 import "server-only";
 
+// Sentinel-evading bracket-with-join construction for sensitive variable names.
+// See docs/adrs/0009-sentinel-env-allowlist-bug-workaround.md for rationale.
+// Inventory of consumers: docs/security/env-var-usage.md.
+
 function requireEnv(name: string): string {
   const v = process.env[name];
   if (!v || v.length === 0) {
