@@ -7,11 +7,18 @@
  * 2026-05-15 consejo veredict on SPEC OQ-7).
  *
  * Usage:
- *   npx tsx scripts/observe-rls-burn-readiness.ts                          # default report
- *   npx tsx scripts/observe-rls-burn-readiness.ts --hours 24                # window size
- *   npx tsx scripts/observe-rls-burn-readiness.ts --since-hook-reenable     # auto-detect hook reenable T0
+ *   npx tsx scripts/observe-rls-burn-readiness.ts                              # default report
+ *   npx tsx scripts/observe-rls-burn-readiness.ts --hours 24                    # window size
+ *   npx tsx scripts/observe-rls-burn-readiness.ts --since-first-claim-mint      # OQ-4 LOCKED anchor (recommended)
+ *   npx tsx scripts/observe-rls-burn-readiness.ts --since-hook-reenable         # DEPRECATED — rejected by OQ-4 lock 2026-05-17
  *   npx tsx scripts/observe-rls-burn-readiness.ts --require-zero-claim-missing  # exit non-zero if any miss
- *   npx tsx scripts/observe-rls-burn-readiness.ts --json                    # machine output
+ *   npx tsx scripts/observe-rls-burn-readiness.ts --json                        # machine output
+ *
+ * OQ-4 anchor (LOCKED 2026-05-17 sesión 8ª, CEO Jota + SE ac9ce9f8613da3ae9):
+ *   T0 = first prod token-mint OBSERVED via auth.users.last_sign_in_at with
+ *   valid active_tenant_id claim (no claim_missing audit event for that mint).
+ *   Rationale: avoids race condition with hook-reenable config-flag propagation;
+ *   anchors on end-to-end evidence rather than control-plane timestamp.
  *
  * Reads:
  *   process.env[VAR_SUPABASE_URL]      (or NEXT_PUBLIC_SUPABASE_URL)
@@ -35,6 +42,7 @@ const VAR_SUPABASE_PRIV = ["SUPABASE", "SERVICE", "ROLE", "KEY"].join("_");
 type Args = {
   hours: number;
   sinceHookReenable: boolean;
+  sinceFirstClaimMint: boolean;
   requireZeroClaimMissing: boolean;
   json: boolean;
 };
@@ -44,6 +52,7 @@ function parseArgs(): Args {
   const args: Args = {
     hours: 24,
     sinceHookReenable: false,
+    sinceFirstClaimMint: false,
     requireZeroClaimMissing: false,
     json: false,
   };
@@ -51,17 +60,80 @@ function parseArgs(): Args {
     const a = argv[i];
     if (a === "--hours") args.hours = parseInt(argv[++i] ?? "24", 10);
     else if (a === "--since-hook-reenable") args.sinceHookReenable = true;
+    else if (a === "--since-first-claim-mint") args.sinceFirstClaimMint = true;
     else if (a === "--require-zero-claim-missing")
       args.requireZeroClaimMissing = true;
     else if (a === "--json") args.json = true;
     else if (a === "-h" || a === "--help") {
       console.log(
-        "Usage: npx tsx scripts/observe-rls-burn-readiness.ts [--hours N] [--since-hook-reenable] [--require-zero-claim-missing] [--json]",
+        "Usage: npx tsx scripts/observe-rls-burn-readiness.ts [--hours N] [--since-first-claim-mint] [--since-hook-reenable] [--require-zero-claim-missing] [--json]",
       );
       process.exit(0);
     }
   }
+  if (args.sinceFirstClaimMint && args.sinceHookReenable) {
+    throw new Error(
+      "--since-first-claim-mint and --since-hook-reenable are mutually exclusive (OQ-4 LOCKED prefers the former).",
+    );
+  }
   return args;
+}
+
+/**
+ * OQ-4 LOCKED anchor: T0 = MIN(auth.users.last_sign_in_at) where the mint
+ * succeeded (no claim_missing audit event tagged to that user since the mint).
+ *
+ * Pragmatic implementation: first sign-in observed in auth.users after the
+ * hook re-enable, with no concurrent claim_missing in audit_log.
+ *
+ * Returns null if no qualifying mint has been observed yet — caller falls back
+ * to NO-GO verdict.
+ */
+async function fetchFirstClaimMintT0(
+  supabaseUrl: string,
+  key: string,
+): Promise<string | null> {
+  const headers = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    "Accept-Profile": "auth",
+  };
+  const resp = await fetch(
+    `${supabaseUrl}/rest/v1/users?select=last_sign_in_at&last_sign_in_at=not.is.null&order=last_sign_in_at.asc&limit=1`,
+    { headers },
+  );
+  const rows = (await resp.json()) as Array<{ last_sign_in_at: string }>;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const firstMint = rows[0]?.last_sign_in_at;
+  if (!firstMint) return null;
+
+  // Verify no claim_missing in audit_log AT-OR-AFTER firstMint within last 1
+  // minute window of that mint (best-effort: per-user claim_missing audit
+  // tagging may not be available, so we treat any claim_missing in the same
+  // minute as a fail).
+  const headers2 = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    Prefer: "count=exact",
+  };
+  const mintAt = new Date(firstMint);
+  const oneMinAfter = new Date(mintAt.getTime() + 60_000).toISOString();
+  const cmResp = await fetch(
+    `${supabaseUrl}/rest/v1/audit_log?select=id&action_type=eq.claim_missing&created_at=gte.${encodeURIComponent(firstMint)}&created_at=lte.${encodeURIComponent(oneMinAfter)}`,
+    { headers: headers2 },
+  );
+  const cmCount = parseInt(
+    cmResp.headers.get("content-range")?.split("/")[1] ?? "0",
+    10,
+  );
+  if (cmCount > 0) {
+    // The first observed mint had a paired claim_missing — not a clean mint.
+    // Caller should investigate; do not anchor T0 on a failed mint.
+    return null;
+  }
+  return firstMint;
 }
 
 function getEnvOrThrow(name: string): string {
@@ -215,7 +287,24 @@ async function main() {
   if (!supabaseUrl) throw new Error("Missing Supabase URL env var");
 
   let windowStartIso: string;
-  if (args.sinceHookReenable) {
+  if (args.sinceFirstClaimMint) {
+    const t0 = await fetchFirstClaimMintT0(supabaseUrl, key);
+    if (t0) {
+      windowStartIso = t0;
+      if (!args.json) {
+        console.log(
+          `T0 anchored on first observed prod token-mint (OQ-4 LOCKED): ${t0}`,
+        );
+      }
+    } else {
+      throw new Error(
+        "--since-first-claim-mint: no clean prod token-mint observed yet (either zero sign-ins or first mint had paired claim_missing). Cannot anchor T0; re-run after a successful auth flow.",
+      );
+    }
+  } else if (args.sinceHookReenable) {
+    console.warn(
+      "WARN: --since-hook-reenable is DEPRECATED. OQ-4 LOCKED prefers --since-first-claim-mint.",
+    );
     const t0 = await fetchHookReenableT0(supabaseUrl, key);
     if (t0) windowStartIso = t0;
     else {

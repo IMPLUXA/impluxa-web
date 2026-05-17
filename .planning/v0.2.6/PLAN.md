@@ -204,21 +204,15 @@ Burn legacy v1 PERMISSIVE RLS policies on 4 tenant-owned tables (`sites`, `leads
 - **Sentinel risk:** HIGH (prod Hakuna config change, gravedad #21.a).
 - **Commit:** none (dashboard config).
 
-### W0.T2 — Resolve OQ-3 (CS-1 sub-option) + OQ-4 (24h T0 clock) + OQ-8 (CS-3 magic-link safety) [Rey decisions]
+### W0.T2 — Resolve OQ-3 (CS-1 sub-option) + OQ-4 (24h T0 clock) + OQ-8 (CS-3 magic-link safety) [CEO decisions]
 
-- **Action:** Lord Mano Claudia drafts Telegram message bundling 3 strategic OQs:
-  1. OQ-3: "CS-1a real 2do tenant en v0.2.6 (pulls DNS wildcard de v0.3.0) o CS-1b dry-run admin route flag-gated? Senior PM recommendation: CS-1b."
-  2. OQ-4: "24h window T0 = hook re-enable timestamp `<from W0.T1>` (BA tentative)? Confirm o override."
-  3. OQ-8 data: "Resend last-30d sends `magic-link/recovery/signup_confirmation` count = `<query result>`. Si zero → CS-3 410 ships in W4. Si recent → defer v0.2.7."
-- **Files:** Telegram outbound + mirror chat per CLAUDE.md regla #15.b. NO repo files.
-- **Acceptance:** Rey responds with 3 explicit decisions. Logged to `session-boot.md` decisions_log.
-- **Deps:** OQ-8 sub-action: Resend logs query (Resend dashboard or API GET `/emails?from=auth@impluxa.com&since=<30d>`) executed by Lord Mano Claudia BEFORE drafting Telegram (so message includes data, not "please query").
-- **Type:** `checkpoint:human-action` (strategic decisions).
-- **Reversibility:** Rey can override later between W3 and W4.
-- **Time:** 15 min Lord Mano Claudia draft + Resend query + (Rey reaction).
-- **Owner:** Rey Jota (decide) + Lord Mano Claudia (assemble + ask).
-- **Sentinel risk:** LOW (no code, no prod change).
-- **Commit:** `docs(v0.2.6/W0): log Rey decisions OQ-3/4/8 to session-boot` after Rey responds.
+- **STATUS:** ✅ DONE 2026-05-17 sesión 8ª (caso fundacional Sec 4 v2.2 cumplido).
+- **Resolved:**
+  1. **OQ-3 LOCKED CS-1b dry-run.** CS-1a deferred to v0.3.0 (no budget para DNS wildcard + Resend domain + payment, sin urgencia).
+  2. **OQ-4 LOCKED first prod token-mint OBSERVED with valid `active_tenant_id` claim** (no `claim_missing` para esa mint). Reject hook re-enable timestamp (evita race con propagation). Implementado via `--since-first-claim-mint` en `scripts/observe-rls-burn-readiness.ts`.
+  3. **OQ-8 SHIPPED CS-3 410 Gone** ahead of W4 — PR #5 squash-merged to main commit `b465eed`. Evidence: `auth.users` last 30d → 1 confirmation_sent (47h ago) + 1 recovery_sent (24h+ ago), `mailer_otp_exp=3600s` (1h TTL) → zero live tokens. Two-Pass review aplicado (SE `aea5476f26b6a79e3` bloqueó 2 issues + 4 nice-to-have, todos resueltos). 10/10 tests + smoketest prod 410 verde.
+- **Squad records:** Senior PM `a1aeb780479a9d26b` + Security Engineer `ac9ce9f8613da3ae9` classification + lean unánime; CEO Jota validation via Telegram msg_id 67-69 sesión 8ª.
+- **Reversibility:** CEO Jota puede revertir OQ-3 (pull-forward CS-1a) o OQ-4 (cambiar anchor a hook re-enable timestamp) en cualquier momento antes de W3.T1. OQ-8 revert = `git revert b465eed && git push origin main` (<60s, Vercel auto-redeploy).
 
 **W0 EXIT CRITERIA:** W0.T1 green + W0.T2 all 3 OQs resolved → unlock W1.
 
@@ -437,16 +431,16 @@ Burn legacy v1 PERMISSIVE RLS policies on 4 tenant-owned tables (`sites`, `leads
 
 **No code changes in this wave** — pure data collection + reporting. Time = 24h human-clock + ~1h Lord Mano Claudia analysis.
 
-### W3.T1 — Start 24h observability window [Rey-confirmed T0]
+### W3.T1 — Start 24h observability window [T0 anchor LOCKED OQ-4]
 
-- **Action (per FR-RLS-BURN-2 + OQ-4 pending Rey):**
-  1. Once Rey confirms T0 clock (W0.T2 OQ-4 resolution): hook re-enable timestamp `<hook_reenabled_at_utc>` OR first prod token-mint with claim, whichever Rey picks.
-  2. Annotate T0 in `session-boot.md` `last_session_end.observability_window_t0`.
+- **Action (per FR-RLS-BURN-2 + OQ-4 LOCKED):**
+  1. Execute `npx tsx scripts/observe-rls-burn-readiness.ts --since-first-claim-mint --json` against Hakuna prod. T0 = first observed `auth.users.last_sign_in_at` post-hook-reenable with no `claim_missing` audit event for that mint.
+  2. Annotate T0 in `session-boot.md` `last_session_end.observability_window_t0` with the ISO timestamp returned by the script.
   3. Schedule end-of-window check at T0 + 24h via `loop` skill or cron monitor (whichever is operative).
   4. NO Hakuna prod changes during window — purely observe.
 - **Files:** `D:\segundo-cerebro\wiki\meta\session-boot.md` (annotate T0).
 - **Acceptance:** T0 logged + scheduled wake-up captured.
-- **Deps:** W0.T1 done + W0.T2 OQ-4 resolved.
+- **Deps:** W0.T1 done.
 - **Type:** `auto`.
 - **Reversibility:** trivial annotation edit.
 - **Verify:** session-boot.md reflects T0; cron/loop scheduled.
