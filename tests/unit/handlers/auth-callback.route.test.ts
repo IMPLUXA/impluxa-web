@@ -1,32 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-// The route now uses `createServerClient` from `@supabase/ssr` DIRECTLY
-// (not the shared helper) so it can attach session cookies to the outgoing
-// NextResponse explicitly — see route.ts header comment for rationale.
-// Tests must mock the direct import, not `@/lib/supabase/server`.
-const { exchangeCodeMock, createServerClientMock } = vi.hoisted(() => ({
-  exchangeCodeMock: vi.fn().mockResolvedValue({ data: {}, error: null }),
-  createServerClientMock: vi.fn(),
-}));
+// CS-3 v0.2.6: route deprecated, returns 410 Gone with structured log.
+// No Supabase client construction; tests assert deprecation contract only.
 
-vi.mock("@supabase/ssr", () => ({
-  createServerClient: createServerClientMock,
-}));
+const handlers = await import("@/app/api/auth/callback/route");
 
-createServerClientMock.mockImplementation(() => ({
-  auth: { exchangeCodeForSession: exchangeCodeMock },
-}));
-
-// Stub env vars the route reads at module load / handler call.
-process.env.NEXT_PUBLIC_SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://test.supabase";
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "anon-key-test";
-
-const { GET } = await import("@/app/api/auth/callback/route");
-
-function makeRequest(code?: string, next?: string): NextRequest {
+function makeRequest(
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
+  code?: string,
+  next?: string,
+): NextRequest {
   const params = new URLSearchParams();
   if (code) params.set("code", code);
   if (next) params.set("next", next);
@@ -34,61 +18,100 @@ function makeRequest(code?: string, next?: string): NextRequest {
   const url = qs
     ? `http://localhost/api/auth/callback?${qs}`
     : "http://localhost/api/auth/callback";
-  return new NextRequest(url, { method: "GET" });
+  return new NextRequest(url, { method });
 }
 
-describe("GET /api/auth/callback", () => {
+describe("/api/auth/callback (deprecated, 410 Gone)", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
-    exchangeCodeMock.mockReset().mockResolvedValue({ data: {}, error: null });
-    createServerClientMock.mockClear();
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    warnSpy.mockClear();
   });
 
-  it("redirects to origin root after successful exchange (default `next`)", async () => {
-    const res = await GET(makeRequest("valid-code-123"));
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("http://localhost/");
+  it("responds 410 Gone on GET regardless of params", async () => {
+    const res = await handlers.GET(makeRequest("GET", "any-code", "/anywhere"));
+    expect(res.status).toBe(410);
   });
 
-  it("redirects to the `next` query param when provided", async () => {
-    const res = await GET(makeRequest("valid-code-123", "/app/dashboard"));
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("http://localhost/app/dashboard");
+  it("responds 410 Gone on GET when no params are provided", async () => {
+    const res = await handlers.GET(makeRequest());
+    expect(res.status).toBe(410);
   });
 
-  it("calls exchangeCodeForSession with the code from query param", async () => {
-    await GET(makeRequest("my-auth-code"));
-    expect(exchangeCodeMock).toHaveBeenCalledWith("my-auth-code");
+  it("responds 410 Gone on POST/PUT/PATCH/DELETE", async () => {
+    for (const method of ["POST", "PUT", "PATCH", "DELETE"] as const) {
+      const fn = handlers[method];
+      const res = await fn(makeRequest(method));
+      expect(res.status).toBe(410);
+    }
   });
 
-  it("redirects to /login?error=missing_code when no code param is present", async () => {
-    const res = await GET(makeRequest());
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe(
-      "http://localhost/login?error=missing_code",
-    );
+  it("returns JSON body with gone error code", async () => {
+    const res = await handlers.GET(makeRequest("GET", "x"));
+    const body = await res.json();
+    expect(body).toMatchObject({ error: "gone" });
+    expect(typeof body.message).toBe("string");
   });
 
-  it("does NOT call exchangeCodeForSession when code is absent", async () => {
-    await GET(makeRequest());
-    expect(exchangeCodeMock).not.toHaveBeenCalled();
+  it("sets content-type JSON, no-store cache and nosniff", async () => {
+    const res = await handlers.GET(makeRequest());
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
   });
 
-  it("redirects to /login?error=... when exchange returns an error", async () => {
-    exchangeCodeMock.mockResolvedValueOnce({
-      data: null,
-      error: { message: "invalid grant" },
+  it("logs deprecated_route_hit with method and query_keys but NOT values", async () => {
+    await handlers.GET(makeRequest("GET", "secret-code-xyz", "/p"));
+    const ourCalls = warnSpy.mock.calls.filter((call: unknown[]) => {
+      try {
+        return JSON.parse(call[0] as string).event === "deprecated_route_hit";
+      } catch {
+        return false;
+      }
     });
-    const res = await GET(makeRequest("bad-code"));
-    expect(res.status).toBe(307);
-    const location = res.headers.get("location") ?? "";
-    expect(location).toContain("/login?error=");
-    expect(location).toContain("invalid%20grant");
+    expect(ourCalls).toHaveLength(1);
+    const payload = JSON.parse(ourCalls[0][0] as string);
+    expect(payload.route).toBe("/api/auth/callback");
+    expect(payload.method).toBe("GET");
+    expect(payload.query_keys).toEqual(["code", "next"]);
+    expect(JSON.stringify(payload)).not.toContain("secret-code-xyz");
   });
 
-  it("does NOT leak auth code in redirect URL", async () => {
-    const res = await GET(makeRequest("secret-code"));
-    const location = res.headers.get("location") ?? "";
-    expect(location).not.toContain("secret-code");
-    expect(location).not.toContain("code=");
+  it("logs the method on non-GET hits", async () => {
+    await handlers.POST(makeRequest("POST"));
+    const ourCalls = warnSpy.mock.calls.filter((call: unknown[]) => {
+      try {
+        return JSON.parse(call[0] as string).event === "deprecated_route_hit";
+      } catch {
+        return false;
+      }
+    });
+    expect(ourCalls).toHaveLength(1);
+    expect(JSON.parse(ourCalls[0][0] as string).method).toBe("POST");
+  });
+
+  it("does NOT echo auth code in response body, headers, or log values", async () => {
+    const res = await handlers.GET(makeRequest("GET", "secret-code-xyz"));
+    const body = await res.text();
+    expect(body).not.toContain("secret-code-xyz");
+    const allHeaders = JSON.stringify(
+      Object.fromEntries(res.headers.entries()),
+    );
+    expect(allHeaders).not.toContain("secret-code-xyz");
+  });
+
+  it("response body does not leak internal version string", async () => {
+    const res = await handlers.GET(makeRequest());
+    const body = await res.text();
+    expect(body).not.toMatch(/v\d+\.\d+\.\d+/);
+  });
+
+  it("survives a console.warn that throws (logging never blocks the 410)", async () => {
+    warnSpy.mockImplementationOnce(() => {
+      throw new Error("log stream broken");
+    });
+    const res = await handlers.GET(makeRequest());
+    expect(res.status).toBe(410);
   });
 });
