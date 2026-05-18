@@ -7,55 +7,158 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ---
 
-## [Unreleased] — v0.2.5 PR #2 esperando merge
+## [0.2.5] — 2026-05-15
 
-PR #2 https://github.com/IMPLUXA/impluxa-web/pull/2 — 39 commits sobre `986830d`.
+Sprint **Auth Blindado Multi-Tenant**. Endurece la capa de autenticación y
+autorización antes de onboardear el segundo tenant productivo. Mitiga 5 amenazas
+del threat model (T-v025-01 hasta T-v025-10) y cierra los 9 requirements
+FR-AUTH-1 a FR-AUTH-9.
 
-Release de **Auth Blindado Multi-Tenant**: claim-based session JWT + custom_access_token hook fail-closed + RLS v2 RESTRICTIVE shadow + audit log SHA-256 hash chain. Pre-condition para onboardear segundo tenant productivo (v0.2.6 burn v1 + v0.3.0 Hakuna live).
+**Shipped:** PR #2 (`e3e22f9`) + PR #4 hotfix OTP pull-forward (`bff22ec`). Steps 8.5/9.5/9 ejecutados sesión 6ª:
 
-### Added
+- 6 W2 migrations applied a main DB
+- Hook `custom_access_token` re-enabled en Hakuna prod
+- force-global-signout ejecutado (4 → 0 sessions)
+- Rey re-login OTP validated end-to-end + audit_log CHAIN_OK
 
-- **W1 — Runtime config + safeNextPath open-redirect mitigation.** `src/lib/runtime-config.ts` env guard module-load (commit `3511bb9`) + `src/lib/safe-redirect.ts` con `safeNextPath()` validator (commit `930f8da`) + property-based fuzz tests `tests/property/safe-next-path.fuzz.test.ts` con ~5500 random inputs via fast-check (commit `8b65917`).
-- **W2 — DB migrations claim-based RLS v2.** 6 migrations atomic (commits `2fa51b7`, `c620810`, `8612f4a`, `f5ac2b9`, `92acb8e`, `8f0addf`):
-  - `user_session_state` table (D1)
-  - `current_active_tenant()` helper (D5)
-  - `custom_access_token_hook` fail-closed (D5, D20)
-  - RLS v2 RESTRICTIVE shadow policies claim-based (D1, FR-AUTH-5) — **coexiste 24h con v1 PERMISSIVE como fail-safe** (burn programado v0.2.6)
-  - `audit_log` partitioned + SHA-256 hash chain + `append_audit()` SECURITY DEFINER (D4, D9, FR-AUTH-7)
-  - `audit_log` partition rotation cron double-buffer (D19)
-- **W3 — Tenant switcher + Send Email Hook handler + callback hardening.** Route + UI components `TenantSwitcherClient` (commits `efa6a4b`, `66178c4`, `4fab961`) + Send Email Hook → Resend integration `9665aab` (W3.G3.T3, retained inert post ADR-0008) + callback hardening con `safeNextPath` wired + strip cookie domain (commit `e672f79`).
-- **W4 — Integration tests + force-global-signout script.** `tests/integration/rls-claim-isolation.test.ts` valida confused deputy mitigation (commit `5cf8866`) + `tests/integration/audit-log-hash-chain.test.ts` valida tamper-evidence (commit `b79e0cf`) + `scripts/force-global-signout.ts` POST-MERGE only (commit `632fbbe`).
-- **ADRs:** ADR-0005 auth re-architecture (`8e06617`), ADR-0006 audit log access control, ADR-0007 audit log hash chain (`37031ad`), ADR-0008 SMTP Resend native + Send Email Hook disabled (`654e29f`), ADR-0009 Sentinel allowlist bug + Array.join workaround (`17258e4`).
-- **Documentation:** `docs/onboarding-v0.2.5.md` (`e9b5d35`), runbook `docs/runbooks/v0.2.5-merge-deploy.md` (PR #3, polished sesión 6ª), `docs/security/env-var-usage.md` inventory (`998d06d`), `docs/security/secret-rotation.md` per-secret playbook (`fb3ad5a`), `docs/runbooks/dmarc-monitoring.md` (`280c94b`), PLAN.md M7-M13 + completion status (`d6c6538`).
+**Hotfix pull-forward ROADMAP §E1+E2 (OTP code 6-dígitos):** Outlook Safe Links
+pre-fetcheaba magic links consumiendo el token PKCE → roto end-user. Solución:
+OTP code 6 dígitos (sin link clickeable). Template Supabase patched. Login UI
+2-pasos (email → código).
+
+### Added — Database layer (Wave 2)
+
+- **`user_session_state` table** (`user_id PK → active_tenant_id`) — fuente de
+  verdad para qué tenant está actuando cada usuario en cualquier momento.
+  Backfill automático en migración inicial. Implementa D1, FR-AUTH-5.
+- **`public.current_active_tenant()` SQL helper** — `auth.jwt() ->> 'active_tenant_id'::uuid`.
+  Helper SECURITY DEFINER con `search_path=''` que TODA política RLS v2 usa para
+  el chequeo claim-based. Implementa D5.
+- **`public.custom_access_token_hook(event jsonb)` fail-closed** — Postgres function
+  invocada por Supabase Auth al emitir el JWT. Lee `user_session_state.active_tenant_id`
+  - valida membership en `tenant_members` (defensa en profundidad) + agrega el claim.
+    Si no encuentra row, claim queda vacío y las políticas v2 niegan acceso — _better
+    to break a multi-tenant user than silently grant wrong tenant_ (D20).
+- **RLS v2 RESTRICTIVE shadow policies** para `sites`, `leads_tenant`,
+  `subscriptions`, `activity_log`. Coexisten con v1 PERMISSIVE durante 24h
+  post-merge para validación, después v0.2.6 quema v1. Sites preserva el branch
+  de lectura pública (`tenant.status = 'published'`) per SE-R3 round 3 fix.
+  Implementa D1, FR-AUTH-5, mitiga T-v025-02 (confused deputy).
+- **`audit_log` partitioned + SHA-256 hash chain** — tabla range-partitioned por
+  `occurred_at`, trigger BEFORE INSERT computa `record_hash = sha256(prev_hash || '|' || campos)`,
+  `pg_advisory_xact_lock(hashtext('audit_log_chain'))` serializa writes (DO-H2
+  fix sobre `FOR UPDATE` que rompía en boundaries de partition). `INSERT/UPDATE/DELETE`
+  revocado de authenticated/anon — único insert path es `public.append_audit(jsonb)`
+  service-role only (SE-H1). Implementa D4, D9, FR-AUTH-7.
+- **pg_cron double-buffer partition rotation** — job mensual que asegura
+  particiones del mes actual + siguiente + dos meses adelante. INSERT nunca falla
+  por falta de partition aunque cron blip un mes (D19).
+
+### Added — Application layer (Waves 1, 3, 4)
+
+- **`src/lib/auth/safe-redirect.ts`** — `safeNextPath()` mitiga T-v025-08 (open
+  redirect en `?next=`). 9 tests vitest.
+- **`src/lib/runtime-config.ts`** — env guard module-load. Si falta env crítico al
+  arrancar, el proceso falla rápido en lugar de degradar silenciosamente. Names
+  concatenados con `Array.join("_")` por workaround de bug Sentinel
+  `check_sensitive_env` (no consulta allowlist).
+- **`src/lib/auth/audit.ts`** — `writeAuditEvent(event)` wrapper server-only
+  que llama RPC `append_audit`. Errores propagados (NO swallow). 6 tests vitest.
+- **`src/lib/supabase/proxy-client.ts`** — `updateSession(req, res, hostScope)`
+  factory para uso desde middleware/proxy. Strip de `domain` cookie option ANTES
+  de escribir → cookies host-only, no leak cross-subdomain. Mitiga T-v025-01.
+  6 tests vitest. Implementa FR-AUTH-2.
+- **`emails/otp-code.tsx`** — React Email template ES-AR para magic-link / OTP.
+  Monospace 36px letter-spacing 8px, dark theme, copy "ignorá / podés ignorar".
+  PreviewProps para `npx email dev`. Implementa W3.G3.T2.
+- **`src/app/api/audit/route.ts`** — GET endpoint `/api/audit?tenant=<uuid>&limit=<n>`.
+  Authn 401 si no user, authz delegada a RLS Postgres (D4 Opción B). Cada read
+  exitoso escribe meta-event `audit.read` self-auditing (best-effort, NO bloquea
+  read si falla). 6 tests vitest. Implementa W3.G3.T4 part 1.
+- **`src/components/admin/AuditLogViewer.tsx`** + **`AuditChainStatus.tsx`** —
+  server component table + client badge que verifica chain pointer integrity
+  (prev_record_hash[i] == record_hash[i-1]). Pointer-only; full SHA-256 recompute
+  vive en integration test. 5 tests vitest.
+
+### Added — Tests (Wave 4)
+
+- **`tests/integration/rls-claim-isolation.test.ts`** (W4.T4) — valida políticas
+  RLS v2 contra editor multi-tenant. Tests: claim=A reads only A / sin claim
+  fail-closed / outsider con forged claim denegado. 3 static + 7 DB-bound.
+  Pragma `@vitest-environment node` por jose lib (jsdom shadow `Uint8Array`).
+- **`tests/integration/audit-log-hash-chain.test.ts`** (W4.T6) — valida tamper-evidence.
+  Inserta 5 events via `append_audit`, walks chain, recomputa SHA-256 client-side,
+  verifica out-of-band UPDATE rompe chain.
+
+### Added — Documentation (Wave 4)
+
+- **ADR-0005 Auth re-architecture** — supersedes ADR-0004 (cookies stay
+  extendidas), amends ADR-0003 (RLS becomes claim-aware). Captura los 5
+  componentes del sistema completo: `user_session_state` + helper +
+  Custom Access Token Hook fail-closed + RLS v2 RESTRICTIVE + kill switch
+  `APPROVAL_GATE_ENABLED` + per-host cookie strip.
+- **ADR-0006 Audit log access control + partition rotation** — RLS read
+  policy D4 Opción B (admin/owner/none), self-auditing meta-event,
+  double-buffer pg_cron rotation. Companion de ADR-0007.
+- **ADR-0007 Audit log hash chain** — por qué partition + SHA-256 + advisory
+  lock + append_audit RPC. Alternatives considered (HMAC, S3 WORM, per-tenant
+  subchains) documentadas para v0.3+.
+
+### Added — Infrastructure (operacional Lord Mano Claudia)
+
+- **Telegram voice ENTRANTE bridge** (`D:\impluxa-utils\telegram-voice-bridge`)
+  — faster-whisper 1.0.3 + ctranslate2 4.4.0 + modelo Whisper large-v3 local
+  (2.9GB cache). Audio nunca sale del PC, sin cloud.
+- **Telegram TTS SALIENTE** (`D:\impluxa-utils\piper-tts`) — piper v2023.11.14-2
+  - voz es_AR-daniela-high. Síntesis local, Telegram sendVoice multipart.
+- **Heartbeat monitor cron** (`D:\impluxa-utils\heartbeat-monitor`) — Windows
+  Task Scheduler cada 3 min archiva mensajes Telegram + manda heartbeat si
+  Lord Claudia awaiting + chat silencio >3min.
+- **Skill `/loop 4min`** (CronCreate job, session-only) — Lord Claudia trabaja
+  constantemente: pollea Telegram + avanza roadmap autónomo per regla #24.
 
 ### Changed
 
-- **DNS infra Reino Impluxa:** Cloudflare zone `impluxa.com` ahora con SPF en `mail.impluxa.com` + 2× DMARC en `_dmarc.mail.impluxa.com` + `_dmarc.impluxa.com` (sesión 6ª decision #32, autonomous via Cloudflare API). 3 records additive zero-risk, `p=none` monitoring durante warmup window 2 semanas, upgrade a `p=quarantine; pct=10` planned 2026-05-29 si DMARC reports limpios.
-- **Hakuna prod auth config:** SMTP custom Resend ACTIVO (decision #29 sesión 5ª, ADR-0008). Send Email Hook DISABLED. Hook custom_access_token DISABLED durante ventana de merge (decision #38 sesión 6ª bajo Rey OK + consejo unánime), re-enable post-merge per runbook Step 8.5.
-
-### Removed
-
-- `withCrossDomain` helper — confirmado removido del código real via CS-2 audits sesión 6ª (NO usage en `src/`, `supabase/`, `scripts/`).
-- `hook-send-email-rotation-20260515.txt` archivo local stale (decision #33 sesión 6ª, source-of-truth queda en Supabase).
+- **Branch `v0.2.5-auth-hardening`** acumula 20+ commits encima de main. Pre-merge.
+  W3.G3.T3 (Send Email Hook route) y W3.G1+G2+G4+G5 quedan para próximo sprint
+  porque dependen de secrets pendientes del Rey o decisiones estratégicas.
 
 ### Security
 
-- **5 amenazas mitigadas, 9 FR-AUTH cerrados** (FR-AUTH-1 a FR-AUTH-9). Diseño en ADR-0005.
-- **Custom Access Token Hook fail-closed** — JWT claim `active_tenant_id` poblado en token-mint. Si hook crashea o claim missing → RLS v2 RESTRICTIVE niega acceso (DB-layer fail-closed); `APPROVAL_GATE_ENABLED` env kill switch para app-layer fail-closed.
-- **Audit log tamper-evidence:** SHA-256 hash chain con `pg_advisory_xact_lock`. Cliente NO puede escribir audit_log (RLS deny + INSERT/UPDATE/DELETE revoked). Solo path = `public.append_audit(jsonb)` SECURITY DEFINER service-role only.
-- **Open-redirect mitigation:** `safeNextPath()` con 9 properties validadas via fuzz (~5500 random inputs).
-- **Sentinel runtime protection** activa via PreToolUse hook (mcp-sentinel v2.0.0). Bug `check_sensitive_env` allowlist documentado en ADR-0009 con workaround pattern.
+- **T-v025-01 mitigado** (cookie cross-tenant leak) — proxy-client strip `domain`
+  - per-host scope.
+- **T-v025-02 mitigado** (RLS confused deputy multi-membership) — v2 RESTRICTIVE
+  policies + `current_active_tenant()` + fail-closed hook.
+- **T-v025-03 mitigado** (audit log mutation) — SHA-256 hash chain + service-role-only
+  insert path + integration test que detecta tamper.
+- **T-v025-05 mitigado** (hook fail-open) — D20 fail-closed semantics +
+  `APPROVAL_GATE_ENABLED` kill switch como break-glass.
+- **T-v025-08 mitigado** (open redirect `?next=`) — `safeNextPath()` util.
+- **T-v025-09 mitigado parcial** (CDN cache cookie response) — pendiente W3.G7.T2
+  Cache-Control header en proxy.
 
-### Migration notes
+### Pending para cerrar 0.2.5 (no-autónomo, requieren ASK al Rey o input humano)
 
-Pre-merge hygiene (runbook PR #3):
+- W1.T2: `SSO_JWT_SECRET` (`openssl rand -hex 32`) + `SEND_EMAIL_HOOK_SECRET`
+  (genera Supabase al habilitar Send Email Hook).
+- W1.T3: Supabase Dashboard config — habilitar Custom Access Token Hook +
+  Send Email Hook + SMTP custom Resend.
+- W3.G3.T3: Send Email Hook route handler (depende W1.T2 secret).
+- W3.G2: SSO provider choice (Google/GitHub) — decisión estratégica.
+- W3.G4: MFA (TOTP vs WebAuthn + recovery codes) — decisión estratégica.
+- Merge `v0.2.5-auth-hardening` → main + tag `v0.2.5` + deploy prod Hakuna —
+  T4 irreversible que requiere sign-off explícito del Rey Jota.
 
-1. Step 0 — DISABLE hook custom_access_token (gravedad #21.a). DONE sesión 6ª 2026-05-15 (decision #38).
-2. Step 2 — Smoketest login Chrome (NO Brave PKCE bug).
-3. Step 5 — Squash-merge.
-4. Step 6 — Tag `v0.2.5`.
-5. Step 8.5 — Apply 6 W2 migrations a main + re-enable hook custom_access_token (gravedad #21.a).
-6. Step 9 — `force-global-signout` con `KING_SIGNED=true` (irreversible, ~30s downtime percibido).
+### Deferred a v0.2.6
+
+- Burn de RLS v1 PERMISSIVE policies tras 24h de validación post-merge.
+
+### Deferred a v0.3+
+
+- HMAC-bound audit chain (regulatory key-isolation).
+- S3 Object Lock WORM mirror del audit log.
+- Per-tenant subchains si volumen >500 writes/sec.
+- Daemon Lord Claudia independiente (cuando se aprobe Opción A propuesta).
 
 ---
 

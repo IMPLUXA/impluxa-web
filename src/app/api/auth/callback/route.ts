@@ -1,53 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 
 /**
- * Auth callback for magic link / OAuth flows.
+ * Deprecated auth callback — returns 410 Gone (CS-3 v0.2.6).
  *
- * IMPORTANT: in Route Handlers, cookies() from next/headers is read-only and
- * `cookieStore.set()` does NOT persist to the outgoing response. The session
- * cookies set by Supabase via exchangeCodeForSession() must be attached to
- * the NextResponse explicitly.
+ * The login flow migrated to OTP code verification (signInWithOtp + verifyOtp
+ * type:"email") in v0.2.5. The magic-link email template sends a 6-digit code
+ * via {{ .Token }} rather than a ConfirmationURL pointing here. Confirmation,
+ * recovery, email-change and invite emails still embed {{ .ConfirmationURL }}
+ * which can land on this path via Supabase redirect_to, but mailer_otp_exp is
+ * 3600s (1h) so cached tokens are dead within the hour.
  *
- * The previous implementation used the shared getSupabaseServerClient() which
- * relies on cookies() and silently swallows the write error in a try/catch.
- * Result: exchange succeeded server-side, but the browser never received the
- * session cookie -> the user landed back on /login.
+ * One release of 410 + structured logging gives visibility into residual
+ * legacy traffic before hard removal.
+ *
+ * TODO(v0.2.7): remove this route entirely per ROADMAP §E4.
  */
-export async function GET(req: NextRequest) {
-  const { searchParams, origin } = req.nextUrl;
-  const code = searchParams.get("code");
-  const next = searchParams.get("next") || "/";
 
-  if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=missing_code`);
+export const runtime = "nodejs";
+
+function handle(req: NextRequest, method: string): NextResponse {
+  try {
+    console.warn(
+      JSON.stringify({
+        event: "deprecated_route_hit",
+        route: "/api/auth/callback",
+        method,
+        ts: new Date().toISOString(),
+        query_keys: Array.from(req.nextUrl.searchParams.keys()),
+        ua: req.headers.get("user-agent") ?? null,
+      }),
+    );
+  } catch {
+    // Never let logging failure prevent the 410 response.
   }
 
-  const response = NextResponse.redirect(`${origin}${next}`);
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  return new NextResponse(
+    JSON.stringify({
+      error: "gone",
+      message: "This endpoint is deprecated. Use the OTP code flow at /login.",
+    }),
     {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(toSet) {
-          toSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
-        },
+      status: 410,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
       },
     },
   );
+}
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error.message)}`,
-    );
-  }
-
-  return response;
+export function GET(req: NextRequest) {
+  return handle(req, "GET");
+}
+export function POST(req: NextRequest) {
+  return handle(req, "POST");
+}
+export function PUT(req: NextRequest) {
+  return handle(req, "PUT");
+}
+export function DELETE(req: NextRequest) {
+  return handle(req, "DELETE");
+}
+export function PATCH(req: NextRequest) {
+  return handle(req, "PATCH");
 }
