@@ -61,9 +61,40 @@ export interface AuditEvent {
  *
  * @throws when `action` is empty or when Supabase returns an error.
  */
+/**
+ * Tenant-claim actions covered by the audit_dedup PK gate. Kept in sync
+ * with the `audit_dedup_action_chk` CHECK constraint
+ * (migration 20260518_v026_001_audit_dedup.sql L25) and the
+ * `TenantClaimAction` discriminated union above.
+ */
+const TENANT_CLAIM_ACTIONS = new Set<string>([
+  "claim_missing",
+  "active_tenant_null",
+]);
+
 export async function writeAuditEvent(event: AuditEvent): Promise<void> {
   if (!event?.action) {
     throw new Error("audit_log write failed: action is required");
+  }
+
+  // B-COLD-1 (s13 Two-Pass cold round): when a tenant-claim action is
+  // emitted without `jwt_jti`, the audit_dedup gate silently falls back
+  // to the legacy write-every-time path. The fallback is semantically
+  // correct (dedup is best-effort), but the resulting audit_log noise
+  // corrupts the RLS burn-gate verdict (false `claim_missing > 0`).
+  // Log warn for operational visibility; integration tests (s14) assert.
+  if (
+    TENANT_CLAIM_ACTIONS.has(event.action) &&
+    (!event.jwt_jti || event.jwt_jti.length === 0)
+  ) {
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        event: "audit_dedup_bypass_missing_jti",
+        action: event.action,
+        actor_user_id: event.actor_user_id,
+      }),
+    );
   }
 
   const supabase = getSupabaseServiceClient();

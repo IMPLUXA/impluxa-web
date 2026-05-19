@@ -34,6 +34,16 @@ vi.mock("@/lib/supabase/service", () => ({
   getSupabaseServiceClient: vi.fn(() => ({ rpc: rpcMock })),
 }));
 
+// ── runtime-config mock (kill switch — ADR-0005 §5 break-glass) ───────────────
+// `isApprovalGateBypassed` returns module-load-frozen `env.APPROVAL_GATE_ENABLED === "0"`
+// in prod. We expose a vi.fn so tests can flip the bypass per-case without
+// remounting the module.
+const isApprovalGateBypassedMock = vi.fn(() => false);
+vi.mock("@/lib/runtime-config", () => ({
+  env: {},
+  isApprovalGateBypassed: isApprovalGateBypassedMock,
+}));
+
 const { requireActiveTenantOrRedirect, requireActiveTenantOrResponse } =
   await import("@/lib/auth/guard");
 
@@ -85,6 +95,8 @@ function resetAllMocks() {
   getUserMock.mockReset();
   getSessionMock.mockReset();
   rpcMock.mockReset();
+  isApprovalGateBypassedMock.mockReset();
+  isApprovalGateBypassedMock.mockReturnValue(false);
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -350,6 +362,79 @@ describe("requireActiveTenantOrResponse (W1.T1 paso 5)", () => {
     expect(JSON.stringify(result.response.body)).not.toContain(
       USER_CLAIM_MISSING.email,
     );
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Group D — APPROVAL_GATE_ENABLED kill switch (ADR-0005 §5, B-H3 + B-COLD-5)
+// ════════════════════════════════════════════════════════════════════════════════
+describe("kill switch bypass (APPROVAL_GATE_ENABLED=0)", () => {
+  beforeEach(resetAllMocks);
+
+  // D1 — page entrypoint bypass: returns sentinel tenant + emits forensic audit
+  it("D1: requireActiveTenantOrRedirect bypassed → returns {tenantId:'__bypass__'} + emits 'approval_gate_bypassed' with entrypoint:'page'", async () => {
+    isApprovalGateBypassedMock.mockReturnValue(true);
+    getUserMock.mockResolvedValueOnce({ data: { user: USER_CLAIM_MISSING } });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { access_token: TOKEN_WITH_JTI } },
+    });
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+
+    const result = await requireActiveTenantOrRedirect();
+
+    expect(result).toEqual({
+      user: USER_CLAIM_MISSING,
+      tenantId: "__bypass__",
+    });
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(rpcMock).toHaveBeenCalledWith("append_audit", {
+      p_event: {
+        action: "approval_gate_bypassed",
+        jwt_jti: TEST_JTI,
+        actor_user_id: USER_CLAIM_MISSING.id,
+        metadata: { entrypoint: "page" },
+      },
+    });
+  });
+
+  // D2 — api entrypoint bypass: returns ok:true + sentinel tenant + emits forensic audit
+  it("D2: requireActiveTenantOrResponse bypassed → returns {ok:true,tenantId:'__bypass__'} + emits 'approval_gate_bypassed' with entrypoint:'api'", async () => {
+    isApprovalGateBypassedMock.mockReturnValue(true);
+    getUserMock.mockResolvedValueOnce({ data: { user: USER_CLAIM_MISSING } });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { access_token: TOKEN_WITH_JTI } },
+    });
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+
+    const result = await requireActiveTenantOrResponse();
+
+    expect(result).toEqual({
+      ok: true,
+      user: USER_CLAIM_MISSING,
+      tenantId: "__bypass__",
+    });
+    expect(nextResponseJsonMock).not.toHaveBeenCalled();
+    expect(rpcMock).toHaveBeenCalledWith("append_audit", {
+      p_event: {
+        action: "approval_gate_bypassed",
+        jwt_jti: TEST_JTI,
+        actor_user_id: USER_CLAIM_MISSING.id,
+        metadata: { entrypoint: "api" },
+      },
+    });
+  });
+
+  // D3 — unauthenticated user is still rejected before kill switch (api 401, page redirect /login)
+  it("D3: unauthenticated user → 401 even when kill switch engaged (api entrypoint)", async () => {
+    isApprovalGateBypassedMock.mockReturnValue(true);
+    getUserMock.mockResolvedValueOnce({ data: { user: null } });
+
+    const result = await requireActiveTenantOrResponse();
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected ok:false branch");
+    expect(result.response.status).toBe(401);
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 });
 

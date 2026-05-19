@@ -121,7 +121,7 @@ async function fetchFirstClaimMintT0(
   const mintAt = new Date(firstMint);
   const oneMinAfter = new Date(mintAt.getTime() + 60_000).toISOString();
   const cmResp = await fetch(
-    `${supabaseUrl}/rest/v1/audit_log?select=id&action_type=eq.claim_missing&created_at=gte.${encodeURIComponent(firstMint)}&created_at=lte.${encodeURIComponent(oneMinAfter)}`,
+    `${supabaseUrl}/rest/v1/audit_log?select=id&action=eq.claim_missing&occurred_at=gte.${encodeURIComponent(firstMint)}&occurred_at=lte.${encodeURIComponent(oneMinAfter)}`,
     { headers: headers2 },
   );
   const cmCount = parseInt(
@@ -187,7 +187,7 @@ async function fetchCounts(
 
   // 2. claim_missing audit events (instrumentation expected by v0.2.6)
   const claimMissingResp = await fetch(
-    `${supabaseUrl}/rest/v1/audit_log?select=id&action_type=eq.claim_missing&created_at=gt.${encodeURIComponent(windowStartIso)}`,
+    `${supabaseUrl}/rest/v1/audit_log?select=id&action=eq.claim_missing&occurred_at=gt.${encodeURIComponent(windowStartIso)}`,
     { headers },
   );
   const claimMissingHeader = claimMissingResp.headers.get("content-range");
@@ -195,17 +195,17 @@ async function fetchCounts(
 
   // 3. active_tenant_null events (proxy for hook misfire rate)
   const ntnResp = await fetch(
-    `${supabaseUrl}/rest/v1/audit_log?select=id&action_type=eq.active_tenant_null&created_at=gt.${encodeURIComponent(windowStartIso)}`,
+    `${supabaseUrl}/rest/v1/audit_log?select=id&action=eq.active_tenant_null&occurred_at=gt.${encodeURIComponent(windowStartIso)}`,
     { headers },
   );
   const ntnHeader = ntnResp.headers.get("content-range");
   const activeTenantNull = parseInt(ntnHeader?.split("/")[1] ?? "0", 10);
 
-  // Detect instrumentation gap: if action_type column or rows simply do not exist,
+  // Detect instrumentation gap: if action column or rows simply do not exist,
   // PostgREST returns 200 with count=0 (false negative). Best-effort heuristic:
   // also query for ANY row in audit_log within window. If zero AND tokenMints>0 → likely gap.
   const anyResp = await fetch(
-    `${supabaseUrl}/rest/v1/audit_log?select=id&created_at=gt.${encodeURIComponent(windowStartIso)}&limit=1`,
+    `${supabaseUrl}/rest/v1/audit_log?select=id&occurred_at=gt.${encodeURIComponent(windowStartIso)}&limit=1`,
     { headers },
   );
   const anyRow = (await anyResp.json()) as unknown[];

@@ -3,7 +3,54 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { decodeJwt } from "jose";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { isApprovalGateBypassed } from "@/lib/runtime-config";
 import { writeAuditEvent, type TenantClaimAction } from "./audit";
+
+/**
+ * Sentinel tenant ID returned when the kill switch (ADR-0005 §5,
+ * `APPROVAL_GATE_ENABLED=0`) is engaged. Downstream tenant-isolation
+ * queries WILL NOT match this value, so the bypass is fail-loud at the
+ * data layer even though the auth layer permits the request through.
+ * This is deliberate: the break-glass exists to unblock auth, NOT to
+ * grant data access. Operators who need data access during emergency
+ * must additionally disable RLS at the database layer.
+ */
+const APPROVAL_GATE_BYPASS_TENANT_ID = "__bypass__";
+
+/**
+ * Emits a forensic audit event whenever the kill switch fires. Uses the
+ * same RPC path as TenantClaimAction events but with a distinct `action`
+ * value so the dedup gate (PK on tenant-claim actions only) does NOT
+ * apply — every bypass is recorded. Failures are logged but swallowed
+ * because the bypass already implies we are in a degraded state.
+ */
+async function emitApprovalGateBypassAudit(
+  user: { id: string },
+  entrypoint: "page" | "api",
+  accessToken: string | undefined,
+): Promise<void> {
+  const jti = extractJti(accessToken);
+  try {
+    await writeAuditEvent({
+      action: "approval_gate_bypassed",
+      jwt_jti: jti,
+      actor_user_id: user.id,
+      metadata: { entrypoint },
+    });
+  } catch (err) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "audit_write_failed",
+        reason: "approval_gate_bypassed",
+        entrypoint,
+        user_id: user.id,
+        has_jti: jti !== undefined,
+        err: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  }
+}
 
 export async function requireUser() {
   const supabase = await getSupabaseServerClient();
@@ -123,6 +170,14 @@ export type RequireActiveTenantPageResult = {
  */
 export async function requireActiveTenantOrRedirect(): Promise<RequireActiveTenantPageResult> {
   const user = await requireUser();
+  if (isApprovalGateBypassed()) {
+    const supabase = await getSupabaseServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    await emitApprovalGateBypassAudit(user, "page", session?.access_token);
+    return { user, tenantId: APPROVAL_GATE_BYPASS_TENANT_ID };
+  }
   const result = readActiveTenantClaim(user);
   if (!result.ok) {
     const supabase = await getSupabaseServerClient();
@@ -160,6 +215,13 @@ export async function requireActiveTenantOrResponse(): Promise<RequireActiveTena
         { status: 401 },
       ),
     };
+  }
+  if (isApprovalGateBypassed()) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    await emitApprovalGateBypassAudit(user, "api", session?.access_token);
+    return { ok: true, user, tenantId: APPROVAL_GATE_BYPASS_TENANT_ID };
   }
   const result = readActiveTenantClaim(user);
   if (!result.ok) {
