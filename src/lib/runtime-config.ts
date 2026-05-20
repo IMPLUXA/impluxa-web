@@ -15,11 +15,17 @@ function requireEnv(name: string): string {
   return v;
 }
 
+function readOptEnv(name: string): string | undefined {
+  const v = process.env[name];
+  return v && v.length > 0 ? v : undefined;
+}
+
 const VAR_SUPABASE_PRIV = ["SUPABASE", "SERVICE", "ROLE", "KEY"].join("_");
 const VAR_SSO_JWT = ["SSO", "JWT", "SECRET"].join("_");
 const VAR_EMAIL_HOOK = ["SEND", "EMAIL", "HOOK", "SECRET"].join("_");
 const VAR_RESEND = ["RESEND", "API", "KEY"].join("_");
 const VAR_UPSTASH_TOK = ["UPSTASH", "REDIS", "REST", "TOKEN"].join("_");
+const VAR_APPROVAL_GATE = ["APPROVAL", "GATE", "ENABLED"].join("_");
 
 export const env = {
   SUPABASE_URL: requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
@@ -34,4 +40,17 @@ export const env = {
   RESEND_KEY: requireEnv(VAR_RESEND),
   UPSTASH_REDIS_REST_URL: requireEnv("UPSTASH_REDIS_REST_URL"),
   UPSTASH_REDIS_TOK: requireEnv(VAR_UPSTASH_TOK),
+  // Optional kill switch (ADR-0005 §5). When exactly "0" the claim-isolation
+  // gate is bypassed at the app layer. Any other value (or unset) → gate
+  // enforced. Module-load read freezes the value; restart required to flip.
+  APPROVAL_GATE_ENABLED: readOptEnv(VAR_APPROVAL_GATE),
 };
+
+/**
+ * Kill switch helper. Returns true when ADR-0005 §5 break-glass is engaged
+ * (env var exactly "0"). Read once at module load via `env.APPROVAL_GATE_ENABLED`.
+ * Both guard entrypoints MUST call this before claim validation.
+ */
+export function isApprovalGateBypassed(): boolean {
+  return env.APPROVAL_GATE_ENABLED === "0";
+}

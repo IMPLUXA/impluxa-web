@@ -20,12 +20,13 @@ This directory tracks meaningful architectural decisions for Impluxa. We use [MA
 
 ## Index
 
-| ID                                            | Title                                      | Status   | Date       | Topic         |
-| --------------------------------------------- | ------------------------------------------ | -------- | ---------- | ------------- |
-| [ADR-0001](./0001-host-based-routing.md)      | Host-based routing via middleware rewrites | Accepted | 2026-05-11 | Routing       |
-| [ADR-0002](./0002-template-module-pattern.md) | Template module pattern with Zod schemas   | Accepted | 2026-05-11 | Templates     |
-| [ADR-0003](./0003-rls-split-policies.md)      | RLS split policies + `is_admin()` helper   | Accepted | 2026-05-11 | Security / DB |
-| [ADR-0004](./0004-supabase-ssr-cookies.md)    | `@supabase/ssr` cookie-based session       | Accepted | 2026-05-11 | Auth          |
+| ID                                                                               | Title                                                                               | Status   | Date       | Topic                         |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------- | ---------- | ----------------------------- |
+| [ADR-0001](./0001-host-based-routing.md)                                         | Host-based routing via middleware rewrites                                          | Accepted | 2026-05-11 | Routing                       |
+| [ADR-0002](./0002-template-module-pattern.md)                                    | Template module pattern with Zod schemas                                            | Accepted | 2026-05-11 | Templates                     |
+| [ADR-0003](./0003-rls-split-policies.md)                                         | RLS split policies + `is_admin()` helper                                            | Accepted | 2026-05-11 | Security / DB                 |
+| [ADR-0004](./0004-supabase-ssr-cookies.md)                                       | `@supabase/ssr` cookie-based session                                                | Accepted | 2026-05-11 | Auth                          |
+| [ADR-0010](./0010-cut-b-truncado-deferred-consumers-and-migration-discipline.md) | Cut B-truncado deferred consumers, security-freeze invariants, migration discipline | Accepted | 2026-05-19 | v0.2.6 / Migration / Security |
 
 ## Writing a new ADR
 

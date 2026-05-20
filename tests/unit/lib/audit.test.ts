@@ -81,4 +81,45 @@ describe("writeAuditEvent (W3.G3.T1, FR-AUTH-7)", () => {
     const result = await writeAuditEvent({ action: "auth.logout" });
     expect(result).toBeUndefined();
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // W1.T1 paso 5 — jwt_jti field (audit_dedup gate, migration 20260518_v026_001)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  it("D1: jwt_jti is forwarded inside p_event payload when present", async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+    const event: AuditEvent = {
+      action: "claim_missing",
+      jwt_jti: "jti-test-abc-123",
+      actor_user_id: "00000000-0000-0000-0000-000000000001",
+    };
+
+    await writeAuditEvent(event);
+
+    expect(rpcMock).toHaveBeenCalledOnce();
+    expect(rpcMock).toHaveBeenCalledWith("append_audit", { p_event: event });
+    const [, args] = rpcMock.mock.calls[0];
+    expect((args as { p_event: AuditEvent }).p_event.jwt_jti).toBe(
+      "jti-test-abc-123",
+    );
+  });
+
+  it("D2: jwt_jti key is omitted from p_event when caller passes undefined", async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+    const event: AuditEvent = {
+      action: "active_tenant_null",
+      jwt_jti: undefined,
+      actor_user_id: "00000000-0000-0000-0000-000000000002",
+    };
+
+    await writeAuditEvent(event);
+
+    expect(rpcMock).toHaveBeenCalledOnce();
+    const [, args] = rpcMock.mock.calls[0];
+    const payload = (args as { p_event: AuditEvent }).p_event;
+    // jwt_jti key may be present with undefined value, but never a real value
+    expect(payload.jwt_jti).toBeUndefined();
+    expect(payload.action).toBe("active_tenant_null");
+    expect(payload.actor_user_id).toBe("00000000-0000-0000-0000-000000000002");
+  });
 });

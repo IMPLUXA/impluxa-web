@@ -1,7 +1,7 @@
 name: CI
 on:
   push: { branches: [main] }
-  pull_request: { branches: [main] }
+  pull_request: { branches: [main, "feature/*"] }
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,7 +12,24 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npx tsc --noEmit
+      # DUMMIES — sync con src/lib/runtime-config.ts requireEnv list.
+      # CI build step usa placeholders for build-time env_guard satisfaction only.
+      # Cualquier step que invoque runtime (test E2E, lint con server eval) debe
+      # migrar a secrets reales primero (ver future docs/ci.md TBD post v0.2.6).
+      # Caso #8 light Squad veredicto: Opcion A placeholder dummies (Security
+      # aabc79bbf7f93aeb6 + DevOps ac6938c1879a0f237 unanimes s14).
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: CI_BUILD_DUMMY_DO_NOT_USE_anon_key
+          NEXT_PUBLIC_AUTH_HOST: auth.placeholder.local
+          NEXT_PUBLIC_APP_HOST: app.placeholder.local
+          NEXT_PUBLIC_ADMIN_HOST: admin.placeholder.local
+          NEXT_PUBLIC_TENANT_HOST_SUFFIX: .placeholder.local
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+          SUPABASE_SERVICE_ROLE_KEY: CI_BUILD_DUMMY_DO_NOT_USE_service_role
+          SSO_JWT_SECRET: CI_BUILD_DUMMY_DO_NOT_USE_sso_jwt_32chars_padding_ok_now
+          SEND_EMAIL_HOOK_SECRET: CI_BUILD_DUMMY_DO_NOT_USE_email_hook_v1whsec
+          RESEND_API_KEY: CI_BUILD_DUMMY_DO_NOT_USE_resend_re_api
+          UPSTASH_REDIS_REST_URL: https://placeholder.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: CI_BUILD_DUMMY_DO_NOT_USE_upstash_token

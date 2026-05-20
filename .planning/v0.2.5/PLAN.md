@@ -165,14 +165,14 @@ Legend: `DONE` = committed + verified | `DONE-DEFERRED` = código ready, ejecuci
 
 ### Wave 1 — Blocking infra
 
-| Task  | Status                 | Notas                                                                                                                                                                         |
-| ----- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| W1.T1 | PENDING-KING           | Cloudflare CNAME + Vercel domain alias — Lord Claudia tiene API key (no es human-action obligado per regla #12); ejecutar post-merge según runbook PR #3.                     |
-| W1.T2 | PENDING-KING (parcial) | Env vars seteados sesión 4ª-5ª (SSO*JWT_SECRET, SUPABASE*_, RESEND\__, UPSTASH\_\*); `BREAK_GLASS_ALLOWED_IPS` SUPERSEDED por M2; `SEND_EMAIL_HOOK_SECRET` SUPERSEDED por M7. |
-| W1.T3 | SUPERSEDED (M7)        | Send Email Hook disabled — SMTP custom Resend nativo. Custom Access Token Hook config: M8 trackea estado.                                                                     |
-| W1.T4 | DONE                   | Commit `273c8d5` — jose + react-email + standardwebhooks installed.                                                                                                           |
-| W1.T5 | DONE                   | Commits `930f8da` (safeNextPath + tests) + `3511bb9` (env-guard module-load) + `8b65917` (property fuzz). Per M6 archivo es `env-guard.ts`.                                   |
-| W1.T6 | DONE                   | Upstash namespacing verified sesión 4ª.                                                                                                                                       |
+| Task  | Status                 | Notas                                                                                                                                                                           |
+| ----- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W1.T1 | PENDING-KING           | Cloudflare CNAME + Vercel domain alias — Lord Claudia tiene API key (no es human-action obligado per regla #12); ejecutar post-merge según runbook PR #3.                       |
+| W1.T2 | PENDING-KING (parcial) | Env vars seteados sesión 4ª-5ª (SSO*JWT_SECRET, SUPABASE*\_, RESEND\_\_, UPSTASH\_\*); `BREAK_GLASS_ALLOWED_IPS` SUPERSEDED por M2; `SEND_EMAIL_HOOK_SECRET` SUPERSEDED por M7. |
+| W1.T3 | SUPERSEDED (M7)        | Send Email Hook disabled — SMTP custom Resend nativo. Custom Access Token Hook config: M8 trackea estado.                                                                       |
+| W1.T4 | DONE                   | Commit `273c8d5` — jose + react-email + standardwebhooks installed.                                                                                                             |
+| W1.T5 | DONE                   | Commits `930f8da` (safeNextPath + tests) + `3511bb9` (env-guard module-load) + `8b65917` (property fuzz). Per M6 archivo es `env-guard.ts`.                                     |
+| W1.T6 | DONE                   | Upstash namespacing verified sesión 4ª.                                                                                                                                         |
 
 ### Wave 2 — Sequential DB
 
