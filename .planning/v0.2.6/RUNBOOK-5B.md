@@ -47,9 +47,12 @@ join pg_index    ci  on ci.indexrelid = c.oid
 join pg_class    pt  on pt.oid = ci.indrelid
 where p.relkind = 'I'  -- partitioned index
   and p.relname in (
-    'audit_log_actor_idx',     -- adjust to actual parent index names
-    'audit_log_action_idx',
-    'audit_log_occurred_at_idx'
+    -- Actual parent index names per `20260514_v025_005_audit_log.sql`
+    -- + DBO-cold 5B.10 empirical verify on preview `llyexugyuwwdqfarumbj`.
+    -- Source authority: `W1.T1-5B-SPEC-PASS-2-DBO.md` §5 + cold 5B.10 §empirical.
+    'audit_log_acting_tenant_occurred_idx',
+    'audit_log_actor_user_occurred_idx',
+    'audit_log_pkey'
   )
 order by p.relname, pt.relname;
 ```
