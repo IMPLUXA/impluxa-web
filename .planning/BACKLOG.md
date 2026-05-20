@@ -114,6 +114,12 @@
 - **Tripwire 3 (this BACKLOG entry)**: present.
 - **Risk if defer slips**: medium operativo (cada chat auditoria nuevo gasta tiempo extra coordinando paths multiples). Cero impacto produccion.
 - **Nota agregada s15 post-cierre**: investigacion s15 (verificacion pre-cierre paths upload Claude.ai project) detecto **duplicado `D:\segundo-cerebro\CLAUDE.md` vs canonical `C:\Users\Pablo\CLAUDE.md`**. Origen desconocido (stale copy / viewer mirror / dual-write hook desactivado?). Authoritative es `C:\Users\Pablo\CLAUDE.md` (el que /boot Sec 0 carga). Resolver en T2 consolidacion s16: (a) `diff` ambos archivos byte-a-byte para ver si son identicos, (b) decidir si elimina el duplicado, reconcilia divergencias, o re-sincroniza, (c) evitar drift tipo Telegram s14 duplicado (canal vs file) — mismo patron familia "verdad duplicada en multiples ubicaciones". Logged tambien en MEMORY.md y observaciones-claudia-v22.md s15 si emerge como reincidencia.
+- **CEO direccion 2026-05-20 post-cierre s16**: dedicar **UNA SESION ESPECIFICA** al vocabulario + consolidacion archivos. **Objetivos:**
+  - **Consolidacion fisica**: todos los archivos canonicos en 1 solo directorio. Eliminar duplicado `D:\segundo-cerebro\CLAUDE.md` vs `C:\Users\Pablo\CLAUDE.md` (authoritative `/boot` Sec 0) + cualquier otro duplicado encontrado durante el sweep.
+  - **Migracion vocabulario completa segundo-cerebro**: grep masivo + reemplazo `Rey/Lord/Reino/Consejo → CEO/Claudia/Impluxa/Squad` en todos los archivos (notes, lessons, transcripts, topic files no tocados, lo que aparezca). Ya migrado: CLAUDE.md v2.2 + MEMORY.md s16 + topic file `feedback_vocabulario_convoco_consejo.md` s16. Pendiente: resto de `D:\segundo-cerebro\` (lessons, aprendizajes, hot.md, session-boot legacy entries, scripts, Task Scheduler names, `audit-decisions.ps1`, credentials filename, etc).
+  - **Scope-lock**: NO mezclar con trabajo v0.2.6 (5B.11 / 5B.12 / Logflare procurement / pg_cron enable Hakuna preview). Sesion separada con dedicacion exclusiva.
+  - **Squad real obligatorio**: Two-Pass extended T2+ politica vigente. Senior PM + Workflow Architect + posible Security Engineer cold (decision T2 destructiva sobre memory + segundo-cerebro fisico). Validar lesson-por-lesson + dry-run sweep antes de aplicar reemplazos masivos. Backup pre-cambio obligatorio.
+  - **Trigger sesion**: post-v0.2.6 o cuando CEO escriba arrancar la sesion dedicada. Lesson relacionada: `vocabulario-migracion-pendiente-2026-05-16`.
 
 ---
 
