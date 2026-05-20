@@ -88,8 +88,26 @@
 
 ---
 
+## post-v0.2.6 — `tests/unit/auth-guard.test.ts` local-dev environment gap
+
+- **Deferred from**: 5B.9 integration tests (sesion 15).
+- **Defer reason**: `tests/unit/auth-guard.test.ts` (pre-existing from commit `67f73fa`, before s15) imports `@/lib/auth/guard` directly without mocking `@/lib/runtime-config`. Because `runtime-config.ts` runs `requireEnv()` at module load for all required environment variables, loading the test file in a local dev environment without those vars set causes module-import failure: `[v0.2.5 env guard] Missing required env var: NEXT_PUBLIC_SUPABASE_URL`. CI passes because the s14 CI workflow has 13 placeholder env vars set in the build step (`b7ed8d6` fix CI commit). Pre-existing condition NOT caused by 5B.9 commit `8f74946`. Local-dev-only failure.
+- **Closure target**: post-v0.2.6, opportunistic. NOT a blocker for v0.2.6 ship or `hakuna_live` flip.
+- **Closure criterion**: `npx vitest run tests/unit/auth-guard.test.ts` passes locally without any environment pre-setup (clean `process.env`). Two acceptable approaches:
+  - (a) Mock `@/lib/runtime-config` at the top of the file using `vi.mock`, mirroring the pattern already used in `tests/unit/auth-guard-tenant.test.ts` (lines 37-45). Cleanest, no shared setup leak.
+  - (b) Add a vitest setup file (`vitest.setup.ts`) that pre-populates placeholder env vars for ALL test files. Wider blast radius, but fixes any future similar test file at once.
+- **Dossier**: lesson recorded in commit `8f74946` body. No dedicated dossier.
+- **Tripwire 1 (code TODO)**: not added (this is local-dev gap, not a production scope item). If a contributor opens `auth-guard.test.ts` in the future and reads this BACKLOG entry, they will find the closure path.
+- **Tripwire 2 (SPEC ref)**: not added (SPEC §10 covers production scope; this is dev tooling).
+- **Tripwire 3 (this BACKLOG entry)**: present.
+- **Tag**: `local-dev gap, fix opcional post-v0.2.6, mockear runtime-config o vitest setup file`.
+- **Risk if defer slips**: low. CI remains green; only affects local-dev iteration friction when running the full suite locally.
+
+---
+
 ## Change log
 
-| Session | Author                                                | Change                                                                                                                        |
-| ------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| s15     | Claudia + Squad caso #8 fresh + re-review fresh BA+SE | Initial BACKLOG. 4 entries: DB-H1, C-H2, post-v0.2.6 Sentinel `check_sensitive_env`, post-v0.2.6 partition rotation backfill. |
+| Session | Author                                                | Change                                                                                                                                                                          |
+| ------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| s15     | Claudia + Squad caso #8 fresh + re-review fresh BA+SE | Initial BACKLOG. 4 entries: DB-H1, C-H2, post-v0.2.6 Sentinel `check_sensitive_env`, post-v0.2.6 partition rotation backfill.                                                   |
+| s15     | Claudia (post 5B.9 tests run + CEO directive)         | Added 5th entry: `tests/unit/auth-guard.test.ts` local-dev environment gap (pre-existing, NOT caused by 5B.9 commit `8f74946`). Tag: `local-dev gap, fix opcional post-v0.2.6`. |
