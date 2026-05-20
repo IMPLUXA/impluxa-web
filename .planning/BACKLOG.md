@@ -88,6 +88,34 @@
 
 ---
 
+## [s16 inicio] Consolidar archivos del project Claude.ai en carpeta unica
+
+- **Deferred from**: s15 cierre (post-Sec 6 formal closure, NOT a session reopening — just T1 docs queue).
+- **Defer reason CEO**: para hacer mas rapido el upload de archivos al project Claude.ai cuando arranca nuevo chat de auditoria. Hoy estan distribuidos en distintos paths.
+- **Estado actual a auditar al ejecutar (s16)**:
+  - `D:\segundo-cerebro\meta\` ya contiene: `caso7-codes-prior-caso8.md`, `observaciones-auditor-externo.md`, `observaciones-claudia-v22.md`, `roadmap-audit-s13-post-cierre.md`.
+  - Path actual de: `CLAUDE.md`, `DETECTION_SIGNALS.md`, `MEMORY.md`, `session-boot.md`, `hot.md` (verificar paths reales s16 inicio antes de mover).
+- **Tarea** (orden estricto pre-merge):
+  1. Audit completo de paths actuales.
+  2. Lean carpeta destino: `D:\segundo-cerebro\meta\` (ya tiene 4 archivos).
+  3. Search-replace exhaustivo de referencias en `CLAUDE.md`, `session-boot.md`, `hot.md`, hooks `.claude/`, scripts.
+  4. Mover archivos a destino unico.
+  5. Validar con `/boot` test en chat de prueba.
+  6. Update git tracking si aplica (`meta/` actualmente untracked en repo segundo-cerebro — decidir si trackear post-consolidacion).
+- **Tipo**: T2 (no T1 trivial).
+- **Riesgo**: bajo si metodico, alto si apurado. NO hacer al final de sesion cansada.
+- **Estimate**: 30-60 min.
+- **Beneficio**: upload archivos al project Claude.ai mas rapido + mental model claro.
+- **Closure target**: s16 inicio (antes de arrancar 5B.11 ASK CEO mark PR #6 Ready, para que el chat de auditoria pueda subir archivos con paths actualizados).
+- **Closure criterion**: todos los archivos del project Claude.ai estan en `D:\segundo-cerebro\meta\` (o carpeta unica decidida) + cero referencias rotas en CLAUDE.md / session-boot.md / hot.md / hooks / scripts + `/boot` test pasa en chat de prueba.
+- **Dossier**: este entry. Sin dossier dedicado hasta ejecucion.
+- **Tripwire 1 (code TODO)**: NA (no es scope productivo).
+- **Tripwire 2 (SPEC ref)**: NA.
+- **Tripwire 3 (this BACKLOG entry)**: present.
+- **Risk if defer slips**: medium operativo (cada chat auditoria nuevo gasta tiempo extra coordinando paths multiples). Cero impacto produccion.
+
+---
+
 ## post-v0.2.6 — `tests/unit/auth-guard.test.ts` local-dev environment gap
 
 - **Deferred from**: 5B.9 integration tests (sesion 15).
