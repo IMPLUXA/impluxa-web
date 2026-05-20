@@ -436,6 +436,90 @@ describe("kill switch bypass (APPROVAL_GATE_ENABLED=0)", () => {
     expect(result.response.status).toBe(401);
     expect(rpcMock).not.toHaveBeenCalled();
   });
+
+  // D4 — bypass + audit RPC rejects (network/timeout) → guard STILL returns bypass result
+  // Enforces SPEC §10.3 I3 + I6 invariants (ADR-0010 D10.1): kill switch path remains
+  // functional even when audit emission fails. Without this test, a future refactor to
+  // rethrow audit failures from emitApprovalGateBypassAudit would silently break the
+  // break-glass ADR-0005 §5 commitment.
+  it("D4: bypass + audit RPC rejects (network error) → returns bypass result, console.error logged, NO rethrow (page entrypoint)", async () => {
+    isApprovalGateBypassedMock.mockReturnValue(true);
+    getUserMock.mockResolvedValueOnce({ data: { user: USER_CLAIM_MISSING } });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { access_token: TOKEN_WITH_JTI } },
+    });
+    rpcMock.mockRejectedValueOnce(new Error("ECONNRESET"));
+
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    // Guard MUST return bypass result, NOT rethrow
+    const result = await requireActiveTenantOrRedirect();
+    expect(result).toEqual({
+      user: USER_CLAIM_MISSING,
+      tenantId: "__bypass__",
+    });
+
+    // redirect NOT called (kill switch path bypasses normal flow)
+    expect(redirectMock).not.toHaveBeenCalled();
+
+    // Audit failure logged as structured JSON via emitApprovalGateBypassAudit catch block
+    expect(consoleErrorSpy).toHaveBeenCalledOnce();
+    const logged = consoleErrorSpy.mock.calls[0][0] as string;
+    const parsed = JSON.parse(logged);
+    expect(parsed).toMatchObject({
+      level: "error",
+      event: "audit_write_failed",
+      reason: "approval_gate_bypassed",
+      entrypoint: "page",
+      user_id: USER_CLAIM_MISSING.id,
+      has_jti: true,
+    });
+    expect(typeof parsed.err).toBe("string");
+    expect(parsed.err).toMatch(/ECONNRESET/);
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  // D5 — bypass + audit RPC returns error object → guard STILL returns bypass result (api entrypoint)
+  it("D5: bypass + audit RPC returns error object → returns bypass result, console.error logged, NO rethrow (api entrypoint)", async () => {
+    isApprovalGateBypassedMock.mockReturnValue(true);
+    getUserMock.mockResolvedValueOnce({ data: { user: USER_CLAIM_MISSING } });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { access_token: TOKEN_WITH_JTI } },
+    });
+    rpcMock.mockResolvedValueOnce({
+      data: null,
+      error: { message: "permission denied", code: "42501" },
+    });
+
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const result = await requireActiveTenantOrResponse();
+    expect(result).toEqual({
+      ok: true,
+      user: USER_CLAIM_MISSING,
+      tenantId: "__bypass__",
+    });
+    expect(nextResponseJsonMock).not.toHaveBeenCalled();
+
+    expect(consoleErrorSpy).toHaveBeenCalledOnce();
+    const parsed = JSON.parse(consoleErrorSpy.mock.calls[0][0] as string);
+    expect(parsed).toMatchObject({
+      level: "error",
+      event: "audit_write_failed",
+      reason: "approval_gate_bypassed",
+      entrypoint: "api",
+      user_id: USER_CLAIM_MISSING.id,
+      has_jti: true,
+    });
+    expect(parsed.err).toMatch(/permission denied/);
+
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 // ════════════════════════════════════════════════════════════════════════════════
