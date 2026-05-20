@@ -79,6 +79,16 @@ function parseArgs(): Args {
   return args;
 }
 
+// TODO(W1.T2): wire `public.app_config` consumer here.
+// DB-H1 deferred from W1.T1 5B.7 — see dossier
+// `D:\impluxa-web\.planning\v0.2.6\W1.T1-5B-SPEC-PASS-1-DBO.md` §1.1
+// and BACKLOG.md entry "DB-H1 app_config consumer".
+// W1.T2 will read `public.app_config.value->>'hook_reenable_ts'` as the
+// fallback anchor when `--since-hook-reenable` flag is used. Today the
+// script uses OQ-4 LOCKED anchor `--since-first-claim-mint` which does not
+// need app_config; the `--since-hook-reenable` branch is DEPRECATED (line
+// 13 above) but kept gated for emergency rollback to the timestamp-anchor.
+
 /**
  * OQ-4 LOCKED anchor: T0 = MIN(auth.users.last_sign_in_at) where the mint
  * succeeded (no claim_missing audit event tagged to that user since the mint).

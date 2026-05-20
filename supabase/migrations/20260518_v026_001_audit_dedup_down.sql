@@ -26,6 +26,15 @@ begin
 end $$;
 
 -- 2. Restore append_audit to the v0.2.5 original body (verbatim from 005_audit_log.sql:94-127).
+--
+-- Drop precedence required: PostgreSQL rejects `create or replace function ... returns void`
+-- when an existing function with the same name has a different return type (the up
+-- migration created `append_audit returns bigint`). Without the drop, this rollback fails
+-- with `ERROR 42P13: cannot change return type of existing function`. C-H1 fix
+-- (cold-round caso #8 fresh BA, sesion 15) — same pattern as lesson
+-- `patches-operacionales-emergentes-durante-apply` patch #2.
+drop function if exists public.append_audit(jsonb);
+
 create or replace function public.append_audit(p_event jsonb)
 returns void
 language plpgsql

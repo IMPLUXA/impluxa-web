@@ -77,12 +77,29 @@ export async function writeAuditEvent(event: AuditEvent): Promise<void> {
     throw new Error("audit_log write failed: action is required");
   }
 
-  // B-COLD-1 (s13 Two-Pass cold round): when a tenant-claim action is
-  // emitted without `jwt_jti`, the audit_dedup gate silently falls back
-  // to the legacy write-every-time path. The fallback is semantically
-  // correct (dedup is best-effort), but the resulting audit_log noise
-  // corrupts the RLS burn-gate verdict (false `claim_missing > 0`).
-  // Log warn for operational visibility; integration tests (s14) assert.
+  // TODO(W1.T2): close C-H2 deferred from W1.T1 5B.7 (sesion 15).
+  // The warn-only path below is the PRODUCER side of a producer-warn +
+  // consumer-collapse design. The CONSUMER side (the dedup-on-read
+  // collapse in `scripts/observe-rls-burn-readiness.ts`) ships in W1.T2.
+  // Closure test: `tests/integration/observe-rls-burn-readiness-jti-null-collapse.test.ts`
+  // with 4 named assertions (a/b/c/d) — see BACKLOG.md entry C-H2 and
+  // dossiers `W1.T1-5B-C-H2-REREVIEW-BA-FRESH.md` + `-SE-FRESH.md`.
+  // Severity: MED (NOT HIGH). Direction is fail-closed: noise inflates
+  // `claim_missing` count → gate already binary `> 0` → false NO-GO is
+  // SAFE direction (real gate is human Rey sign-off per SPEC.md:60).
+  // Re-review fresh BA `a874a47a54370a774` + SE `a7b8b19469251fd2f`
+  // converged DEFER-W1.T2 with explicit 4-tripwire.
+  //
+  // B-COLD-1 (s13 Two-Pass cold round, supersedes the original RESOLVED
+  // verdict per s15 cold-round + fresh re-review): when a tenant-claim
+  // action is emitted without `jwt_jti`, the audit_dedup gate silently
+  // falls back to the legacy write-every-time path. The fallback is
+  // semantically correct (dedup is best-effort), but the resulting
+  // audit_log noise inflates the `claim_missing` count surfaced by
+  // `observe-rls-burn-readiness.ts`. Per s15 re-review, this is
+  // fail-closed (false NO-GO, not exploitable false GO).
+  // Log warn for operational visibility; consumer-collapse + closure
+  // test ship in W1.T2 (see TODO above).
   if (
     TENANT_CLAIM_ACTIONS.has(event.action) &&
     (!event.jwt_jti || event.jwt_jti.length === 0)
