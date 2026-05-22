@@ -2,35 +2,35 @@ import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { writeAuditEvent } from "@/lib/auth/audit";
+import { requireActiveTenantOrResponse } from "@/lib/auth/guard";
 
 /**
  * GET /api/audit?tenant=<uuid>
  *
- * Read audit_log events for a tenant. Authorization is enforced by RLS at the
- * database level (policy `audit_log_select_owner`, D4 Opción B):
- *   - Platform admin reads all rows
- *   - Tenant owner reads only their tenant's rows
- *   - Nobody else reads anything (empty result, no 403)
+ * Read audit_log events for a tenant. Authorization is enforced in two layers:
+ *   1. Route layer (`requireActiveTenantOrResponse`): 401 unauthenticated,
+ *      403 authenticated-without-active-tenant-claim (emits dedup-gated
+ *      `claim_missing` / `active_tenant_null` audit event).
+ *   2. Database layer (RLS policy `audit_log_select_owner`, D4 Opción B):
+ *      - Platform admin reads all rows
+ *      - Tenant owner reads only their tenant's rows
+ *      - Nobody else reads anything (empty result)
  *
- * The route layer enforces only "is authenticated?" (401 otherwise) — the
- * tenant-scope check is delegated to Postgres RLS so a route bug cannot leak
- * cross-tenant data.
+ * Tenant-scope check is delegated to Postgres RLS so a route bug cannot leak
+ * cross-tenant data even if the guard is bypassed.
  *
  * After a successful read, a meta-audit event `audit.read` is written so that
  * audit log access itself is auditable. Failure of the meta-write does NOT
  * fail the read (audit outage must not deny user access).
  *
- * Implements W3.G3.T4 (FR-AUTH-7).
+ * Implements W3.G3.T4 (FR-AUTH-7) + W1.T2 (burn-readiness telemetry).
  */
 export async function GET(req: NextRequest) {
-  const supabase = await getSupabaseServerClient();
+  const guardResult = await requireActiveTenantOrResponse();
+  if (!guardResult.ok) return guardResult.response;
+  const { user } = guardResult;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const supabase = await getSupabaseServerClient();
 
   const tenantId = req.nextUrl.searchParams.get("tenant");
   if (!tenantId) {

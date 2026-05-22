@@ -1,16 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const { ssrAuthMock, ssrFromMock, writeAuditMock } = vi.hoisted(() => ({
-  ssrAuthMock: { getUser: vi.fn() },
+const { guardMock, ssrFromMock, writeAuditMock } = vi.hoisted(() => ({
+  guardMock: vi.fn(),
   ssrFromMock: vi.fn(),
   writeAuditMock: vi.fn(),
 }));
 
+// W1.T2: route now calls requireActiveTenantOrResponse() before any other
+// work. Mocking the guard avoids loading runtime-config (which fires
+// requireEnv at import time and breaks in local test envs without
+// NEXT_PUBLIC_SUPABASE_URL set).
+vi.mock("@/lib/auth/guard", () => ({
+  requireActiveTenantOrResponse: guardMock,
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
-  getSupabaseServerClient: vi
-    .fn()
-    .mockResolvedValue({ auth: ssrAuthMock, from: ssrFromMock }),
+  getSupabaseServerClient: vi.fn().mockResolvedValue({ from: ssrFromMock }),
 }));
 
 vi.mock("@/lib/auth/audit", () => ({
@@ -33,18 +39,33 @@ function mockSelect(rows: unknown[] = [], error: unknown = null) {
   return chain;
 }
 
+function mockGuardOk(userId: string = USER_X, tenantId: string = TENANT_A) {
+  guardMock.mockResolvedValue({
+    ok: true,
+    user: { id: userId },
+    tenantId,
+  });
+}
+
+function mockGuardReject(status: 401 | 403, code: "E_AUTH" | "E_TENANT_CLAIM") {
+  guardMock.mockResolvedValue({
+    ok: false,
+    response: NextResponse.json(
+      { error: status === 401 ? "unauthorized" : "forbidden", code },
+      { status },
+    ),
+  });
+}
+
 beforeEach(() => {
-  ssrAuthMock.getUser.mockReset();
+  guardMock.mockReset();
   ssrFromMock.mockReset();
   writeAuditMock.mockReset().mockResolvedValue(undefined);
 });
 
-describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B)", () => {
-  it("returns 401 when no authenticated user", async () => {
-    ssrAuthMock.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
-    });
+describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B + W1.T2)", () => {
+  it("returns 401 when guard rejects unauthenticated", async () => {
+    mockGuardReject(401, "E_AUTH");
     const req = new NextRequest(
       `http://app.impluxa.com/api/audit?tenant=${TENANT_A}`,
     );
@@ -53,11 +74,20 @@ describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B)", () => {
     expect(writeAuditMock).not.toHaveBeenCalled();
   });
 
+  it("returns 403 when guard rejects missing tenant claim (W1.T2)", async () => {
+    mockGuardReject(403, "E_TENANT_CLAIM");
+    const req = new NextRequest(
+      `http://app.impluxa.com/api/audit?tenant=${TENANT_A}`,
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.code).toBe("E_TENANT_CLAIM");
+    expect(writeAuditMock).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when ?tenant query param is missing", async () => {
-    ssrAuthMock.getUser.mockResolvedValue({
-      data: { user: { id: USER_X } },
-      error: null,
-    });
+    mockGuardOk();
     const req = new NextRequest("http://app.impluxa.com/api/audit");
     const res = await GET(req);
     expect(res.status).toBe(400);
@@ -65,10 +95,7 @@ describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B)", () => {
   });
 
   it("returns 200 with audit rows filtered by RLS for authed user", async () => {
-    ssrAuthMock.getUser.mockResolvedValue({
-      data: { user: { id: USER_X } },
-      error: null,
-    });
+    mockGuardOk();
     const rows = [
       {
         id: 1,
@@ -92,10 +119,7 @@ describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B)", () => {
   });
 
   it("calls writeAuditEvent with action=audit.read after returning rows", async () => {
-    ssrAuthMock.getUser.mockResolvedValue({
-      data: { user: { id: USER_X } },
-      error: null,
-    });
+    mockGuardOk();
     mockSelect([], null);
 
     const req = new NextRequest(
@@ -111,10 +135,7 @@ describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B)", () => {
   });
 
   it("returns 500 when audit_log query returns a Supabase error", async () => {
-    ssrAuthMock.getUser.mockResolvedValue({
-      data: { user: { id: USER_X } },
-      error: null,
-    });
+    mockGuardOk();
     mockSelect([], { message: "rls denied", code: "42501" });
 
     const req = new NextRequest(
@@ -125,10 +146,7 @@ describe("GET /api/audit (W3.G3.T4, FR-AUTH-7, D4 Opción B)", () => {
   });
 
   it("does NOT throw when meta-audit insert fails — primary read response is preserved", async () => {
-    ssrAuthMock.getUser.mockResolvedValue({
-      data: { user: { id: USER_X } },
-      error: null,
-    });
+    mockGuardOk();
     mockSelect([], null);
     writeAuditMock.mockRejectedValueOnce(new Error("downstream write fail"));
 

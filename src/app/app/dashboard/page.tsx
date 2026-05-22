@@ -1,11 +1,28 @@
-import { requireUser } from "@/lib/auth/guard";
+import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
 import { getCurrentTenant } from "@/lib/tenants/membership";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function Dashboard() {
-  const user = await requireUser();
-  const tenant = (await getCurrentTenant(user.id))!;
+  const { user, tenantId } = await requireActiveTenantOrRedirect();
+  const tenant = await getCurrentTenant(user.id);
+  // W1.T2 nit-MED fix: see layout.tsx for rationale. Drift = burn-gate
+  // corruption invisible. Defense-in-depth redirect fail-closed.
+  if (!tenant) redirect("/login?error=no_tenant");
+  if (tenant.id !== tenantId) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "tenant_claim_membership_drift",
+        scope: "dashboard_page",
+        user_id: user.id,
+        claim_tenant_id: tenantId,
+        membership_tenant_id: tenant.id,
+      }),
+    );
+    redirect("/login?e=e08_drift");
+  }
   const sb = getSupabaseServiceClient();
 
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString();

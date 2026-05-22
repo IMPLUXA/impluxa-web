@@ -80,6 +80,17 @@ type ActiveTenantClaimResult =
  * claim from `user_session_state` or first-membership fallback. Returns a
  * discriminated result describing which dedup-tracked condition fired
  * when the claim is unusable.
+ *
+ * W1.T2 B3 semantics (resolved 2026-05-22): `claim_missing` is emitted on
+ * the sad-path AFTER a successful JWT mint — the access token is
+ * cryptographically valid but the hook's claim assembly produced an
+ * undefined `active_tenant_id`. It does NOT cover the mint-crash case
+ * (hook PL/pgSQL exception → no JWT issued → no Next.js call-site
+ * reached). Mint-crash detection is out-of-scope for this guard and
+ * lives in Supabase Auth logs / Sentry.
+ *
+ * `active_tenant_null` is emitted when the claim is present but unusable
+ * (literal null, empty string, or non-string type).
  */
 function readActiveTenantClaim(user: AuthUser): ActiveTenantClaimResult {
   const claim = user.app_metadata?.active_tenant_id;
