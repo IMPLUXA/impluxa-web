@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth/guard";
+import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
 import { getCurrentTenant } from "@/lib/tenants/membership";
 import { Sidebar } from "@/components/app/Sidebar";
 import { redirect } from "next/navigation";
@@ -12,9 +12,29 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser();
+  const { user, tenantId } = await requireActiveTenantOrRedirect();
   const tenant = await getCurrentTenant(user.id);
   if (!tenant) redirect("/login?error=no_tenant");
+  // W1.T2 nit-MED fix: defense-in-depth against silent drift between the
+  // JWT `active_tenant_id` claim (authoritative per hook) and the tenant
+  // resolved by `getCurrentTenant(user.id)` (resolves via membership). A
+  // divergence here means burn-readiness gate corruption — the user would
+  // see one tenant while audit/RLS scope to another. Fail-closed redirect
+  // with structured log for ops triage. Error code `e08_drift` is opaque
+  // to the user to avoid leaking the discriminator.
+  if (tenant.id !== tenantId) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "tenant_claim_membership_drift",
+        scope: "app_layout",
+        user_id: user.id,
+        claim_tenant_id: tenantId,
+        membership_tenant_id: tenant.id,
+      }),
+    );
+    redirect("/login?e=e08_drift");
+  }
 
   return (
     <div className="bg-onyx text-bone flex min-h-screen">
