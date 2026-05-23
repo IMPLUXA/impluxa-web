@@ -75,7 +75,16 @@ Antes de cualquier rollback, verificar:
 | A.2  | Apply v026_003 down  | ~2s             | File `20260524_v026_003_audit_dedup_ttl_dynamic_down.sql` v2. Hace `CREATE OR REPLACE PROCEDURE` hardcoded 7d + `DROP FUNCTION _audit_dedup_gc_cutoff` + `DELETE FROM public.app_config WHERE key='audit_dedup_ttl_days'`. Selective DELETE preserva otras rows (WA Pass-2 cold H1 finding remediado v2).                                                                                                           |
 | A.3  | Verify post-rollback | ~5s             | Repetir queries §1.2 §1.3 §1.4. Esperado: cron schedule `'0 3 * * *'` (NO cambia, sólo rewrites el command implícito via v026_004_down), `_audit_dedup_gc_run` prokind='p' (procedure), `app_config` sin row `audit_dedup_ttl_days`, `_audit_dedup_gc_cutoff` no existe.                                                                                                                                            |
 
-**Tiempo total nivel A**: ~4-5s SQL puro + verify. Estimado wall-clock incluyendo confirmación CEO + MCP latency: **<60s**.
+**Tiempo total nivel A** (tech wall-clock SQL + MCP + verify, NO Sec 3 ASK CEO):
+
+- SQL puro `apply_migration` 4-5s
+- MCP latency 2 calls back-to-back 5-10s
+- Verify queries §1.2 + §1.3 + §1.4 post-rollback 5-10s
+- **Total tech wall-clock: 15-25s**.
+
+**Decision-to-execute wall-clock**: incluye Sec 3 ASK CEO formal (T4 gravedad alta — rollback prod). Response window CEO típico minutos a horas, NO segundos. Sin standing order CEO `"si Nivel A trigger, ejecutar sin re-ASK"` activado pre-incidente, el wall-clock total decision-to-execute es **variable + minutos**, NO los <60s del criterio Sec 2.c rollback timing.
+
+**Sec 2.c condición rollback <60s**: cumple SOLO si CEO emite standing order pre-incidente. Sin standing order, Sec 2.c <60s NO se cumple → Sec 2.d auto-disqualify confirmado (independiente del gap Two-Pass Review B4 ya documentado en Sec 2.d eligibility nivel A below).
 
 **Sec 2.d elegibilidad nivel A**: cumple <60s rollback timing. PERO Sec 2.d completa requiere Two-Pass Review sin hallazgos (B4 WA gap original) + sin Bug 2 re-introduced (down v026_004 lo introduce consciente) → Sec 2.d auto-disqualify igual → Sec 3 ASK CEO obligatorio.
 
