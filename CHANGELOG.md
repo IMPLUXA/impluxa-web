@@ -113,15 +113,15 @@ OTP code 6 dígitos (sin link clickeable). Template Supabase patched. Login UI
   - voz es_AR-daniela-high. Síntesis local, Telegram sendVoice multipart.
 - **Heartbeat monitor cron** (`D:\impluxa-utils\heartbeat-monitor`) — Windows
   Task Scheduler cada 3 min archiva mensajes Telegram + manda heartbeat si
-  Lord Claudia awaiting + chat silencio >3min.
-- **Skill `/loop 4min`** (CronCreate job, session-only) — Lord Claudia trabaja
+  Claudia CoS awaiting + chat silencio >3min.
+- **Skill `/loop 4min`** (CronCreate job, session-only) — Claudia CoS trabaja
   constantemente: pollea Telegram + avanza roadmap autónomo per regla #24.
 
 ### Changed
 
 - **Branch `v0.2.5-auth-hardening`** acumula 20+ commits encima de main. Pre-merge.
   W3.G3.T3 (Send Email Hook route) y W3.G1+G2+G4+G5 quedan para próximo sprint
-  porque dependen de secrets pendientes del Rey o decisiones estratégicas.
+  porque dependen de secrets pendientes del CEO o decisiones estratégicas.
 
 ### Security
 
@@ -137,7 +137,7 @@ OTP code 6 dígitos (sin link clickeable). Template Supabase patched. Login UI
 - **T-v025-09 mitigado parcial** (CDN cache cookie response) — pendiente W3.G7.T2
   Cache-Control header en proxy.
 
-### Pending para cerrar 0.2.5 (no-autónomo, requieren ASK al Rey o input humano)
+### Pending para cerrar 0.2.5 (no-autónomo, requieren ASK al CEO o input humano)
 
 - W1.T2: `SSO_JWT_SECRET` (`openssl rand -hex 32`) + `SEND_EMAIL_HOOK_SECRET`
   (genera Supabase al habilitar Send Email Hook).
@@ -147,7 +147,7 @@ OTP code 6 dígitos (sin link clickeable). Template Supabase patched. Login UI
 - W3.G2: SSO provider choice (Google/GitHub) — decisión estratégica.
 - W3.G4: MFA (TOTP vs WebAuthn + recovery codes) — decisión estratégica.
 - Merge `v0.2.5-auth-hardening` → main + tag `v0.2.5` + deploy prod Hakuna —
-  T4 irreversible que requiere sign-off explícito del Rey Jota.
+  T4 irreversible que requiere sign-off explícito del CEO Jota.
 
 ### Deferred a v0.2.6
 
@@ -158,7 +158,7 @@ OTP code 6 dígitos (sin link clickeable). Template Supabase patched. Login UI
 - HMAC-bound audit chain (regulatory key-isolation).
 - S3 Object Lock WORM mirror del audit log.
 - Per-tenant subchains si volumen >500 writes/sec.
-- Daemon Lord Claudia independiente (cuando se aprobe Opción A propuesta).
+- Daemon Claudia CoS independiente (cuando se aprobe Opción A propuesta).
 
 ---
 

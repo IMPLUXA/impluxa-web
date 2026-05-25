@@ -42,7 +42,7 @@
 ## C-H2 — `audit_dedup` bypass when JTI missing in tenant-claim action
 
 - **Deferred from**: W1.T1 5B.7 (Sub-paso 5.B, sesion 15) after Two-Pass extended caso #8 fresh + internal re-review fresh BA `a874a47a54370a774` + Security Engineer `a7b8b19469251fd2f`.
-- **Defer reason**: when a tenant-claim action payload has `jwt_jti` null (gotrue/SDK regression scenario S2 from SE threat model — only reachable scenario in prod), `audit.ts:86-98` emits a `console.warn` but does NOT short-circuit, so `append_audit` proceeds and the dedup gate at `20260518_v026_001_audit_dedup.sql:143` skips its `if` block (it requires non-null `v_jti`), inserting a fresh `audit_log` row per retry. Cold-round BA cold flagged this as HIGH "corrupts FR-RLS-BURN-2 readiness signal". Re-review fresh BA + SE concur it is MED (not HIGH): the gate at `observe-rls-burn-readiness.ts:249-254` is binary (`claim_missing > 0` → NO-GO), count inflation does NOT flip the verdict; SPEC.md:60 confirms the real gate is human Rey sign-off, not script auto-flip; direction of corruption is fail-closed (false NO-GO = safe direction, not exploitable false GO). All proposed FIX-AHORA mitigations are out of scope for Cut B (auth-boundary reject breaks T5 compat; fail-closed at audit.ts reverses fail direction to UNSAFE; synthetic dedup PK is schema change).
+- **Defer reason**: when a tenant-claim action payload has `jwt_jti` null (gotrue/SDK regression scenario S2 from SE threat model — only reachable scenario in prod), `audit.ts:86-98` emits a `console.warn` but does NOT short-circuit, so `append_audit` proceeds and the dedup gate at `20260518_v026_001_audit_dedup.sql:143` skips its `if` block (it requires non-null `v_jti`), inserting a fresh `audit_log` row per retry. Cold-round BA cold flagged this as HIGH "corrupts FR-RLS-BURN-2 readiness signal". Re-review fresh BA + SE concur it is MED (not HIGH): the gate at `observe-rls-burn-readiness.ts:249-254` is binary (`claim_missing > 0` → NO-GO), count inflation does NOT flip the verdict; SPEC.md:60 confirms the real gate is human CEO sign-off, not script auto-flip; direction of corruption is fail-closed (false NO-GO = safe direction, not exploitable false GO). All proposed FIX-AHORA mitigations are out of scope for Cut B (auth-boundary reject breaks T5 compat; fail-closed at audit.ts reverses fail direction to UNSAFE; synthetic dedup PK is schema change).
 - **Closure target**: W1.T2 audit_log writers phase (next milestone in v0.2.6) — the W1.T2 work introduces consumer-side collapse logic in `observe-rls-burn-readiness.ts` that makes this signal-hygiene control fully closed.
 - **Closure criterion**: integration test `tests/integration/observe-rls-burn-readiness-jti-null-collapse.test.ts` with these 4 named assertions (a/b/c/d):
   - (a) Given N retries with JTI-null tenant-claim action payloads, the script collapses to a single `claim_missing` row by `(actor_user_id, minute-bucket)` before counting against the gate.
@@ -478,6 +478,23 @@
 - **Tripwire 3 (this BACKLOG entry)**: present.
 - **Risk if defer slips**: bajo. 62 agents activos funcionando correctamente (descripciones STRONG, invocacion explicit subagent_type OK). Defer agents audit NO afecta operacion sesion Hakuna live. Solo gap auditoria visibility (no se sabe si hay overlap silencioso entre agent `Security Engineer` y skill `security-review` para test mental Claudia). Pre-Hakuna live aceptable defer; post-incidente puede subir prioridad si Claudia confunde agent vs skill en triage real.
 - **Lesson candidate vigilancia**: `catalog-mezcla-kinds-empirico-altera-audit-scope` (1era ocurrencia 2026-05-23 Fase 1.7 P3). Si 2 ocurrencias mas futuros catalog audits → codificar formal MEMORY.md.
+
+---
+
+## [W2.bis-B4-RESIDUAL] Vocab migration residual doc-only 58 actionable cross-repo
+
+- **Deferred from**: s19b P7+P8+P9 apply impluxa-web subset (2026-05-25). Scope finding pre-empirical-check P7.0 (5to uso lesson `pre-empirical-check-pre-mutation-generalizado`) detecto v5.1 consolidated scope cruza 3 repos: impluxa-web (62 actionable runtime-critical) + impluxa-utils (45 doc-only B2 READMEs) + segundo-cerebro/wiki/meta (13 doc-only B1 hot.md + heartbeat-monitor.md). Plan v2 asumio single-repo single-feature-branch — incorrect. CEO Opcion A: apply impluxa-web esta sesion (cierra 4/4 pre-flipeo Hakuna live blockers runtime-critical), defer 58 doc-only post-Hakuna-live.
+- **Defer reason**: B2 utils READMEs + B1 segundo-cerebro markdown son doc-only sin afectar runtime/build/Vercel/deploy. Blocker pre-flipeo Hakuna live era runtime-critical (codigo + runbooks + scripts), no doc-completeness. Aplicar runtime-critical primero respeta espiritu del blocker. Doc-only puede continuar post-Hakuna-live sin riesgo operacional.
+- **Closure target**: post-Hakuna-live, sesion dedicada vocab-residual o split en 2 sub-sesiones (utils + segundo-cerebro).
+- **Closure criterion**:
+  - B2 impluxa-utils: 4 README.md actualizados (45 actionable) en branch separate impluxa-utils repo + PR + merge. Grep verify post-merge: 0 active `Rey|Lord Claude|Reino|Consejo` outside KEEP zones en `D:/impluxa-utils/**/*.md`.
+  - B1 segundo-cerebro: 2 markdown actualizados (~13 actionable) en `D:/segundo-cerebro/wiki/meta/{hot.md,heartbeat-monitor.md}` commits direct knowledge base (no PR flow). Grep verify: 0 active outside KEEP.
+- **Dossier**: `D:/impluxa-web/.planning/vocab-migration/s19a-take2-p5b-CONSOLIDATED-v5.md` (entries B1 + B2 ya clasificadas v5.1).
+- **Tripwire 1 (code TODO)**: N/A (doc-only, no codigo).
+- **Tripwire 2 (SPEC ref)**: N/A.
+- **Tripwire 3 (this BACKLOG entry)**: present.
+- **Risk if defer slips**: bajo. Vocab nuevo (CEO/Claudia/Impluxa/Squad) ya prevalece runtime-critical impluxa-web. Doc-only inconsistency en utils/segundo-cerebro es cosmetic, no operational. NO bloquea Hakuna live flip.
+- **Lesson aplicada**: `pre-empirical-check-pre-mutation-generalizado` 5to uso consecutivo cross-sesion (saved 4-5h overshoot 3-repo apply + Squad blind-spot honest declarado).
 
 ---
 
