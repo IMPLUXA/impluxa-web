@@ -12,7 +12,7 @@
  * próximo request + redirect a /login. Magic-link nuevo → JWT con claim →
  * RLS v2 RESTRICTIVE permite acceso. ~30s downtime percibido por usuario.
  *
- * **NO CORRER SIN SIGN-OFF EXPLÍCITO DEL REY** (T4 irreversible sobre prod
+ * **NO CORRER SIN SIGN-OFF EXPLÍCITO DEL CEO** (T4 irreversible sobre prod
  * Hakuna live). El script requiere también KING_SIGNED=true en environment
  * como defense-in-depth, y la service-role key solo está cargada en Vercel
  * prod.
@@ -64,7 +64,7 @@ async function main(): Promise<number> {
       "ERROR: --confirm requiere KING_SIGNED=true en el environment.",
     );
     console.error(
-      "Esta es protección defense-in-depth — el Rey debe firmar explícito.",
+      "Esta es protección defense-in-depth — el CEO debe firmar explícito.",
     );
     return 1;
   }
@@ -143,7 +143,7 @@ async function main(): Promise<number> {
     "\nW4.T7 complete. Todos los usuarios re-loguean con JWT que carga active_tenant_id claim.",
   );
   console.log(
-    "Smoketest: Pablo (Rey Jota) debe ver session expired + recibir magic link al re-login.",
+    "Smoketest: Pablo (CEO Jota) debe ver session expired + recibir magic link al re-login.",
   );
   return 0;
 }

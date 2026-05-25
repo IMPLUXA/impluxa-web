@@ -86,7 +86,7 @@ export async function writeAuditEvent(event: AuditEvent): Promise<void> {
   // dossiers `W1.T1-5B-C-H2-REREVIEW-BA-FRESH.md` + `-SE-FRESH.md`.
   // Severity: MED (NOT HIGH). Direction is fail-closed: noise inflates
   // `claim_missing` count → gate already binary `> 0` → false NO-GO is
-  // SAFE direction (real gate is human Rey sign-off per SPEC.md:60).
+  // SAFE direction (real gate is human CEO sign-off per SPEC.md:60).
   // Re-review fresh BA `a874a47a54370a774` + SE `a7b8b19469251fd2f`
   // converged DEFER-W1.T2 with explicit 4-tripwire.
   //
