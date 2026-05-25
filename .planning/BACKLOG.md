@@ -498,6 +498,32 @@
 
 ---
 
+## [W2.bis-VERIFY-SCRIPTS-PIPESTATUS] Exit code bug pattern `cmd | tail $?` — verify scripts hygiene
+
+- **Deferred from**: s19b P8.2 build verify (2026-05-25). Bash script con `npm run build 2>&1 | tail -40 ; echo "BUILD_EXIT=$?"` captura exit code de `tail` (siempre 0) en lugar de `npm run build` (real exit code). Falsa señal "BUILD_EXIT=0" mientras build realmente fallaba con env-guard error. Cachado por Claudia honest-declaration pre-claim SHIPPED (no propagado regression silenciosa).
+- **Defer reason**: instancia UNICA observable. NO lesson formal aun (regla 3+ ocurrencias). Nota tracking para mejorar hygiene scripts futuros.
+- **Closure target**: cualquier sesion futura con verify scripts shell.
+- **Closure criterion**: verify scripts shell capture exit code via PIPESTATUS array (`${PIPESTATUS[0]}`) o variable explicit pre-pipe (`cmd; CODE=$?; echo "$CODE" | tail`) en lugar de `cmd | tail $?`. Patron aplicable a npm/tsc/curl/git verifies.
+- **Dossier**: N/A (1 line nota).
+- **Tripwire**: 3 ocurrencias futuras → codificar lesson formal `verify-scripts-exit-code-pipestatus`.
+- **Risk if defer slips**: bajo. Patron habit auto-correctible cuando Claudia detecta falsa señal verde mid-flow.
+
+---
+
+## [W2.bis-HOST-ROUTING-PREVIEW-BASELINE] Vercel preview hostnames vs custom domain 200/404 divergence — baseline-check obligatorio pre-claim regression
+
+- **Deferred from**: s19b P8.5 Vercel preview smoke (2026-05-25). Smoke GET / sobre preview URL `*.vercel.app` returns 404 Next.js not-found (host-routing pre-existing — preview hostnames NO matchean impluxa.com tenant routes). Custom domain `impluxa.com` returns 200 marketing landing. Falsa señal regression si solo comparas contra spec "200 + HTML" sin baseline-check pre-vocab preview previo.
+- **Defer reason**: instancia UNICA observable. NO lesson formal aun. Nota tracking para smoke tests futuros.
+- **Closure target**: cualquier sesion futura con Vercel preview smoke test.
+- **Closure criterion**: smoke tests Vercel preview deploys deben incluir baseline comparison contra preview pre-mutation (cualquier preview reciente d3c56e4 era baseline correct esta sesion). Diferenciar:
+  - "404 IDENTICO baseline = host-routing pre-existing, NO regression"
+  - "404 NEW post-mutation vs 200 baseline = regression real"
+- **Dossier**: N/A (1 line nota).
+- **Tripwire**: 3 ocurrencias futuras → codificar lesson formal `vercel-preview-baseline-check-pre-regression-claim` o agregar al detection signal `pre-empirical-check`.
+- **Risk if defer slips**: bajo. Patron auto-correctible cuando Claudia hace baseline check ANTES claim regression.
+
+---
+
 ## Change log
 
 | Session                                | Author                                                                                                                        | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
