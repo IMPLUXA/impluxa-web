@@ -34,7 +34,7 @@ Consumer files MUST import from `runtime-config`, not access the process environ
 | Resend API key (via `VAR_RESEND`)             | `RESEND_KEY`                     | `runtime-config.ts`, Resend client at `/api/auth/email-hook`                          |
 | `UPSTASH_REDIS_REST_URL`                      | `UPSTASH_REDIS_REST_URL`         | `runtime-config.ts`, rate-limit middleware                                            |
 | Upstash Redis token (via `VAR_UPSTASH_TOK`)   | `UPSTASH_REDIS_TOK`              | `runtime-config.ts`, rate-limit middleware                                            |
-| `KING_SIGNED`                                 | (read directly in script guards) | `scripts/force-global-signout.ts` line 62 — guard to require explicit Rey approval    |
+| `KING_SIGNED`                                 | (read directly in script guards) | `scripts/force-global-signout.ts` line 62 — guard to require explicit CEO approval    |
 | `SUPABASE_URL` (non-public fallback)          | (read directly)                  | `scripts/force-global-signout.ts` line 37 — coalesces with NEXT_PUBLIC_SUPABASE_URL   |
 
 ## Direct-access exceptions (NOT going through `runtime-config`)

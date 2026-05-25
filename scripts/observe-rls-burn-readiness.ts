@@ -4,7 +4,7 @@
  * Read-only telemetry script for the 24h observability window prior to v0.2.6
  * RLS burn migration apply (FR-RLS-BURN-2). Recommended by Backend Architect
  * agentId `ab0e469f56c0e28cc` over a canary endpoint approach (sesión 6ª
- * 2026-05-15 consejo veredict on SPEC OQ-7).
+ * 2026-05-15 Squad veredict on SPEC OQ-7).
  *
  * Usage:
  *   npx tsx scripts/observe-rls-burn-readiness.ts                              # default report
@@ -280,7 +280,7 @@ function reportText(
       "VERDICT: GO — readiness criteria met for v0.2.6 burn migration apply.",
     );
     lines.push(
-      "Next: Rey OK explicit (gravedad #21.a) → apply burn → 1h post-burn intensive monitoring.",
+      "Next: CEO OK explicit (gravedad #21.a) → apply burn → 1h post-burn intensive monitoring.",
     );
   } else {
     lines.push("VERDICT: NO-GO — readiness criteria NOT met:");

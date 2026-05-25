@@ -62,6 +62,19 @@ Impluxa is "Webflow + Shopify + Wix for LATAM pymes, but template-only and pesos
 | `<slug>.impluxa.com`             | `/_tenant/<slug>/*` (public tenant site) | None (RLS public read of published) |
 | `<custom-domain>`                | `/_tenant/<slug>/*` (post-PMF module)    | None                                |
 
+> **Subdomain prefix strip — gotcha smoke tests:** `app.impluxa.com/X` resolves
+> to filesystem `src/app/app/X/page.tsx` (via middleware rewrite). The URL the
+> user actually sees / curls is `/X`, NOT `/app/X`. Smoke tests in prod must
+> use the public URL, not the filesystem layout.
+>
+> Examples (W1.T2 SHIPPED 2026-05-22):
+>
+> - ✅ `curl https://app.impluxa.com/dashboard` → 307 → /login
+> - ❌ `curl https://app.impluxa.com/app/dashboard` → 404 (filesystem path leaked)
+>
+> Same pattern applies to `admin.impluxa.com` (strips `/admin` prefix in URLs)
+> and tenant subdomains (strip `/_tenant/<slug>` prefix).
+
 ## 6. Data model summary
 
 7 tables (all RLS-enabled):
