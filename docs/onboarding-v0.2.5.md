@@ -1,7 +1,7 @@
 # Onboarding — v0.2.5 Auth Blindado Multi-Tenant
 
 > Para: futuras Lord Mano Claudias que retomen este sprint, devs nuevos que se
-> sumen al Reino Impluxa, o auditorías técnicas externas.
+> sumen al Impluxa, o auditorías técnicas externas.
 > Última actualización: 2026-05-15 (branch `v0.2.5-auth-hardening` pre-merge).
 
 ## Qué es v0.2.5 en 3 frases
@@ -17,7 +17,7 @@ emisión del token falla cerrado si no encuentra estado válido.
 
 1. **Hakuna está vivo.** `impluxa.com/hakuna` es prod facturando. Cualquier
    acción T3-T4 (merge a main, push force, deploy, rotation de secrets) requiere
-   sign-off explícito del Rey Jota en el mismo turn. Hay un hook PreToolUse
+   sign-off explícito del CEO Jota en el mismo turn. Hay un hook PreToolUse
    (`branch-protection-main.sh`) que bloquea a nivel CLI sin `KING_SIGNED=true`.
 
 2. **Branch `v0.2.5-auth-hardening` está 18 commits encima de main (sesión 6ª 2026-05-15).**
@@ -109,17 +109,17 @@ npx vitest run tests/integration/
 
 ## Pendientes para cerrar v0.2.5 (no autónomos)
 
-| Pending                              | Owner        | Bloqueo                                         |
-| ------------------------------------ | ------------ | ----------------------------------------------- |
-| `SSO_JWT_SECRET`                     | Rey Jota     | `openssl rand -hex 32` + cargar a Vercel        |
-| `SEND_EMAIL_HOOK_SECRET`             | Rey Jota     | Lo genera Supabase al habilitar Send Email Hook |
-| Habilitar Custom Access Token Hook   | Rey Jota     | Supabase Dashboard → Auth → Hooks               |
-| Habilitar Send Email Hook            | Rey Jota     | Supabase Dashboard → Auth → Hooks               |
-| SMTP Resend configurado              | Rey Jota     | Supabase Dashboard → Auth → SMTP                |
-| W3.G3.T3 Send Email Hook route       | Lord Claudia | Bloqueado en `SEND_EMAIL_HOOK_SECRET`           |
-| W3.G2 SSO provider choice            | Rey Jota     | Decisión estratégica Google/GitHub/SAML         |
-| W3.G4 MFA TOTP vs WebAuthn           | Rey Jota     | Decisión estratégica + recovery codes UX        |
-| Merge a main + tag `v0.2.5` + deploy | Rey Jota     | T4 irreversible — sign-off explícito            |
+| Pending                              | Owner       | Bloqueo                                         |
+| ------------------------------------ | ----------- | ----------------------------------------------- |
+| `SSO_JWT_SECRET`                     | CEO Jota    | `openssl rand -hex 32` + cargar a Vercel        |
+| `SEND_EMAIL_HOOK_SECRET`             | CEO Jota    | Lo genera Supabase al habilitar Send Email Hook |
+| Habilitar Custom Access Token Hook   | CEO Jota    | Supabase Dashboard → Auth → Hooks               |
+| Habilitar Send Email Hook            | CEO Jota    | Supabase Dashboard → Auth → Hooks               |
+| SMTP Resend configurado              | CEO Jota    | Supabase Dashboard → Auth → SMTP                |
+| W3.G3.T3 Send Email Hook route       | Claudia CoS | Bloqueado en `SEND_EMAIL_HOOK_SECRET`           |
+| W3.G2 SSO provider choice            | CEO Jota    | Decisión estratégica Google/GitHub/SAML         |
+| W3.G4 MFA TOTP vs WebAuthn           | CEO Jota    | Decisión estratégica + recovery codes UX        |
+| Merge a main + tag `v0.2.5` + deploy | CEO Jota    | T4 irreversible — sign-off explícito            |
 
 ## Trabajo deferido a v0.2.6+
 
@@ -128,16 +128,16 @@ npx vitest run tests/integration/
 - HMAC-bound audit chain (regulatory key-isolation)
 - S3 Object Lock WORM mirror del audit log
 - Per-tenant subchains si volumen >500 writes/sec
-- Daemon Lord Claudia independiente (resuelve grieta sesión cerrada)
+- Daemon Claudia CoS independiente (resuelve grieta sesión cerrada)
 
 ## Reglas operativas de Lord Mano Claudia (CLAUDE.md highlights relevantes)
 
-- **#20** Próxima tarea técnica autónoma = Lord Claudia + consejo deciden, no preguntar al Rey
+- **#20** Próxima tarea técnica autónoma = Claudia CoS + Squad deciden, no preguntar al CEO
 - **#21** Autonomía total + Security Engineer guardrail obligado para T2+ con impacto
 - **#22** Autonomía contra silencio — 3min timeout + Telegram heartbeat + activación por TG
-- **#23** Naming oficial: Rey Jota + Lord Mano Claudia (femenino, voz Daniela TTS)
+- **#23** Naming oficial: CEO Jota + Claudia CoS (femenino, voz Daniela TTS)
 - **#24** Norte operacional: trabajar constantemente avanzando proyecto, idle = anomalía
-- **Santo Grial** (regla cardinal): ANTES de proponer cualquier solución al Rey → invocar consejo real + chequear arsenal de skills. Lord Claudia NUNCA decide sola.
+- **Santo Grial** (regla cardinal): ANTES de proponer cualquier solución al CEO → invocar Squad real + chequear arsenal de skills. Claudia CoS NUNCA decide sola.
 
 ## Convenios de commits del sprint
 
@@ -150,20 +150,20 @@ chore(v0.2.5/W1): <título>   # tooling, deps, infra
 refactor(v0.2.5/W3): <título># renombres, cleanups sin cambio funcional
 ```
 
-## Quién es quién del consejo del arsenal (top experts consultados en este sprint)
+## Quién es quién del Squad (top experts consultados en este sprint)
 
 | Experto                | Para qué se invocó                                                                                        |
 | ---------------------- | --------------------------------------------------------------------------------------------------------- |
 | **Workflow Architect** | Diseño `/loop`, prompt del tick, failure modes mapeados                                                   |
 | **Security Engineer**  | Sign-off T2+ (Whisper local, Piper TTS, heartbeat monitor, Computer Use settings, branch protection hook) |
-| **Senior PM**          | Roadmap autónomo ~20h, scope safe vs ASK al Rey                                                           |
+| **Senior PM**          | Roadmap autónomo ~20h, scope safe vs ASK al CEO                                                           |
 | **Backend Architect**  | Cookie scope hardening, PR auto-merge analysis                                                            |
 | **Database Optimizer** | DO-H2 advisory lock fix, partition strategy review                                                        |
 | **Compliance Auditor** | ADR-0006 audit access control (mencionado en planning)                                                    |
 
 ## Contacto y operación
 
-- **Telegram bot:** `@impluxa_consorte_bot` (chat_id Rey Jota = `6698732267`).
+- **Telegram bot:** `@impluxa_consorte_bot` (chat_id CEO Jota = `6698732267`).
 - **Comunicación bidireccional:** ver `memory/feedback_polling_telegram_entre_checkpoints.md`.
 - **Audio entrante:** `D:\impluxa-utils\telegram-voice-bridge\` (Whisper local).
 - **Audio saliente:** `D:\impluxa-utils\piper-tts\` (Piper local es_AR Daniela).

@@ -92,7 +92,7 @@ NEVER rotate without a reason. Reactive rotation creates rotation fatigue + wind
   1. Telegram @BotFather → `/revoke` → confirm bot → receive new token.
   2. Update `lord-claude.credentials` TELEGRAM_BOT_TOKEN entry.
   3. Smoketest: send test message to chat_id.
-  4. Update any Vercel env if bot is used from server-side (currently CLI only from Lord Claudia).
+  4. Update any Vercel env if bot is used from server-side (currently CLI only from Claudia CoS).
 - **Rollback:** BotFather supports revoke only — no rollback. New token is immediately active.
 - **Last rotation:** 2026-05-14 (1st rotation noted in credentials file comment).
 

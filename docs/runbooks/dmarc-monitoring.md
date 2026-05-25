@@ -25,7 +25,7 @@ Optional forensic reports (`ruf=`) arrive per-failure.
 **Setup REQUIRED before reports arrive useful:**
 
 1. Confirm `dmarc@impluxa.com` is a real mailbox or alias that forwards somewhere readable.
-2. If alias only — set up forward to a Rey-readable inbox (Gmail, Outlook personal).
+2. If alias only — set up forward to a CEO-readable inbox (Gmail, Outlook personal).
 3. If you want parsing — use a free DMARC analyzer (Postmark DMARC Digest, dmarcian, EasyDMARC free tier). Otherwise eyeball the XML.
 
 Status as of 2026-05-15: **mailbox status NOT VERIFIED** — TODO before cron schedule (below) becomes useful. If `dmarc@impluxa.com` does not exist as a deliverable mailbox, the reports get bounced and the data is lost.
@@ -39,7 +39,7 @@ Run `cron \LordClaudeDmarcReview` (TODO setup, parallel to `\LordClaudeHeartbeat
 # - IMAP login to dmarc@impluxa.com
 # - Pull XML attachments from past 7 days
 # - Parse: count of pass/fail by receiver
-# - Send summary to Rey via Telegram OR write to D:/segundo-cerebro/wiki/meta/dmarc-weekly-<date>.md
+# - Send summary to CEO via Telegram OR write to D:/segundo-cerebro/wiki/meta/dmarc-weekly-<date>.md
 ```
 
 Manual fallback if cron not yet set up: open inbox + skim XML manually.

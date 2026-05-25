@@ -16,7 +16,7 @@ Trigger ANY of:
 - Audit log `claim_missing` events spike (>5/hour from real users)
 - Magic link delivery fails for valid email (Outlook/Gmail/Yahoo all = bounce)
 - Session token leaked in error log, screenshot, or chat transcript
-- TOTP/MFA reset request from Rey or admin user
+- TOTP/MFA reset request from CEO or admin user
 - Suspected service-role key compromise
 - RLS regression (user reads cross-tenant data unexpectedly)
 - `Error running hook URI` returned to user on callback redirect
@@ -27,9 +27,9 @@ For unrelated incidents (DNS outage, build failure, payment processing): use `in
 
 | Severity       | Criteria                                                                                                        | Examples                                                                                                           | TTR target                             |
 | -------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| **AUTH-SEV-1** | Active cross-tenant data exposure OR all logins broken OR known credential leak in attacker hands               | RLS bug returning tenant B rows to tenant A user; mass `Error running hook URI`; service-role key in public commit | <30 min recovery, immediate Rey ASK    |
-| **AUTH-SEV-2** | Single user locked out OR magic link broken for some receivers OR suspected (not confirmed) credential exposure | Hakuna user can't log in; Outlook spam folder for magic links; secret in private gist                              | <2 hours, Rey notify, scheduled fix    |
-| **AUTH-SEV-3** | Cosmetic UX issue OR suspected scan/probe in audit log                                                          | "Session expired" message confusing; failed login from unknown IP single hit                                       | <24 hours, Rey notify in cierre report |
+| **AUTH-SEV-1** | Active cross-tenant data exposure OR all logins broken OR known credential leak in attacker hands               | RLS bug returning tenant B rows to tenant A user; mass `Error running hook URI`; service-role key in public commit | <30 min recovery, immediate CEO ASK    |
+| **AUTH-SEV-2** | Single user locked out OR magic link broken for some receivers OR suspected (not confirmed) credential exposure | Hakuna user can't log in; Outlook spam folder for magic links; secret in private gist                              | <2 hours, CEO notify, scheduled fix    |
+| **AUTH-SEV-3** | Cosmetic UX issue OR suspected scan/probe in audit log                                                          | "Session expired" message confusing; failed login from unknown IP single hit                                       | <24 hours, CEO notify in cierre report |
 
 ## AUTH-SEV-1 procedures
 
@@ -37,7 +37,7 @@ For unrelated incidents (DNS outage, build failure, payment processing): use `in
 
 **Symptom:** user reports seeing data not belonging to their tenant.
 
-1. **Immediate containment** (Lord Claudia executes WITHOUT Rey ASK — preventive, reversible):
+1. **Immediate containment** (Claudia CoS executes WITHOUT CEO ASK — preventive, reversible):
    - Set `APPROVAL_GATE_ENABLED=0` in Vercel via API. App-layer enforcement OFF, but RLS at DB layer continues protecting (fail-closed by design).
    - This blocks ALL writes from authenticated users (read-mostly mode). Acceptable for <30 min.
 2. **Forensic capture**:
@@ -48,7 +48,7 @@ For unrelated incidents (DNS outage, build failure, payment processing): use `in
    AND actor_user_id = '<reporting_user_uuid>'
    ORDER BY created_at DESC LIMIT 500;
    ```
-3. **Rey ASK** (gravedad #21.a) for next steps: rollback last migration / disable hook / etc.
+3. **CEO ASK** (gravedad #21.a) for next steps: rollback last migration / disable hook / etc.
 4. **Force global signout** (irreversible) ONLY if RLS bug confirmed AND fix not deployable in <60 min. Use `scripts/force-global-signout.ts --confirm` with `KING_SIGNED=true`.
 5. **Postmortem** within 24h: `D:\segundo-cerebro\wiki\incidents\<DATE>-<slug>.md`.
 
@@ -64,7 +64,7 @@ This is the exact failure mode of decision #38 sesión 6ª (hook custom_access_t
    # Check hook_custom_access_token_enabled + hook_custom_access_token_uri
    ```
 2. **If `hook_custom_access_token_enabled=true` AND function missing in main DB** (W2 migrations not applied):
-   - **DISABLE hook immediately** (Rey ASK gravedad #21.a, decision #38 pattern).
+   - **DISABLE hook immediately** (CEO ASK gravedad #21.a, decision #38 pattern).
    - Apply W2 migrations to main via `supabase db push`.
    - Re-enable hook + smoketest claims via `scripts/observe-rls-burn-readiness.ts`.
 3. **If function exists but crashes**: check `auth.audit_log_entries` for hook execution errors. Log to incident dir. Fix function + redeploy.
@@ -84,7 +84,7 @@ This is the exact failure mode of decision #38 sesión 6ª (hook custom_access_t
    AND actor_user_id IS NULL  -- service-role acts without actor
    ORDER BY created_at;
    ```
-5. **Postmortem** mandatory + report to Rey + LGPD/AAIP notification check.
+5. **Postmortem** mandatory + report to CEO + LGPD/AAIP notification check.
 
 ## AUTH-SEV-2 procedures
 
@@ -92,7 +92,7 @@ This is the exact failure mode of decision #38 sesión 6ª (hook custom_access_t
 
 1. Verify via Supabase Auth dashboard: user exists, email confirmed, not banned.
 2. Check `audit_log` for recent `claim_missing` events for that user. If yes → hook misfire, see 1B.
-3. Manual fix via SQL editor (Rey ASK gravedad #21.a, low-risk surgery):
+3. Manual fix via SQL editor (CEO ASK gravedad #21.a, low-risk surgery):
    ```sql
    UPDATE user_session_state
    SET active_tenant_id = (SELECT tenant_id FROM tenant_members
@@ -123,7 +123,7 @@ Standard operations: capture in audit_log, include in cierre report regla #16, n
 
 ## Recovery target table
 
-| Incident type                     | TTR target                | Reversible?                     | Requires Rey OK          |
+| Incident type                     | TTR target                | Reversible?                     | Requires CEO OK          |
 | --------------------------------- | ------------------------- | ------------------------------- | ------------------------ |
 | Cross-tenant exposure containment | <5 min                    | Yes (`APPROVAL_GATE_ENABLED=1`) | NO (preventive)          |
 | Hook disable + re-enable          | <5 min                    | Yes (snapshot rollback)         | YES (gravedad #21.a)     |
@@ -135,11 +135,11 @@ Standard operations: capture in audit_log, include in cierre report regla #16, n
 
 ## Anti-patterns
 
-- **Skip Rey ASK on prod auth changes.** Even "obvious" rollback to prior known-good state needs explicit Rey OK per regla #21.a.
+- **Skip CEO ASK on prod auth changes.** Even "obvious" rollback to prior known-good state needs explicit CEO OK per regla #21.a.
 - **Use `force-global-signout` for non-emergency.** It's irreversible UX impact. Reserve for SEV-1 only.
 - **Apply DB hotfix without snapshot capture.** Incident postmortem will lack evidence.
 - **Disable Sentinel during incident.** Sentinel is defense-in-depth; bypassing it during incident = stacking risks.
-- **Telegram secrets to Rey.** Even during incident. Use file paths + lengths + format prefixes per lesson `credenciales-en-transcript`.
+- **Telegram secrets to CEO.** Even during incident. Use file paths + lengths + format prefixes per lesson `credenciales-en-transcript`.
 - **Skip postmortem for "small" incident.** Pattern repeats. Document.
 
 ## Postmortem template

@@ -40,7 +40,7 @@ Trigger ANY of:
 
 **Procedure:**
 
-1. **Manual partition creation** (T2, requires Rey OK gravedad #21.a):
+1. **Manual partition creation** (T2, requires CEO OK gravedad #21.a):
 
    ```sql
    -- Replace YYYYMM with next month
@@ -71,7 +71,7 @@ Trigger ANY of:
 
 **Constraint:** audit_log is tamper-evident via SHA-256 hash chain. A `DELETE` would break chain validation for all subsequent rows.
 
-**Procedure (T4, requires Rey OK gravedad #21.a + legal sign-off):**
+**Procedure (T4, requires CEO OK gravedad #21.a + legal sign-off):**
 
 1. **Identify rows to redact** (NOT delete):
    ```sql
@@ -92,14 +92,14 @@ Trigger ANY of:
    WHERE actor_user_id = '<user_uuid>'
      AND occurred_at > now() - interval '7 years';  -- legal retention floor
    ```
-3. **Document redaction** in `D:\segundo-cerebro\wiki\incidents\<DATE>-gdpr-erasure-<short>.md` with: request date + legal basis + rows affected + Rey approval timestamp.
+3. **Document redaction** in `D:\segundo-cerebro\wiki\incidents\<DATE>-gdpr-erasure-<short>.md` with: request date + legal basis + rows affected + CEO approval timestamp.
 4. **Hash chain validation note:** integration test will FLAG redacted rows because `record_hash` was computed over original `metadata`. This is BY DESIGN — the chain remains valid for tamper-evidence (pre-redaction hash); the test's job is to detect changes, and a documented GDPR redaction IS a change. Add an exception list to test or accept the flag as informational.
 
 ### Scenario C — Detach + archive old partition
 
 **When:** partition older than retention window (e.g., 13 months for AAIP compliance) AND disk pressure on Supabase project.
 
-**Procedure (T2, requires Rey OK):**
+**Procedure (T2, requires CEO OK):**
 
 1. **Pre-flight forensic dump** (preserve evidence):
    ```bash
@@ -163,7 +163,7 @@ Trigger ANY of:
    sha256sum /archive/case-<id>.sql > /archive/case-<id>.sql.sha256
    # Sign chain-of-custody record + upload
    ```
-4. **Re-enable rotation** after legal release with explicit Rey OK.
+4. **Re-enable rotation** after legal release with explicit CEO OK.
 
 ## Anti-patterns
 
