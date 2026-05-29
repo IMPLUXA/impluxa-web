@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { StructureSchema } from "./structure";
 
 export const ServicioSchema = z.object({
   key: z.string(),
@@ -76,6 +77,10 @@ export const EventosDesignSchema = z.object({
     heading: z.string(),
     body: z.string(),
   }),
+  // Optional per-tenant structural tokens (card/grid/image; grows per phase).
+  // Absent -> resolveStructure() materializes the exact current class set
+  // (backward-compat by construction; hakunamatata renders identical).
+  structure: StructureSchema.optional(),
 });
 
 export const EventosMediaSchema = z.object({
