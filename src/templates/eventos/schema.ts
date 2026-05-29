@@ -33,6 +33,9 @@ export const ContactoSchema = z.object({
   phone: z.string(),
   whatsapp: z.string(),
   hours: z.array(z.string()),
+  // When false, the lead-capture form is not rendered and WhatsApp (wa.me)
+  // is the sole CTA. Defaults true so existing tenants are unaffected.
+  show_lead_form: z.boolean().default(true),
 });
 
 export const EventosContentSchema = z.object({
