@@ -97,6 +97,7 @@ export const defaultContent: EventosContent = {
     phone: "0294 15-460-3499",
     whatsapp: "+5492944603499",
     hours: ["11–13", "13:30–15:30", "16–18", "18:30–20:30", "21–23"],
+    show_lead_form: true,
   },
 };
 

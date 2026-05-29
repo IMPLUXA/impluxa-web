@@ -5,6 +5,12 @@ export const ServicioSchema = z.object({
   title: z.string(),
   description: z.string(),
   icon: z.string().optional(),
+  // Optional service card image (3:2). Consistent with logo_url/hero_image_url
+  // (plain string, allows relative /public paths). Absent for existing tenants.
+  image_url: z.string().optional(),
+  // Optional "desde" price in ARS. Mirrors ComboSchema.price_ars. Absent for
+  // existing tenants -> no price line rendered (backward-compatible).
+  price_ars: z.number().optional(),
 });
 
 export const ComboSchema = z.object({
@@ -33,6 +39,9 @@ export const ContactoSchema = z.object({
   phone: z.string(),
   whatsapp: z.string(),
   hours: z.array(z.string()),
+  // When false, the lead-capture form is not rendered and WhatsApp (wa.me)
+  // is the sole CTA. Defaults true so existing tenants are unaffected.
+  show_lead_form: z.boolean().default(true),
 });
 
 export const EventosContentSchema = z.object({
