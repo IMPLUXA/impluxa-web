@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { EventosContent, EventosDesign } from "../schema";
+import { resolveStructure } from "../structure";
 
 const arsPrice = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -14,6 +15,7 @@ export function Servicios({
   items: EventosContent["servicios"];
   design: EventosDesign;
 }) {
+  const sc = resolveStructure(design.structure);
   return (
     <section
       id="servicios"
@@ -31,32 +33,29 @@ export function Servicios({
       >
         Nuestros servicios
       </h2>
-      <ul
-        role="list"
-        className="mx-auto grid max-w-6xl list-none grid-cols-1 gap-6 p-0 md:grid-cols-2 lg:grid-cols-3"
-      >
+      <ul role="list" className={sc.serviciosGrid}>
         {items.map((s) => (
           <li key={s.key}>
             <article
               aria-labelledby={`servicio-${s.key}-title`}
-              className="h-full overflow-hidden rounded-2xl shadow-md"
+              className={sc.card}
               style={{
                 background: design.colors.secondary + "22",
                 color: design.colors.text,
               }}
             >
               {s.image_url && (
-                <div className="relative aspect-[3/2] w-full">
+                <div className={sc.imageWrapper}>
                   <Image
                     src={s.image_url}
                     alt={s.title}
                     fill
-                    className="object-cover"
+                    className={sc.imageFit}
                     sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                   />
                 </div>
               )}
-              <div className="p-6">
+              <div className={sc.cardPadding}>
                 <h3
                   id={`servicio-${s.key}-title`}
                   className="mb-2 text-xl font-semibold"
