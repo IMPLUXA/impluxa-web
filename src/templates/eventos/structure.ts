@@ -94,10 +94,38 @@ export const StructureSchema = z
         padding: z.enum(["0", "4", "6", "8", "10"]).default("6"),
       })
       .optional(),
+    // Phase 2: Combos card surface. Defaults = exact current literals
+    // (rounded-2xl, no shadow, p-6) so a tenant without override renders an
+    // identical class set. `relative`/`border-2` stay INLINE in the component
+    // (positioning context for the popular badge + border color from
+    // design.colors) — NOT absorbed by the token.
+    combos: z
+      .object({
+        radius: z
+          .enum(["none", "sm", "md", "lg", "xl", "2xl", "3xl", "full"])
+          .default("2xl"),
+        shadow: z.enum(["none", "sm", "md", "lg", "xl"]).default("none"),
+        padding: z.enum(["0", "4", "6", "8", "10"]).default("6"),
+      })
+      .optional(),
+    // Phase 2: Testimonios card surface. Defaults = exact current literals
+    // (rounded-xl, no shadow, p-6).
+    testimonios: z
+      .object({
+        radius: z
+          .enum(["none", "sm", "md", "lg", "xl", "2xl", "3xl", "full"])
+          .default("xl"),
+        shadow: z.enum(["none", "sm", "md", "lg", "xl"]).default("none"),
+        padding: z.enum(["0", "4", "6", "8", "10"]).default("6"),
+      })
+      .optional(),
     grid: z
       .object({
         gap: z.enum(["2", "4", "6", "8"]).default("6"),
         serviciosCols: z.enum(["1", "1-2-3", "1-2-4", "1-3"]).default("1-2-3"),
+        // Phase 2: per-surface grid cols. Defaults = current literals.
+        combosCols: z.enum(["1", "1-2-3", "1-2-4", "1-3"]).default("1-2-4"),
+        testimoniosCols: z.enum(["1", "1-2-3", "1-2-4", "1-3"]).default("1-3"),
       })
       .optional(),
     image: z
@@ -129,6 +157,14 @@ export function resolveStructure(s?: unknown) {
   const cols = t.grid?.serviciosCols ?? "1-2-3";
   const aspect = t.image?.serviceAspect ?? "3/2";
   const fit = t.image?.fit ?? "cover";
+  const combosRadius = t.combos?.radius ?? "2xl";
+  const combosShadow = t.combos?.shadow ?? "none";
+  const combosPadding = t.combos?.padding ?? "6";
+  const testimoniosRadius = t.testimonios?.radius ?? "xl";
+  const testimoniosShadow = t.testimonios?.shadow ?? "none";
+  const testimoniosPadding = t.testimonios?.padding ?? "6";
+  const combosCols = t.grid?.combosCols ?? "1-2-4";
+  const testimoniosCols = t.grid?.testimoniosCols ?? "1-3";
   const join = (...parts: string[]) =>
     parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
   return {
@@ -142,5 +178,28 @@ export function resolveStructure(s?: unknown) {
     cardPadding: PADDING[padding],
     imageWrapper: join("relative", ASPECT[aspect], "w-full"),
     imageFit: FIT[fit],
+    // Phase 2 — Combos. combosCard excludes `relative`/`border-2` (kept inline
+    // in the component); padding is a separate token applied on the same card div.
+    combosGrid: join(
+      "mx-auto grid max-w-6xl list-none",
+      GRID_COLS[combosCols],
+      GAP[gap],
+      "p-0",
+    ),
+    combosCard: join("h-full", RADIUS[combosRadius], SHADOW[combosShadow]),
+    combosCardPadding: PADDING[combosPadding],
+    // Phase 2 — Testimonios.
+    testimoniosGrid: join(
+      "mx-auto grid max-w-5xl list-none",
+      GRID_COLS[testimoniosCols],
+      GAP[gap],
+      "p-0",
+    ),
+    testimoniosCard: join(
+      "h-full",
+      RADIUS[testimoniosRadius],
+      SHADOW[testimoniosShadow],
+    ),
+    testimoniosCardPadding: PADDING[testimoniosPadding],
   };
 }
