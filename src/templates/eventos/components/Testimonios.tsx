@@ -1,4 +1,5 @@
 import type { EventosContent, EventosDesign } from "../schema";
+import { resolveStructure } from "../structure";
 
 export function Testimonios({
   items,
@@ -8,6 +9,7 @@ export function Testimonios({
   design: EventosDesign;
 }) {
   if (items.length === 0) return null;
+  const sc = resolveStructure(design.structure);
   return (
     <section
       aria-labelledby="testimonios-heading"
@@ -24,14 +26,11 @@ export function Testimonios({
       >
         Lo que dicen las familias
       </h2>
-      <ul
-        role="list"
-        className="mx-auto grid max-w-5xl list-none grid-cols-1 gap-6 p-0 md:grid-cols-3"
-      >
+      <ul role="list" className={sc.testimoniosGrid}>
         {items.map((t, i) => (
           <li key={i}>
             <figure
-              className="h-full rounded-xl p-6"
+              className={`${sc.testimoniosCard} ${sc.testimoniosCardPadding}`}
               style={{ background: design.colors.background }}
             >
               <blockquote className="mb-3 italic">

@@ -60,3 +60,69 @@ describe("resolveStructure — overrides diverge (tenant-scoped knob works)", ()
     expect(() => StructureSchema.parse({ card: { radius: "9xl" } })).toThrow();
   });
 });
+
+// Phase 2: Combos + Testimonios card surfaces. With NO override, the resolved
+// token output + the INLINE classes kept in the component must reproduce the
+// EXACT pre-tokenization class set, per element (order-independent class-SET
+// gate — lesson class-set-diff-gate). Pre-refactor literals = source of truth.
+describe("resolveStructure — Phase 2 Combos/Testimonios render-neutral", () => {
+  const sc = resolveStructure(undefined);
+
+  it("combos grid = current <ul> class set", () => {
+    expect(new Set(sc.combosGrid.split(" "))).toEqual(
+      new Set(
+        "mx-auto grid max-w-6xl list-none grid-cols-1 gap-6 p-0 md:grid-cols-2 lg:grid-cols-4".split(
+          " ",
+        ),
+      ),
+    );
+  });
+
+  it("combos card (token + inline relative/border-2/padding) = current <article> set", () => {
+    // Component renders: `relative border-2 ${sc.combosCard} ${sc.combosCardPadding}`
+    const rendered = `relative border-2 ${sc.combosCard} ${sc.combosCardPadding}`;
+    expect(new Set(rendered.split(" "))).toEqual(
+      new Set("relative h-full rounded-2xl border-2 p-6".split(" ")),
+    );
+    expect(sc.combosCard).not.toMatch(/\s{2,}/);
+  });
+
+  it("testimonios grid = current <ul> class set", () => {
+    expect(new Set(sc.testimoniosGrid.split(" "))).toEqual(
+      new Set(
+        "mx-auto grid max-w-5xl list-none grid-cols-1 gap-6 p-0 md:grid-cols-3".split(
+          " ",
+        ),
+      ),
+    );
+  });
+
+  it("testimonios card (token + padding) = current <figure> set", () => {
+    const rendered = `${sc.testimoniosCard} ${sc.testimoniosCardPadding}`;
+    expect(new Set(rendered.split(" "))).toEqual(
+      new Set("h-full rounded-xl p-6".split(" ")),
+    );
+    expect(sc.testimoniosCard).not.toMatch(/\s{2,}/);
+  });
+});
+
+describe("resolveStructure — Phase 2 overrides diverge per surface", () => {
+  it("combos.radius + testimonios.radius override independently", () => {
+    const sc = resolveStructure({
+      combos: { radius: "3xl" },
+      testimonios: { radius: "lg" },
+    });
+    expect(new Set(sc.combosCard.split(" ")).has("rounded-3xl")).toBe(true);
+    expect(new Set(sc.testimoniosCard.split(" ")).has("rounded-lg")).toBe(true);
+    // servicios card untouched by combos/testimonios overrides
+    expect(new Set(sc.card.split(" ")).has("rounded-2xl")).toBe(true);
+  });
+
+  it("grid.combosCols / testimoniosCols override the grid cols", () => {
+    const sc = resolveStructure({
+      grid: { combosCols: "1-3", testimoniosCols: "1-2-4" },
+    });
+    expect(sc.combosGrid).toContain("md:grid-cols-3");
+    expect(sc.testimoniosGrid).toContain("lg:grid-cols-4");
+  });
+});

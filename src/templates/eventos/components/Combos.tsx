@@ -1,4 +1,5 @@
 import type { EventosContent, EventosDesign } from "../schema";
+import { resolveStructure } from "../structure";
 
 export function Combos({
   items,
@@ -7,6 +8,7 @@ export function Combos({
   items: EventosContent["combos"];
   design: EventosDesign;
 }) {
+  const sc = resolveStructure(design.structure);
   return (
     <section
       id="combos"
@@ -24,15 +26,12 @@ export function Combos({
       >
         Combos
       </h2>
-      <ul
-        role="list"
-        className="mx-auto grid max-w-6xl list-none grid-cols-1 gap-6 p-0 md:grid-cols-2 lg:grid-cols-4"
-      >
+      <ul role="list" className={sc.combosGrid}>
         {items.map((c) => (
           <li key={c.key}>
             <article
               aria-labelledby={`combo-${c.key}-title`}
-              className="relative h-full rounded-2xl border-2 p-6"
+              className={`relative border-2 ${sc.combosCard} ${sc.combosCardPadding}`}
               style={{
                 borderColor: c.popular
                   ? design.colors.accent
