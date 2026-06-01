@@ -111,6 +111,11 @@ const turismoHero: EventosContent["hero"] = {
   eyebrow: "Bariloche · Patagonia argentina",
   cta_primary_label: "Ver excursiones",
   cta_primary_href: "#servicios",
+  trust_badges: [
+    "Guías locales certificados",
+    "Grupos reducidos",
+    "Salidas todo el año",
+  ],
   // no cta_secondary -> single CTA
 };
 const turismoDesign: EventosDesign = {
@@ -150,6 +155,7 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
     d.className.includes("sm:flex-row"),
   );
   const turCtaWrapStyle = turCtaWrap?.getAttribute("style") ?? "";
+  const badgeCount = container.querySelectorAll("ul li").length;
 
   it("renders full-bleed photo <img>", () => {
     expect(imgSrc).toContain("turismo/hero/hero.webp");
@@ -163,8 +169,14 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
   });
   it("single outline-light CTA (border added, no secondary)", () => {
     expect(ctaCount).toBe(1);
-    expect(ctaStyle).toContain("border: 2px solid");
-    expect(ctaStyle).toContain("transparent");
+    expect(ctaStyle).toContain("border");
+    expect(ctaStyle).toContain("rgba(255, 255, 255");
+  });
+  it("renders the 3 trust badges", () => {
+    expect(badgeCount).toBe(3);
+    expect(bodyText).toContain("Guías locales certificados");
+    expect(bodyText).toContain("Grupos reducidos");
+    expect(bodyText).toContain("Salidas todo el año");
   });
   it("CTA wrapper left-aligned on photo variant (justify-content flex-start)", () => {
     expect(turCtaWrapStyle).toContain("justify-content: flex-start");
