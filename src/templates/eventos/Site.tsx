@@ -3,6 +3,7 @@ import { Hero } from "./components/Hero";
 import { AboutStrip } from "./components/AboutStrip";
 import { Servicios } from "./components/Servicios";
 import { Combos } from "./components/Combos";
+import { Paseos } from "./components/Paseos";
 import { Calendar } from "./components/Calendar";
 import { Testimonios } from "./components/Testimonios";
 import { Contacto } from "./components/Contacto";
@@ -57,8 +58,13 @@ export function EventosSite({
           tenantName={tenantName}
         />
         <AboutStrip content={content.about} design={design} />
-        <Servicios items={content.servicios} design={design} />
+        <Servicios
+          items={content.servicios}
+          design={design}
+          contacto={content.contacto}
+        />
         <Combos items={content.combos} design={design} />
+        <Paseos items={content.paseos} design={design} />
         <Calendar design={design} />
         <Testimonios items={content.testimonios} design={design} />
         <Pautas items={content.pautas} design={design} />
@@ -68,7 +74,12 @@ export function EventosSite({
           tenantId={tenantId}
         />
       </main>
-      <Footer design={design} tenantName={tenantName} />
+      <Footer
+        design={design}
+        tenantName={tenantName}
+        whatsapp={content.contacto.whatsapp}
+        whatsappCta={content.contacto.whatsapp_cta}
+      />
     </div>
   );
 }
