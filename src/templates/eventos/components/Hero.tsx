@@ -39,7 +39,7 @@ export function Hero({
             fill
             priority
             sizes="100vw"
-            className="-z-10 object-cover"
+            className="pv-hero-photo-in -z-10 object-cover"
             style={{ objectPosition: "center 38%" }}
           />
           <div
@@ -54,10 +54,11 @@ export function Hero({
       )}
       {content.eyebrow && (
         <p
-          className="mb-3 text-sm font-semibold tracking-widest uppercase"
+          className="pv-anim-in mb-3 text-sm font-semibold tracking-widest uppercase"
           style={{
             color: "#E7C99B",
             textShadow: "0 1px 12px rgba(10,26,31,0.7)",
+            animationDelay: "0.05s",
           }}
         >
           {content.eyebrow}
@@ -76,7 +77,11 @@ export function Hero({
       )}
       <h1
         id="hero-heading"
-        className="mb-4 text-4xl font-bold md:text-6xl"
+        className={
+          hasPhoto
+            ? "pv-anim-in mb-4 text-4xl font-bold md:text-6xl"
+            : "mb-4 text-4xl font-bold md:text-6xl"
+        }
         style={{
           fontFamily: design.fonts.heading,
           color: hasPhoto ? "#F6F1E8" : design.colors.primary,
@@ -84,25 +89,37 @@ export function Hero({
           maxWidth: hasPhoto ? "18ch" : undefined,
           textWrap: hasPhoto ? "balance" : undefined,
           textShadow: hasPhoto ? "0 2px 24px rgba(10,26,31,0.55)" : undefined,
+          animationDelay: hasPhoto ? "0.14s" : undefined,
         }}
       >
         {content.slogan}
       </h1>
       <p
-        className="mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
+        className={
+          hasPhoto
+            ? "pv-anim-in mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
+            : "mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
+        }
         style={{
           fontFamily: design.fonts.body,
           color: hasPhoto ? "#EAE4D8" : undefined,
           maxWidth: hasPhoto ? "46ch" : undefined,
           marginLeft: hasPhoto ? "0" : undefined,
           textShadow: hasPhoto ? "0 1px 16px rgba(10,26,31,0.6)" : undefined,
+          animationDelay: hasPhoto ? "0.23s" : undefined,
         }}
       >
         {content.subtitle}
       </p>
       <div
-        className="flex flex-col items-center justify-center gap-4 sm:flex-row"
-        {...(hasPhoto && { style: { justifyContent: "flex-start" } })}
+        className={
+          hasPhoto
+            ? "pv-anim-in flex flex-col items-center justify-center gap-4 sm:flex-row"
+            : "flex flex-col items-center justify-center gap-4 sm:flex-row"
+        }
+        {...(hasPhoto && {
+          style: { justifyContent: "flex-start", animationDelay: "0.32s" },
+        })}
       >
         <a
           href={content.cta_primary_href}
@@ -162,7 +179,10 @@ export function Hero({
         )}
       </div>
       {content.trust_badges && content.trust_badges.length > 0 && (
-        <ul className="mt-6 flex list-none flex-wrap gap-x-6 gap-y-2 p-0">
+        <ul
+          className="pv-anim-in mt-6 flex list-none flex-wrap gap-x-6 gap-y-2 p-0"
+          style={{ animationDelay: "0.41s" }}
+        >
           {content.trust_badges.map((badge) => (
             <li
               key={badge}

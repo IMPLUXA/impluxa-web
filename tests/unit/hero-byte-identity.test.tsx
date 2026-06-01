@@ -14,7 +14,11 @@ import fs from "node:fs";
 vi.mock("next/image", () => ({
   default: (props: Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={props.src as string} alt={(props.alt as string) ?? ""} />
+    <img
+      src={props.src as string}
+      alt={(props.alt as string) ?? ""}
+      className={props.className as string}
+    />
   ),
 }));
 vi.mock("next/dynamic", () => ({
@@ -69,6 +73,10 @@ describe("PIECE 1 gate — Hakuna Hero BYTE-IDENTICAL (real defaults, post-edit)
   const ctaWrap = section.querySelector("div");
   const ctaWrapStyle = ctaWrap ? ctaWrap.getAttribute("style") : "MISSING";
   const ctaWrapClass = ctaWrap ? ctaWrap.getAttribute("class") : "MISSING";
+  // Motion layer: turismo gets pv-anim-in classes; Hakuna must NOT (class + style
+  // unchanged, no animationDelay leaked).
+  const h1Class = h1.getAttribute("class");
+  const pClass = p.getAttribute("class");
 
   it("section: class + style char-identical (no text-align added)", () => {
     expect(section.getAttribute("class")).toBe(BASE_SECTION_CLASS);
@@ -96,6 +104,11 @@ describe("PIECE 1 gate — Hakuna Hero BYTE-IDENTICAL (real defaults, post-edit)
     expect(ctaWrapClass).toBe(
       "flex flex-col items-center justify-center gap-4 sm:flex-row",
     );
+  });
+
+  it("motion: h1 + p class unchanged for Hakuna (no pv-anim-in)", () => {
+    expect(h1Class).toBe("mb-4 text-4xl font-bold md:text-6xl");
+    expect(pClass).toBe("mx-auto mb-10 max-w-2xl text-lg md:text-2xl");
   });
 
   it("text content unchanged (no leaked undefined)", () => {
@@ -158,6 +171,9 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
   );
   const turCtaWrapStyle = turCtaWrap?.getAttribute("style") ?? "";
   const badgeCount = container.querySelectorAll("ul li").length;
+  const turH1Class = container.querySelector("h1")?.getAttribute("class") ?? "";
+  const turPhotoClass =
+    container.querySelector("img")?.getAttribute("class") ?? "";
 
   it("renders full-bleed photo <img>", () => {
     expect(imgSrc).toContain("turismo/hero/hero.webp");
@@ -179,6 +195,10 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
     expect(bodyText).toContain("Guías locales certificados");
     expect(bodyText).toContain("Grupos reducidos");
     expect(bodyText).toContain("Salidas todo el año");
+  });
+  it("motion: turismo elements carry the entrance classes", () => {
+    expect(turH1Class).toContain("pv-anim-in");
+    expect(turPhotoClass).toContain("pv-hero-photo-in");
   });
   it("CTA wrapper left-aligned on photo variant (justify-content flex-start)", () => {
     expect(turCtaWrapStyle).toContain("justify-content: flex-start");

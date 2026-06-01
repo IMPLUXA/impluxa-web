@@ -86,8 +86,12 @@ export function EventosSite({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Contactar por WhatsApp"
-          className="fixed right-6 bottom-6 z-50 inline-flex min-h-[56px] min-w-[56px] items-center justify-center rounded-full shadow-lg transition hover:scale-105 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
-          style={{ background: "#25D366", color: "#FFFFFF" }}
+          className="pv-anim-in fixed right-6 bottom-6 z-50 inline-flex min-h-[56px] min-w-[56px] items-center justify-center rounded-full shadow-lg transition hover:scale-105 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
+          style={{
+            background: "#25D366",
+            color: "#FFFFFF",
+            animationDelay: "0.6s",
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
