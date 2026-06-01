@@ -9,6 +9,7 @@
 // and the turismo-only WhatsApp FAB gate.
 import { describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
+import fs from "node:fs";
 
 vi.mock("next/image", () => ({
   default: (props: Record<string, unknown>) => (
@@ -21,6 +22,7 @@ vi.mock("next/dynamic", () => ({
 }));
 
 import { Hero } from "@/templates/eventos/components/Hero";
+import { AboutStrip } from "@/templates/eventos/components/AboutStrip";
 import { EventosSite } from "@/templates/eventos/Site";
 import {
   defaultContent,
@@ -219,5 +221,44 @@ describe("PIECE 1 — WhatsApp FAB is turismo-only (gated whatsapp_cta===true)",
     );
     expect(fab).not.toBeNull();
     expect(fab?.getAttribute("href")).toContain("wa.me/");
+  });
+});
+
+// ---- TONE-TURISMO-1: AboutStrip value-guard ----
+describe("AboutStrip — families value-guard (Hakuna byte-identical, turismo hidden)", () => {
+  it("Hakuna (260 + ratings): outerHTML BYTE-IDENTICAL to pre-edit baseline", () => {
+    const { container } = render(
+      <AboutStrip content={defaultContent.about} design={defaultDesign} />,
+    );
+    const baseline = fs
+      .readFileSync("tests/unit/hakuna-about-baseline.html", "utf8")
+      .trim();
+    expect(container.querySelector("section")?.outerHTML).toBe(baseline);
+  });
+
+  it("turismo (families 0, no ratings): renders null (no empty dark band)", () => {
+    const { container } = render(
+      <AboutStrip
+        content={{ families_count: 0, ratings: [] }}
+        design={turismoDesign}
+      />,
+    );
+    expect(container.querySelector("section")).toBeNull();
+    expect(container.textContent).toBe("");
+  });
+
+  it("0 families but WITH ratings: renders only the ratings (no +0 stat)", () => {
+    const { container } = render(
+      <AboutStrip
+        content={{
+          families_count: 0,
+          ratings: [{ source: "google", rating: 4.8, count: 12 }],
+        }}
+        design={turismoDesign}
+      />,
+    );
+    expect(container.querySelector("section")).not.toBeNull();
+    expect(container.textContent).not.toContain("familias atendidas");
+    expect(container.textContent).toContain("4.8");
   });
 });
