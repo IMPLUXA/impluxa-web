@@ -46,7 +46,7 @@ export function Hero({
             className="absolute inset-0 -z-10"
             style={{
               background:
-                "linear-gradient(180deg, rgba(20,48,56,0.45) 0%, rgba(20,48,56,0.78) 100%)",
+                "linear-gradient(180deg, rgba(20,48,56,0.66) 0%, rgba(20,48,56,0.38) 42%, rgba(20,48,56,0.82) 100%)",
             }}
           />
         </>
@@ -54,7 +54,10 @@ export function Hero({
       {content.eyebrow && (
         <p
           className="mb-3 text-sm font-semibold tracking-widest uppercase"
-          style={{ color: "#B48448" }}
+          style={{
+            color: "#D6A45C",
+            textShadow: "0 1px 8px rgba(15,30,35,0.65)",
+          }}
         >
           {content.eyebrow}
         </p>
@@ -86,7 +89,10 @@ export function Hero({
       >
         {content.subtitle}
       </p>
-      <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+      <div
+        className="flex flex-col items-center justify-center gap-4 sm:flex-row"
+        {...(hasPhoto && { style: { justifyContent: "flex-start" } })}
+      >
         <a
           href={content.cta_primary_href}
           {...(isExternalPrimary && {

@@ -62,6 +62,11 @@ describe("PIECE 1 gate — Hakuna Hero BYTE-IDENTICAL (real defaults, post-edit)
   const anchors = Array.from(section.querySelectorAll("a"));
   const imgCount = container.querySelectorAll("img").length;
   const sectionChildTags = Array.from(section.children).map((c) => c.tagName);
+  // CTA wrapper flex div (shared w/ Hakuna): Fix 2 adds inline justifyContent
+  // ONLY when hasPhoto. Hakuna (hasPhoto false) must get NO style prop.
+  const ctaWrap = section.querySelector("div");
+  const ctaWrapStyle = ctaWrap ? ctaWrap.getAttribute("style") : "MISSING";
+  const ctaWrapClass = ctaWrap ? ctaWrap.getAttribute("class") : "MISSING";
 
   it("section: class + style char-identical (no text-align added)", () => {
     expect(section.getAttribute("class")).toBe(BASE_SECTION_CLASS);
@@ -82,6 +87,13 @@ describe("PIECE 1 gate — Hakuna Hero BYTE-IDENTICAL (real defaults, post-edit)
     expect(anchors).toHaveLength(2);
     expect(anchors[0].getAttribute("style")).toBe(BASE_CTA_PRIMARY_STYLE);
     expect(anchors[1].getAttribute("style")).toBe(BASE_CTA_SECONDARY_STYLE);
+  });
+
+  it("CTA wrapper div: NO style attribute added, class unchanged (Fix 2 byte-safe)", () => {
+    expect(ctaWrapStyle).toBeNull();
+    expect(ctaWrapClass).toBe(
+      "flex flex-col items-center justify-center gap-4 sm:flex-row",
+    );
   });
 
   it("text content unchanged (no leaked undefined)", () => {
@@ -134,6 +146,10 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
   const ctaAnchors = Array.from(section.querySelectorAll("a"));
   const ctaCount = ctaAnchors.length;
   const ctaStyle = ctaAnchors[0]?.getAttribute("style") ?? "";
+  const turCtaWrap = Array.from(section.querySelectorAll("div")).find((d) =>
+    d.className.includes("sm:flex-row"),
+  );
+  const turCtaWrapStyle = turCtaWrap?.getAttribute("style") ?? "";
 
   it("renders full-bleed photo <img>", () => {
     expect(imgSrc).toContain("turismo/hero/hero.webp");
@@ -149,6 +165,9 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
     expect(ctaCount).toBe(1);
     expect(ctaStyle).toContain("border: 2px solid");
     expect(ctaStyle).toContain("transparent");
+  });
+  it("CTA wrapper left-aligned on photo variant (justify-content flex-start)", () => {
+    expect(turCtaWrapStyle).toContain("justify-content: flex-start");
   });
 });
 
