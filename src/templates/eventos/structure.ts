@@ -134,6 +134,25 @@ export const StructureSchema = z
         fit: z.enum(["cover", "contain"]).default("cover"),
       })
       .optional(),
+    // NEW surfaces (gallery / paseos) — only rendered when the tenant has the
+    // corresponding content (servicio.gallery / content.paseos). Hakuna has
+    // neither, so these never affect Hakuna's class set regardless of values.
+    gallery: z
+      .object({
+        cols: z.enum(["1", "1-2-3", "1-2-4", "1-3"]).default("1-2-3"),
+        aspect: z.enum(["3/2", "4/3", "16/9", "1/1"]).default("3/2"),
+        gap: z.enum(["2", "4", "6", "8"]).default("2"),
+      })
+      .optional(),
+    paseos: z
+      .object({
+        radius: z
+          .enum(["none", "sm", "md", "lg", "xl", "2xl", "3xl", "full"])
+          .default("lg"),
+        shadow: z.enum(["none", "sm", "md", "lg", "xl"]).default("none"),
+        padding: z.enum(["0", "4", "6", "8", "10"]).default("4"),
+      })
+      .optional(),
   })
   .optional();
 
@@ -165,6 +184,12 @@ export function resolveStructure(s?: unknown) {
   const testimoniosPadding = t.testimonios?.padding ?? "6";
   const combosCols = t.grid?.combosCols ?? "1-2-4";
   const testimoniosCols = t.grid?.testimoniosCols ?? "1-3";
+  const galleryCols = t.gallery?.cols ?? "1-2-3";
+  const galleryAspect = t.gallery?.aspect ?? "3/2";
+  const galleryGap = t.gallery?.gap ?? "2";
+  const paseosRadius = t.paseos?.radius ?? "lg";
+  const paseosShadow = t.paseos?.shadow ?? "none";
+  const paseosPadding = t.paseos?.padding ?? "4";
   const join = (...parts: string[]) =>
     parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
   return {
@@ -201,5 +226,20 @@ export function resolveStructure(s?: unknown) {
       SHADOW[testimoniosShadow],
     ),
     testimoniosCardPadding: PADDING[testimoniosPadding],
+    // NEW — Gallery (per-excursion photo album). Turismo-only surface.
+    galleryGrid: join(
+      "grid list-none p-0",
+      GRID_COLS[galleryCols],
+      GAP[galleryGap],
+    ),
+    galleryItem: join(
+      "relative w-full overflow-hidden",
+      ASPECT[galleryAspect],
+      RADIUS["lg"],
+    ),
+    galleryItemFit: FIT.cover,
+    // NEW — Paseos list card. Turismo-only surface.
+    paseosCard: join("h-full", RADIUS[paseosRadius], SHADOW[paseosShadow]),
+    paseosCardPadding: PADDING[paseosPadding],
   };
 }

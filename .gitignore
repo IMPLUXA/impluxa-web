@@ -49,3 +49,6 @@ coverage/lighthouse/
 
 # local tooling (MCP Sentinel project-level allowlist created by agents — global lives at ~/.claude/)
 .security/
+
+# design handoffs (read-only reference bundles; assets go to storage bucket, NOT committed)
+.design/

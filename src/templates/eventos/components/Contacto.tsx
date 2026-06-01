@@ -129,6 +129,28 @@ export function Contacto({
               <span className="sr-only">Horarios: </span>
               {content.hours.join(" · ")}
             </li>
+            {content.instagram && (
+              <li>
+                <span aria-hidden="true">📷 </span>
+                <span className="sr-only">Instagram: </span>
+                <a
+                  href={
+                    content.instagram.startsWith("http")
+                      ? content.instagram
+                      : `https://instagram.com/${content.instagram.replace(/^@/, "")}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram (se abre en una nueva pestaña)"
+                  className="underline focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+                  style={{ outlineColor: design.colors.primary }}
+                >
+                  {content.instagram.startsWith("http")
+                    ? content.instagram
+                    : `@${content.instagram.replace(/^@/, "")}`}
+                </a>
+              </li>
+            )}
           </ul>
         </address>
         {showForm && (

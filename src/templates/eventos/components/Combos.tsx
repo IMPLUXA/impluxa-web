@@ -8,6 +8,9 @@ export function Combos({
   items: EventosContent["combos"];
   design: EventosDesign;
 }) {
+  // Combos is now optional content. Absent/empty (turismo — Patagonia design has
+  // no combos section) -> render nothing. Hakuna provides combos -> unchanged.
+  if (!items || items.length === 0) return null;
   const sc = resolveStructure(design.structure);
   return (
     <section

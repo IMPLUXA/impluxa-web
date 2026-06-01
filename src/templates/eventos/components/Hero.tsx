@@ -67,7 +67,9 @@ export function Hero({
           }
           className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-8 py-3 font-semibold transition hover:scale-105 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
           style={{
-            background: design.colors.primary,
+            // Hero primary CTA opens WhatsApp -> action color when set.
+            // Absent (Hakuna) -> primary -> byte-identical (inline style, not a class).
+            background: design.colors.cta ?? design.colors.primary,
             color: design.colors.background,
             outlineColor: design.colors.accent,
           }}

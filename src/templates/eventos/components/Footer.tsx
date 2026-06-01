@@ -4,10 +4,18 @@ import type { EventosDesign } from "../schema";
 export function Footer({
   design,
   tenantName,
+  whatsapp,
+  whatsappCta,
 }: {
   design: EventosDesign;
   tenantName: string;
+  // OPT-IN WhatsApp CTA. Absent (Hakuna) -> no button -> byte-identical.
+  whatsapp?: string;
+  whatsappCta?: boolean;
 }) {
+  const waDigits =
+    whatsappCta === true && whatsapp ? whatsapp.replace(/[^0-9]/g, "") : null;
+  const ctaColor = design.colors.cta ?? design.colors.primary;
   return (
     <footer
       role="contentinfo"
@@ -17,6 +25,22 @@ export function Footer({
         color: design.colors.background,
       }}
     >
+      {waDigits && (
+        <a
+          href={`https://wa.me/${waDigits}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Consultanos por WhatsApp (se abre en una nueva pestaña)"
+          className="mb-6 inline-flex min-h-[44px] items-center justify-center rounded-full px-8 py-3 font-semibold transition hover:scale-105 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
+          style={{
+            background: ctaColor,
+            color: "#FFFFFF",
+            outlineColor: design.colors.accent,
+          }}
+        >
+          Consultanos por WhatsApp
+        </a>
+      )}
       <p>
         <span aria-hidden="true">© </span>
         <span className="sr-only">Copyright </span>

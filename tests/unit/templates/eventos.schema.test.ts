@@ -25,9 +25,16 @@ describe("eventos schema", () => {
       EventosContentSchema.parse({ ...defaultContent, servicios: [] }),
     ).toThrow();
   });
-  it("requires at least 1 combo", () => {
+  it("combos is OPTIONAL (Patagonia design has no combos; turismo omits them)", () => {
+    // empty array is valid -> Combos component renders null
     expect(() =>
       EventosContentSchema.parse({ ...defaultContent, combos: [] }),
-    ).toThrow();
+    ).not.toThrow();
+    // absent is valid too
+    const noCombos: Record<string, unknown> = { ...defaultContent };
+    delete noCombos.combos;
+    expect(() => EventosContentSchema.parse(noCombos)).not.toThrow();
+    // Hakuna keeps its combos -> still parses with combos present
+    expect(() => EventosContentSchema.parse(defaultContent)).not.toThrow();
   });
 });

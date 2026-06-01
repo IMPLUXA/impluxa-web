@@ -126,3 +126,57 @@ describe("resolveStructure — Phase 2 overrides diverge per surface", () => {
     expect(sc.testimoniosGrid).toContain("lg:grid-cols-4");
   });
 });
+
+// Patagonia PR: gallery + paseos are NEW surfaces only rendered by tenants that
+// have the data (servicio.gallery / content.paseos). hakunamatata has neither,
+// so these tokens never affect its class set. Tests assert sane defaults + that
+// the EXISTING outputs (servicios/card/combos/testimonios) are untouched.
+describe("resolveStructure — gallery/paseos tokens (turismo-only surfaces)", () => {
+  const sc = resolveStructure(undefined);
+
+  it("default gallery tokens are valid literals", () => {
+    expect(new Set(sc.galleryGrid.split(" "))).toEqual(
+      new Set(
+        "grid list-none p-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2".split(
+          " ",
+        ),
+      ),
+    );
+    expect(new Set(sc.galleryItem.split(" "))).toEqual(
+      new Set(
+        "relative w-full overflow-hidden aspect-[3/2] rounded-lg".split(" "),
+      ),
+    );
+    expect(sc.galleryItemFit).toBe("object-cover");
+  });
+
+  it("default paseos tokens are valid literals (no stray space)", () => {
+    expect(new Set(sc.paseosCard.split(" "))).toEqual(
+      new Set("h-full rounded-lg".split(" ")),
+    );
+    expect(sc.paseosCard).not.toMatch(/\s{2,}/);
+    expect(sc.paseosCardPadding).toBe("p-4");
+  });
+
+  it("existing Hakuna-relevant outputs are UNCHANGED by the new tokens", () => {
+    // card / serviciosGrid / combos / testimonios identical to pre-PR defaults
+    expect(new Set(sc.card.split(" "))).toEqual(
+      new Set("h-full overflow-hidden rounded-2xl shadow-md".split(" ")),
+    );
+    expect(sc.cardPadding).toBe("p-6");
+    expect(new Set(sc.combosCard.split(" "))).toEqual(
+      new Set("h-full rounded-2xl".split(" ")),
+    );
+  });
+
+  it("gallery/paseos overrides diverge", () => {
+    const o = resolveStructure({
+      gallery: { cols: "1-3", gap: "6" },
+      paseos: { radius: "2xl", padding: "6" },
+    });
+    expect(o.galleryGrid).toContain("md:grid-cols-3");
+    expect(o.galleryGrid).toContain("gap-6");
+    expect(new Set(o.paseosCard.split(" ")).has("rounded-2xl")).toBe(true);
+    expect(o.paseosCardPadding).toBe("p-6");
+  });
+});
