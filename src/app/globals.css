@@ -20,6 +20,56 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  body { min-height: 100dvh; }
-  ::selection { background: rgb(var(--color-bone)); color: rgb(var(--color-onyx)); }
+  body {
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: rgb(var(--color-bone));
+    color: rgb(var(--color-onyx));
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Motion system (tenant-only). The `.pv-*` classes are applied ONLY by tenants
+ * that opt in (turismo gates them on hasPhoto); Hakuna never receives them, so
+ * its rendered HTML is unchanged. One signature hero entrance (fade-up stagger
+ * + a subtle photo settle), transform/opacity only, ease-out-quint. The final
+ * resting state equals the approved static design; motion is only how it ENTERS.
+ * prefers-reduced-motion disables it -> the approved static state shows instantly.
+ * -------------------------------------------------------------------------- */
+:root {
+  --pv-ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --pv-dur-entrance: 0.45s; /* snappy text entrance (Jota: rapido) */
+}
+@keyframes pvFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pvPhotoSettle {
+  /* scale-start 1.03 (was 1.06): less zoom = less resolution demand on the
+     first frame + faster, lighter settle. */
+  from {
+    transform: scale(1.03);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.pv-anim-in {
+  animation: pvFadeUp var(--pv-dur-entrance) var(--pv-ease-quint) both;
+}
+.pv-hero-photo-in {
+  animation: pvPhotoSettle 0.75s var(--pv-ease-quint) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pv-anim-in,
+  .pv-hero-photo-in {
+    animation: none;
+  }
 }

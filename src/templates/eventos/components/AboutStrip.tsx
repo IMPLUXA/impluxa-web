@@ -7,6 +7,12 @@ export function AboutStrip({
   content: EventosContent["about"];
   design: EventosDesign;
 }) {
+  // Render-neutral guard (TONE-TURISMO-1): hide the "+N familias" stat when the
+  // count is 0, and skip the whole strip when there's nothing to show (no empty
+  // dark band). Hakuna (260 + ratings) is unaffected -> byte-identical. Schema
+  // stays required (value-guard only, no .optional()).
+  const hasFamilies = content.families_count > 0;
+  if (!hasFamilies && content.ratings.length === 0) return null;
   return (
     <section
       aria-labelledby="about-strip-heading"
@@ -20,22 +26,24 @@ export function AboutStrip({
         Reputación y reseñas
       </h2>
       <ul className="mx-auto flex max-w-6xl list-none flex-col items-center justify-around gap-6 p-0 text-center md:flex-row">
-        <li>
-          <div
-            className="text-4xl font-bold"
-            style={{ fontFamily: design.fonts.heading }}
-            aria-hidden="true"
-          >
-            +{content.families_count}
-          </div>
-          <div className="text-sm">
-            <span className="sr-only">Más de </span>
-            <span aria-hidden="true">familias atendidas</span>
-            <span className="sr-only">
-              {content.families_count} familias atendidas
-            </span>
-          </div>
-        </li>
+        {hasFamilies && (
+          <li>
+            <div
+              className="text-4xl font-bold"
+              style={{ fontFamily: design.fonts.heading }}
+              aria-hidden="true"
+            >
+              +{content.families_count}
+            </div>
+            <div className="text-sm">
+              <span className="sr-only">Más de </span>
+              <span aria-hidden="true">familias atendidas</span>
+              <span className="sr-only">
+                {content.families_count} familias atendidas
+              </span>
+            </div>
+          </li>
+        )}
         {content.ratings.map((r, i) => {
           const label = `Valoración en ${r.source}: ${r.rating.toFixed(1)} de 5 estrellas${r.count ? `, ${r.count} reseñas` : ""}`;
           return (

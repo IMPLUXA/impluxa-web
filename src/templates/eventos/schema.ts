@@ -72,6 +72,11 @@ export const EventosContentSchema = z.object({
   hero: z.object({
     slogan: z.string(),
     subtitle: z.string(),
+    // Optional eyebrow line above the H1 (e.g. "Bariloche · Patagonia argentina").
+    // Absent (Hakuna) -> no eyebrow node rendered -> byte-identical.
+    eyebrow: z.string().optional(),
+    // Optional hero trust badges (turismo). Absent (Hakuna) -> no list rendered.
+    trust_badges: z.array(z.string()).optional(),
     cta_primary_label: z.string(),
     cta_primary_href: z.string(),
     cta_secondary_label: z.string().optional(),
