@@ -8,6 +8,7 @@ import { Calendar } from "./components/Calendar";
 import { Testimonios } from "./components/Testimonios";
 import { Contacto } from "./components/Contacto";
 import { Footer } from "./components/Footer";
+import { TenantNav } from "./components/TenantNav";
 import type { EventosContent, EventosDesign, EventosMedia } from "./schema";
 
 // Dynamic import — Pautas is a "use client" accordion below the fold.
@@ -50,6 +51,14 @@ export function EventosSite({
       >
         Saltar al contenido principal
       </a>
+      {content.nav && (
+        <TenantNav
+          items={content.nav.items}
+          logoLight={media.logo_url_light}
+          logoDark={media.logo_url_dark}
+          tenantName={tenantName}
+        />
+      )}
       <main id="main-content" tabIndex={-1}>
         <Hero
           content={content.hero}
