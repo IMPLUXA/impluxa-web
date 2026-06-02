@@ -144,6 +144,22 @@ export const EventosMediaSchema = z.object({
   logo_url_light: z.string().optional(),
   logo_url_dark: z.string().optional(),
   hero_image_url: z.string().optional(),
+  // Hero background slideshow (turismo opt-in). Absent (Hakuna / default) ->
+  // undefined -> no slideshow -> Hero falls back to single hero_image_url (or
+  // nothing for Hakuna) -> byte-identical / backward-compat by construction.
+  // Per-slide: bucket url + object-position crops (desktop posD / mobile posM).
+  // .optional() (NOT .default([])) so absence stays undefined and never alters
+  // a tenant's render unless explicitly seeded.
+  hero_slideshow: z
+    .array(
+      z.object({
+        url: z.string(),
+        posD: z.string(),
+        posM: z.string(),
+        alt: z.string().optional(),
+      }),
+    )
+    .optional(),
   gallery: z.array(z.string()).default([]),
   favicon_url: z.string().optional(),
 });

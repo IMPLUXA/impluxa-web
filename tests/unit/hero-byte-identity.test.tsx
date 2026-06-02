@@ -205,6 +205,106 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
   });
 });
 
+// ---- Hero slideshow variant (turismo opt-in, media.hero_slideshow) ----
+const slideshowMedia: EventosMedia = {
+  gallery: [],
+  hero_slideshow: [
+    {
+      url: "https://x/turismo/hero-slideshow/a.jpg",
+      posD: "center 42%",
+      posM: "50% 38%",
+      alt: "Primera foto",
+    },
+    {
+      url: "https://x/turismo/hero-slideshow/b.jpg",
+      posD: "center 50%",
+      posM: "50% 45%",
+    },
+    {
+      url: "https://x/turismo/hero-slideshow/c.jpg",
+      posD: "center 45%",
+      posM: "60% 35%",
+    },
+  ],
+};
+
+describe("Hero slideshow — turismo opt-in renders the slideshow island", () => {
+  const { container } = render(
+    <Hero
+      content={turismoHero}
+      design={turismoDesign}
+      media={slideshowMedia}
+      tenantName="Patagonia Viva"
+    />,
+  );
+  const section = container.querySelector("section")!;
+  const slides = container.querySelectorAll(".pv-hero-slide");
+  const arrows = container.querySelectorAll(".pv-hero-arrow");
+  const dots = container.querySelectorAll(".pv-hero-dot");
+  const firstSlide = slides[0];
+  const firstImg = firstSlide?.querySelector("img");
+  const contentLayer = section.querySelector(".pv-hero-content");
+  const photoFill = container.querySelector("img.pv-hero-photo-in");
+
+  it("section adopts the cinematic shell class (pv-hero-shell)", () => {
+    expect(section.getAttribute("class")).toContain("pv-hero-shell");
+  });
+  it("renders one .pv-hero-slide per seeded photo (3)", () => {
+    expect(slides.length).toBe(3);
+  });
+  it("first slide is-active; per-photo crops injected as --posD/--posM", () => {
+    expect(firstSlide?.className).toContain("is-active");
+    const style = firstImg?.getAttribute("style") ?? "";
+    expect(style).toContain("--posD: center 42%");
+    expect(style).toContain("--posM: 50% 38%");
+  });
+  it("renders 2 arrows + 3 dots", () => {
+    expect(arrows.length).toBe(2);
+    expect(dots.length).toBe(3);
+  });
+  it("hero text lives in a z-2 content layer, copy preserved", () => {
+    expect(contentLayer).not.toBeNull();
+    expect(contentLayer?.textContent).toContain(turismoHero.slogan);
+  });
+  it("slideshow SUPERSEDES single photo (no pv-hero-photo-in fill img)", () => {
+    expect(photoFill).toBeNull();
+  });
+  it("light text on the dark slideshow bg", () => {
+    expect(section.getAttribute("style")).toContain("rgb(247, 242, 232)");
+  });
+});
+
+describe("Hero slideshow — backward-compat / Hakuna sees nothing", () => {
+  it("Hakuna (no hero_slideshow): zero slideshow DOM", () => {
+    const { container } = render(
+      <Hero
+        content={defaultContent.hero}
+        design={defaultDesign}
+        media={defaultMedia}
+        tenantName="hakunamatata"
+      />,
+    );
+    expect(container.querySelector(".pv-hero-shell")).toBeNull();
+    expect(container.querySelectorAll(".pv-hero-slide").length).toBe(0);
+    expect(container.querySelector(".pv-hero-arrow")).toBeNull();
+    expect(container.querySelector(".pv-hero-dots")).toBeNull();
+  });
+  it("single-photo tenant (hero_image_url, no slideshow): unchanged photo path, no slideshow DOM", () => {
+    const { container } = render(
+      <Hero
+        content={turismoHero}
+        design={turismoDesign}
+        media={turismoMedia}
+        tenantName="turismo"
+      />,
+    );
+    expect(container.querySelector(".pv-hero-slide")).toBeNull();
+    expect(container.querySelector("img")?.getAttribute("src")).toContain(
+      "turismo/hero/hero.webp",
+    );
+  });
+});
+
 // ---- FAB gate (turismo-only) ----
 describe("PIECE 1 — WhatsApp FAB is turismo-only (gated whatsapp_cta===true)", () => {
   it("Hakuna (no whatsapp_cta): NO FAB", () => {
