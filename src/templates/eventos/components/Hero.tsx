@@ -40,7 +40,7 @@ export function Hero({
             priority
             sizes="100vw"
             className="pv-hero-photo-in -z-10 object-cover"
-            style={{ objectPosition: "center 38%" }}
+            style={{ objectPosition: "center 25%" }}
           />
           <div
             aria-hidden
