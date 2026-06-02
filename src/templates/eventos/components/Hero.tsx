@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import type { EventosContent, EventosDesign, EventosMedia } from "../schema";
+import { HeroSlideshow } from "./HeroSlideshow";
 
 // Trust-badge icons (handoff: Lucide geometry, stroke = Copper 400 #C79A63).
 // Turismo-only — rendered solely inside the content.trust_badges block.
@@ -23,6 +24,11 @@ const BADGE_ICON_INNER: Record<string, ReactNode> = {
   check: <path d="M20 6 9 17l-5-5" />,
 };
 
+// Hero scrim gradient (handoff manifest, 5 stops, base #0E2329). Shared by the
+// single-photo variant and the slideshow variant — identical string either way.
+const HERO_SCRIM =
+  "linear-gradient(to top, rgba(14,35,41,0.95) 0%, rgba(14,35,41,0.74) 26%, rgba(14,35,41,0.34) 52%, rgba(14,35,41,0.36) 78%, rgba(14,35,41,0.62) 100%)";
+
 export function Hero({
   content,
   design,
@@ -39,41 +45,21 @@ export function Hero({
     ? /^https?:\/\//.test(content.cta_secondary_href)
     : false;
   // Tenant-exclusive opt-in: turismo sets media.hero_image_url; Hakuna does not.
-  // hasPhoto=false -> every override below resolves to the exact current value
-  // (byte-identical). All photo-variant nodes are additive (absent for Hakuna).
   const hasPhoto = !!media.hero_image_url;
+  // Tenant-exclusive opt-in: turismo seeds media.hero_slideshow (>= 1 slide);
+  // Hakuna does not -> hasSlideshow=false -> HeroSlideshow never mounts AND
+  // onPhoto === hasPhoto, so every branch below resolves to the exact prior
+  // value (byte-identical). When present, the slideshow supersedes the single
+  // photo as the hero background. `onPhoto` = "rendered over a dark photo bg".
+  const hasSlideshow = !!(
+    media.hero_slideshow && media.hero_slideshow.length > 0
+  );
+  const onPhoto = hasPhoto || hasSlideshow;
 
-  return (
-    <section
-      aria-labelledby="hero-heading"
-      className="relative isolate overflow-hidden px-6 py-24 text-center md:py-32"
-      style={{
-        background: design.colors.background,
-        color: hasPhoto ? "#F7F2E8" : design.colors.text,
-        textAlign: hasPhoto ? "left" : undefined,
-      }}
-    >
-      {hasPhoto && (
-        <>
-          <Image
-            src={media.hero_image_url!}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="pv-hero-photo-in -z-10 object-cover"
-            style={{ objectPosition: "center 25%" }}
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 -z-10"
-            style={{
-              background:
-                "linear-gradient(to top, rgba(14,35,41,0.95) 0%, rgba(14,35,41,0.74) 26%, rgba(14,35,41,0.34) 52%, rgba(14,35,41,0.36) 78%, rgba(14,35,41,0.62) 100%)",
-            }}
-          />
-        </>
-      )}
+  // Hero text/CTAs — identical markup in all variants (the copy is "fixed";
+  // only the background changes). Photo-variant styling keys off `onPhoto`.
+  const heroBody = (
+    <>
       {content.eyebrow && (
         <p
           className="pv-anim-in mb-3 text-sm font-semibold uppercase"
@@ -101,46 +87,46 @@ export function Hero({
       <h1
         id="hero-heading"
         className={
-          hasPhoto
+          onPhoto
             ? "pv-anim-in mb-4 text-4xl font-bold md:text-6xl"
             : "mb-4 text-4xl font-bold md:text-6xl"
         }
         style={{
           fontFamily: design.fonts.heading,
-          color: hasPhoto ? "#F6F1E8" : design.colors.primary,
-          letterSpacing: hasPhoto ? "0.015em" : undefined,
-          maxWidth: hasPhoto ? "18ch" : undefined,
-          textWrap: hasPhoto ? "balance" : undefined,
-          textShadow: hasPhoto ? "0 2px 24px rgba(10,26,31,0.55)" : undefined,
-          animationDelay: hasPhoto ? "0.14s" : undefined,
+          color: onPhoto ? "#F6F1E8" : design.colors.primary,
+          letterSpacing: onPhoto ? "0.015em" : undefined,
+          maxWidth: onPhoto ? "18ch" : undefined,
+          textWrap: onPhoto ? "balance" : undefined,
+          textShadow: onPhoto ? "0 2px 24px rgba(10,26,31,0.55)" : undefined,
+          animationDelay: onPhoto ? "0.14s" : undefined,
         }}
       >
         {content.slogan}
       </h1>
       <p
         className={
-          hasPhoto
+          onPhoto
             ? "pv-anim-in mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
             : "mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
         }
         style={{
           fontFamily: design.fonts.body,
-          color: hasPhoto ? "#EAE4D8" : undefined,
-          maxWidth: hasPhoto ? "46ch" : undefined,
-          marginLeft: hasPhoto ? "0" : undefined,
-          textShadow: hasPhoto ? "0 1px 16px rgba(10,26,31,0.6)" : undefined,
-          animationDelay: hasPhoto ? "0.23s" : undefined,
+          color: onPhoto ? "#EAE4D8" : undefined,
+          maxWidth: onPhoto ? "46ch" : undefined,
+          marginLeft: onPhoto ? "0" : undefined,
+          textShadow: onPhoto ? "0 1px 16px rgba(10,26,31,0.6)" : undefined,
+          animationDelay: onPhoto ? "0.23s" : undefined,
         }}
       >
         {content.subtitle}
       </p>
       <div
         className={
-          hasPhoto
+          onPhoto
             ? "pv-anim-in flex flex-col items-center justify-center gap-4 sm:flex-row"
             : "flex flex-col items-center justify-center gap-4 sm:flex-row"
         }
-        {...(hasPhoto && {
+        {...(onPhoto && {
           style: { justifyContent: "flex-start", animationDelay: "0.32s" },
         })}
       >
@@ -157,7 +143,7 @@ export function Hero({
           }
           className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-8 py-3 font-semibold transition hover:scale-105 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
           style={
-            hasPhoto
+            onPhoto
               ? {
                   // Photo variant (turismo): outline-light pill on the photo
                   // (mockup .pv-btn-outline-light). Border inline ONLY here.
@@ -176,7 +162,7 @@ export function Hero({
           }
         >
           {content.cta_primary_label}
-          {hasPhoto && (
+          {onPhoto && (
             <svg
               aria-hidden="true"
               width="18"
@@ -249,6 +235,64 @@ export function Hero({
           ))}
         </ul>
       )}
+    </>
+  );
+
+  // Slideshow variant (turismo opt-in): cinematic shell (manifest 92vh/74vh,
+  // flex-end), rotating background island + scrim, fixed text in a z-2 content
+  // layer. Entirely separate subtree from the byte-identical path below.
+  if (hasSlideshow) {
+    return (
+      <section
+        aria-labelledby="hero-heading"
+        className="pv-hero-shell relative isolate overflow-hidden"
+        style={{ background: design.colors.background, color: "#F7F2E8" }}
+      >
+        <HeroSlideshow slides={media.hero_slideshow!} />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{ zIndex: 1, background: HERO_SCRIM }}
+        />
+        <div className="pv-hero-content">{heroBody}</div>
+      </section>
+    );
+  }
+
+  // Default + single-photo path — BYTE-IDENTICAL to pre-slideshow (onPhoto
+  // collapses to hasPhoto here, since hasSlideshow is false).
+  return (
+    <section
+      aria-labelledby="hero-heading"
+      className="relative isolate overflow-hidden px-6 py-24 text-center md:py-32"
+      style={{
+        background: design.colors.background,
+        color: onPhoto ? "#F7F2E8" : design.colors.text,
+        textAlign: onPhoto ? "left" : undefined,
+      }}
+    >
+      {hasPhoto && (
+        <>
+          <Image
+            src={media.hero_image_url!}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="pv-hero-photo-in -z-10 object-cover"
+            style={{ objectPosition: "center 25%" }}
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 -z-10"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(14,35,41,0.95) 0%, rgba(14,35,41,0.74) 26%, rgba(14,35,41,0.34) 52%, rgba(14,35,41,0.36) 78%, rgba(14,35,41,0.62) 100%)",
+            }}
+          />
+        </>
+      )}
+      {heroBody}
     </section>
   );
 }

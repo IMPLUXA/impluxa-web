@@ -73,3 +73,166 @@
     animation: none;
   }
 }
+
+/* ----------------------------------------------------------------------------
+ * Hero background slideshow (tenant-only, turismo opt-in). Ported FRESH from the
+ * Claude Design handoff manifest (design_handoff_hero) — exact values. Applied
+ * ONLY when a tenant seeds media.hero_slideshow (HeroSlideshow island mounts);
+ * Hakuna never emits these classes/elements, so its HTML stays byte-identical.
+ * Crossfade 1600ms + Ken Burns 7400ms (scale 1.0<->1.06, alternating odd/even)
+ * + dots + desktop arrows + responsive + prefers-reduced-motion.
+ * -------------------------------------------------------------------------- */
+.pv-hero-shell {
+  position: relative;
+  overflow: hidden;
+  min-height: 92vh;
+  display: flex;
+  align-items: flex-end;
+  /* Tuck under the fixed TenantNav (manifest: 72px). Live-visual calibration
+     item — our nav height may differ slightly from the prototype's 72px. */
+  margin-top: -72px;
+  padding-top: 72px;
+}
+.pv-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+.pv-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #143038;
+}
+.pv-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1600ms var(--pv-ease-quint);
+  will-change: opacity;
+}
+.pv-hero-slide.is-active {
+  opacity: 1;
+}
+.pv-hero-slide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--posD, center 38%);
+  display: block;
+  transform: scale(1.01);
+  user-select: none;
+}
+.pv-hero-slide:nth-child(odd).is-active .pv-hero-slide-img {
+  animation: pvKenA 7400ms ease-out forwards;
+}
+.pv-hero-slide:nth-child(even).is-active .pv-hero-slide-img {
+  animation: pvKenB 7400ms ease-out forwards;
+}
+@keyframes pvKenA {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.06) translate(-0.9%, -0.7%);
+  }
+}
+@keyframes pvKenB {
+  from {
+    transform: scale(1.06) translate(0.9%, 0.7%);
+  }
+  to {
+    transform: scale(1) translate(0, 0);
+  }
+}
+.pv-hero-dots {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 22px;
+  display: flex;
+  gap: 10px;
+}
+.pv-hero-dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 6px rgba(10, 26, 31, 0.4);
+  transition:
+    width 360ms var(--pv-ease-quint),
+    background 360ms ease;
+}
+.pv-hero-dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+.pv-hero-dot.is-active {
+  width: 28px;
+  background: #fff;
+}
+.pv-hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  background: rgba(14, 35, 41, 0.26);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 240ms ease,
+    border-color 240ms ease;
+}
+.pv-hero-arrow:hover {
+  background: rgba(14, 35, 41, 0.5);
+  border-color: #fff;
+}
+.pv-hero-arrow:active {
+  background: rgba(14, 35, 41, 0.62);
+}
+.pv-hero-arrow--prev {
+  left: 22px;
+}
+.pv-hero-arrow--next {
+  right: 22px;
+}
+.pv-hero-arrow svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+@media (max-width: 760px) {
+  .pv-hero-shell {
+    min-height: 74vh;
+  }
+  .pv-hero-slide-img {
+    object-position: var(--posM, center 42%);
+  }
+  .pv-hero-arrow {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pv-hero-slide {
+    transition: none;
+  }
+  .pv-hero-slide.is-active .pv-hero-slide-img {
+    animation: none;
+    transform: scale(1);
+  }
+}
