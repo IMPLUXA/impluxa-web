@@ -76,7 +76,15 @@ export const EventosContentSchema = z.object({
     // Absent (Hakuna) -> no eyebrow node rendered -> byte-identical.
     eyebrow: z.string().optional(),
     // Optional hero trust badges (turismo). Absent (Hakuna) -> no list rendered.
-    trust_badges: z.array(z.string()).optional(),
+    // Each badge carries its own icon (handoff: shield/users/sun); default check.
+    trust_badges: z
+      .array(
+        z.object({
+          label: z.string(),
+          icon: z.enum(["shield", "users", "sun", "check"]).default("check"),
+        }),
+      )
+      .optional(),
     cta_primary_label: z.string(),
     cta_primary_href: z.string(),
     cta_secondary_label: z.string().optional(),
@@ -98,6 +106,13 @@ export const EventosContentSchema = z.object({
   // Optional "Otras excursiones / Paseos" list. Absent -> section not rendered.
   paseos: z.array(PaseoSchema).optional(),
   contacto: ContactoSchema,
+  // Optional tenant nav (turismo). OPT-IN: absent (Hakuna) -> no nav rendered
+  // -> byte-identical. .optional() NEVER .default({}) (nested-default trap).
+  nav: z
+    .object({
+      items: z.array(z.object({ label: z.string(), href: z.string() })).min(1),
+    })
+    .optional(),
 });
 
 export const EventosDesignSchema = z.object({
@@ -124,6 +139,10 @@ export const EventosDesignSchema = z.object({
 
 export const EventosMediaSchema = z.object({
   logo_url: z.string().optional(),
+  // Nav wordmark variants (turismo): light logo over dark bg (hero), dark logo
+  // over light bg (scrolled nav). Absent (Hakuna) -> no nav -> unused.
+  logo_url_light: z.string().optional(),
+  logo_url_dark: z.string().optional(),
   hero_image_url: z.string().optional(),
   gallery: z.array(z.string()).default([]),
   favicon_url: z.string().optional(),

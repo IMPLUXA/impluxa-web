@@ -1,5 +1,27 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import type { EventosContent, EventosDesign, EventosMedia } from "../schema";
+
+// Trust-badge icons (handoff: Lucide geometry, stroke = Copper 400 #C79A63).
+// Turismo-only — rendered solely inside the content.trust_badges block.
+const BADGE_ICON_INNER: Record<string, ReactNode> = {
+  shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+  users: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </>
+  ),
+  check: <path d="M20 6 9 17l-5-5" />,
+};
 
 export function Hero({
   content,
@@ -47,16 +69,17 @@ export function Hero({
             className="absolute inset-0 -z-10"
             style={{
               background:
-                "linear-gradient(180deg, rgba(14,35,41,0.62) 0%, rgba(14,35,41,0.40) 45%, rgba(14,35,41,0.80) 100%)",
+                "linear-gradient(to top, rgba(14,35,41,0.95) 0%, rgba(14,35,41,0.74) 26%, rgba(14,35,41,0.34) 52%, rgba(14,35,41,0.36) 78%, rgba(14,35,41,0.62) 100%)",
             }}
           />
         </>
       )}
       {content.eyebrow && (
         <p
-          className="pv-anim-in mb-3 text-sm font-semibold tracking-widest uppercase"
+          className="pv-anim-in mb-3 text-sm font-semibold uppercase"
           style={{
             color: "#E7C99B",
+            letterSpacing: "0.22em",
             textShadow: "0 1px 12px rgba(10,26,31,0.7)",
             animationDelay: "0.05s",
           }}
@@ -153,7 +176,23 @@ export function Hero({
           }
         >
           {content.cta_primary_label}
-          {hasPhoto && <span aria-hidden="true"> →</span>}
+          {hasPhoto && (
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ marginLeft: "8px" }}
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          )}
         </a>
         {content.cta_secondary_href && (
           <a
@@ -185,7 +224,7 @@ export function Hero({
         >
           {content.trust_badges.map((badge) => (
             <li
-              key={badge}
+              key={badge.label}
               className="inline-flex items-center gap-2 text-sm font-semibold"
               style={{
                 color: "#E0DACE",
@@ -197,15 +236,15 @@ export function Hero({
                 height="16"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#D6A45C"
+                stroke="#C79A63"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path d="M20 6 9 17l-5-5" />
+                {BADGE_ICON_INNER[badge.icon] ?? BADGE_ICON_INNER.check}
               </svg>
-              {badge}
+              {badge.label}
             </li>
           ))}
         </ul>

@@ -127,9 +127,9 @@ const turismoHero: EventosContent["hero"] = {
   cta_primary_label: "Ver excursiones",
   cta_primary_href: "#servicios",
   trust_badges: [
-    "Guías locales certificados",
-    "Grupos reducidos",
-    "Salidas todo el año",
+    { label: "Guías locales certificados", icon: "shield" },
+    { label: "Grupos reducidos", icon: "users" },
+    { label: "Salidas todo el año", icon: "sun" },
   ],
   // no cta_secondary -> single CTA
 };
@@ -241,6 +241,49 @@ describe("PIECE 1 — WhatsApp FAB is turismo-only (gated whatsapp_cta===true)",
     );
     expect(fab).not.toBeNull();
     expect(fab?.getAttribute("href")).toContain("wa.me/");
+  });
+});
+
+// ---- Nav gate (turismo-only, opt-in content.nav) ----
+describe("TenantNav is turismo-only (gated content.nav)", () => {
+  it("Hakuna (no content.nav): NO nav/header rendered", () => {
+    const { container } = render(
+      <EventosSite
+        content={defaultContent}
+        design={defaultDesign}
+        media={defaultMedia}
+        tenantId="hakuna"
+        tenantName="hakunamatata"
+      />,
+    );
+    // TenantNav renders a <header>; Site has no other <header> (footer is <footer>).
+    expect(container.querySelector("header")).toBeNull();
+    expect(container.querySelector("nav")).toBeNull();
+  });
+
+  it("tenant with content.nav: nav present with the items", () => {
+    const withNav: EventosContent = {
+      ...defaultContent,
+      nav: {
+        items: [
+          { label: "Excursiones", href: "#excursiones" },
+          { label: "Paseos", href: "#paseos" },
+        ],
+      },
+    };
+    const { container } = render(
+      <EventosSite
+        content={withNav}
+        design={defaultDesign}
+        media={{ ...defaultMedia, logo_url_light: "https://x/l.png" }}
+        tenantId="turismo"
+        tenantName="Patagonia Viva"
+      />,
+    );
+    const nav = container.querySelector("nav");
+    expect(nav).not.toBeNull();
+    expect(nav?.textContent).toContain("Excursiones");
+    expect(nav?.textContent).toContain("Paseos");
   });
 });
 
