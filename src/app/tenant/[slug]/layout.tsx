@@ -50,6 +50,10 @@ const DEFAULT_FONTS = `${fredoka.variable} ${inter.variable}`;
 const FONTSETS: Record<string, string> = {
   hakunamatata: `${fredoka.variable} ${inter.variable}`,
   turismo: `${cinzel.variable} ${hanken.variable}`,
+  // RENAME turismo -> patagoniaviva (additive): same fontset, BOTH keys live so
+  // there is no slug-without-fontset window across the DB flip (Stage 3). The
+  // old `turismo` key stays until the rename is fully retired.
+  patagoniaviva: `${cinzel.variable} ${hanken.variable}`,
 };
 
 export const viewport = {
