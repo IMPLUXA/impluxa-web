@@ -89,8 +89,8 @@
      autonomous_decisions_log s36 override-CEO). 100svh = small viewport height
      (no mobile URL-bar jump); 100vh fallback for browsers without svh. Mobile
      stays 74vh via the @media (max-width:760px) override below. */
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: calc(100vh + 72px);
+  min-height: calc(100svh + 72px);
   display: flex;
   align-items: flex-end;
   /* Tuck under the fixed TenantNav (manifest: 72px). Live-visual calibration
