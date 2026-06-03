@@ -81,6 +81,15 @@ export async function middleware(req: NextRequest) {
   if (host.endsWith(TENANT_SUFFIX)) {
     const slug = host.slice(0, -TENANT_SUFFIX.length);
     if (!slug || slug === "www") return NextResponse.next();
+    // RENAME turismo -> patagoniaviva: 301 the OLD subdomain to the new one.
+    // ENV-GATED OFF by default: ships inert in Stage 1 so turismo keeps serving
+    // (additive principle). Activated atomically with the DB slug flip in Stage 3
+    // by setting PV_RENAME_REDIRECT=on (+ redeploy). Preserves path + query.
+    if (slug === "turismo" && process.env["PV_RENAME_REDIRECT"] === "on") {
+      const dest = req.nextUrl.clone();
+      dest.host = `patagoniaviva${TENANT_SUFFIX}`;
+      return NextResponse.redirect(dest, 301);
+    }
     url.pathname = `/tenant/${slug}${url.pathname === "/" ? "" : url.pathname}`;
     return NextResponse.rewrite(url);
   }
