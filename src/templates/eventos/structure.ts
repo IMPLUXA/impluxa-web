@@ -153,6 +153,15 @@ export const StructureSchema = z
         padding: z.enum(["0", "4", "6", "8", "10"]).default("4"),
       })
       .optional(),
+    // s38 Excursiones v3. "stack" = EXACT current Servicios render -> default ->
+    // Hakuna / any tenant without override is byte-identical by construction.
+    // "overlay" = v3 redesign (dark Pine section, featured split, chips, offer
+    // pricing). OPT-IN via design_json (turismo/patagoniaviva only).
+    servicios: z
+      .object({
+        layout: z.enum(["stack", "overlay"]).default("stack"),
+      })
+      .optional(),
   })
   .optional();
 
@@ -190,6 +199,7 @@ export function resolveStructure(s?: unknown) {
   const paseosRadius = t.paseos?.radius ?? "lg";
   const paseosShadow = t.paseos?.shadow ?? "none";
   const paseosPadding = t.paseos?.padding ?? "4";
+  const serviciosLayout = t.servicios?.layout ?? "stack";
   const join = (...parts: string[]) =>
     parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
   return {
@@ -241,5 +251,7 @@ export function resolveStructure(s?: unknown) {
     // NEW — Paseos list card. Turismo-only surface.
     paseosCard: join("h-full", RADIUS[paseosRadius], SHADOW[paseosShadow]),
     paseosCardPadding: PADDING[paseosPadding],
+    // s38 — Servicios layout variant ("stack" default = current render).
+    serviciosLayout,
   };
 }
