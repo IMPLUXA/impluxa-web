@@ -61,6 +61,7 @@ export function TenantNav({
           <img
             src={logoSrc}
             alt={tenantName}
+            className="pv-nav-logo"
             style={{ height: "38px", width: "auto" }}
           />
         )}

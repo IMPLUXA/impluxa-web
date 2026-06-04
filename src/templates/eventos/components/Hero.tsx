@@ -251,7 +251,7 @@ export function Hero({
         <HeroSlideshow slides={media.hero_slideshow!} />
         <div
           aria-hidden
-          className="absolute inset-0"
+          className="pv-hero-scrim absolute inset-0"
           style={{ zIndex: 1, background: HERO_SCRIM }}
         />
         <div className="pv-hero-content">{heroBody}</div>

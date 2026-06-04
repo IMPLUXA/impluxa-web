@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TouchEvent as ReactTouchEvent } from "react";
 
 /**
  * Hero background slideshow (turismo). OPT-IN: rendered by Hero.tsx ONLY when
@@ -30,7 +29,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
   const [active, setActive] = useState(0);
   const n = slides.length;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const touchX = useRef<number | null>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
 
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -65,24 +64,54 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     startTimer();
   };
 
-  const onTouchStart = (e: ReactTouchEvent) => {
-    touchX.current = e.changedTouches[0].clientX;
-  };
-  const onTouchEnd = (e: ReactTouchEvent) => {
-    if (touchX.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    if (dx > SWIPE_THRESHOLD) prev();
-    else if (dx < -SWIPE_THRESHOLD) next();
-    touchX.current = null;
-  };
+  // Swipe is captured on the WHOLE hero shell, not on .pv-hero-bg. The old React
+  // handlers sat on .pv-hero-bg (z-0), buried under the scrim (z-1) and content
+  // (z-2) which have no pointer-events:none, so on mobile the touch never reached
+  // them and swipe was dead (arrows are display:none below 760px). Touch events
+  // bubble, so a passive listener on the .pv-hero-shell ancestor catches the swipe
+  // wherever the finger lands. Passive + no preventDefault -> vertical scroll intact.
+  useEffect(() => {
+    const shell = bgRef.current?.closest(".pv-hero-shell");
+    if (!shell) return;
+    let startX: number | null = null;
+    let startY = 0;
+    const onStart = (e: Event) => {
+      const t = (e as TouchEvent).changedTouches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+    };
+    const onEnd = (e: Event) => {
+      if (startX == null) return;
+      const t = (e as TouchEvent).changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      startX = null;
+      // The arrows/dots handle their own navigation via onClick; ignore a
+      // tap-drag that ends on a control so it does not ALSO fire a swipe.
+      const target = e.target as Element | null;
+      if (target?.closest?.(".pv-hero-arrow, .pv-hero-dot")) return;
+      // Only a dominantly-horizontal gesture navigates; a vertical scroll with
+      // slight horizontal drift must not hijack the slide.
+      if (Math.abs(dx) <= Math.abs(dy)) return;
+      if (dx > SWIPE_THRESHOLD) {
+        setActive((i) => (i - 1 + n) % n);
+        startTimer();
+      } else if (dx < -SWIPE_THRESHOLD) {
+        setActive((i) => (i + 1) % n);
+        startTimer();
+      }
+    };
+    shell.addEventListener("touchstart", onStart, { passive: true });
+    shell.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      shell.removeEventListener("touchstart", onStart);
+      shell.removeEventListener("touchend", onEnd);
+    };
+  }, [n, startTimer]);
 
   return (
     <>
-      <div
-        className="pv-hero-bg"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
+      <div ref={bgRef} className="pv-hero-bg">
         {slides.map((s, i) => (
           <div
             key={s.url}
