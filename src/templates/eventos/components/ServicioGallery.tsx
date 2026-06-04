@@ -18,11 +18,16 @@ export function ServicioGallery({
   cover,
   title,
   design,
+  overlay = false,
 }: {
   images: string[];
   cover: string;
   title: string;
   design: EventosDesign;
+  // s38 v3: render a BARE full-bleed cover button (fills .exc-photo, no badge —
+  // Servicios paints the title/N-fotos overlay). Absent (default/Hakuna) -> the
+  // exact current cover + badge markup -> byte-identical.
+  overlay?: boolean;
 }) {
   const sc = resolveStructure(design.structure);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -56,31 +61,50 @@ export function ServicioGallery({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => open(0)}
-        aria-haspopup="dialog"
-        aria-label={`Ver galería de ${title} — ${images.length} fotos`}
-        className={`group block w-full cursor-pointer ${sc.galleryItem} focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2`}
-        style={{ outlineColor: design.colors.accent }}
-      >
-        <Image
-          src={cover}
-          alt={title}
-          fill
-          className={`${sc.galleryItemFit} transition group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
-          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-        />
-        <span
-          className="absolute right-2 bottom-2 rounded-full px-3 py-1 text-xs font-semibold"
-          style={{
-            background: design.colors.primary,
-            color: design.colors.background,
-          }}
+      {overlay ? (
+        <button
+          type="button"
+          onClick={() => open(0)}
+          aria-haspopup="dialog"
+          aria-label={`Ver galería de ${title}, ${images.length} fotos`}
+          className="exc-cover-btn focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+          style={{ outlineColor: design.colors.accent }}
         >
-          {images.length} fotos
-        </span>
-      </button>
+          <Image
+            src={cover}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 50vw, 100vw"
+          />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => open(0)}
+          aria-haspopup="dialog"
+          aria-label={`Ver galería de ${title} — ${images.length} fotos`}
+          className={`group block w-full cursor-pointer ${sc.galleryItem} focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2`}
+          style={{ outlineColor: design.colors.accent }}
+        >
+          <Image
+            src={cover}
+            alt={title}
+            fill
+            className={`${sc.galleryItemFit} transition group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100`}
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+          />
+          <span
+            className="absolute right-2 bottom-2 rounded-full px-3 py-1 text-xs font-semibold"
+            style={{
+              background: design.colors.primary,
+              color: design.colors.background,
+            }}
+          >
+            {images.length} fotos
+          </span>
+        </button>
+      )}
 
       <dialog
         ref={dialogRef}

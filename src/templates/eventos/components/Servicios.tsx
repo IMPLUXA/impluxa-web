@@ -1,5 +1,6 @@
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
 import type { EventosContent, EventosDesign } from "../schema";
 import { resolveStructure } from "../structure";
 
@@ -16,6 +17,39 @@ const ServicioGallery = dynamic(
     import("./ServicioGallery").then((m) => ({ default: m.ServicioGallery })),
   { ssr: true },
 );
+
+type Servicio = EventosContent["servicios"][number];
+
+// v3 overlay chip icons, mapped by tags index: 0 = duración (clock),
+// 1 = ubicación (pin), 2 = dificultad (signal). Data order is controlled in
+// content_json (turismo). Out-of-range falls back to the signal icon.
+const CHIP_ICONS: ReactNode[] = [
+  <>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </>,
+  <>
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+  </>,
+  <path d="M3 20h18M7 20V10M12 20V4M17 20v-7" />,
+];
+
+// "Mes de lanzamiento" offer: launch (price_ars = charged) vs regular display
+// (price_regular_ars). Show strike+badge ONLY when a real offer exists AND the
+// discount clears the ~10% threshold (small discounts render a clean price).
+function offerPct(s: {
+  price_ars?: number;
+  price_regular_ars?: number;
+}): number {
+  if (
+    s.price_regular_ars == null ||
+    s.price_ars == null ||
+    s.price_regular_ars <= s.price_ars
+  )
+    return 0;
+  return Math.round((1 - s.price_ars / s.price_regular_ars) * 100);
+}
 
 export function Servicios({
   items,
@@ -34,6 +68,229 @@ export function Servicios({
       ? contacto.whatsapp.replace(/[^0-9]/g, "")
       : null;
   const ctaColor = design.colors.cta ?? design.colors.primary;
+
+  // ----- v3 OVERLAY (turismo opt-in). Separate subtree from the byte-identical
+  // stack path below. Hakuna / default tenants stay on "stack" -> identical. -----
+  if (sc.serviciosLayout === "overlay") {
+    const heading = design.fonts.heading;
+    const anyOffer = items.some((s) => offerPct(s) >= 10);
+    const [featured, ...rest] = items;
+
+    const cover = (s: Servicio) =>
+      s.gallery && s.gallery.length > 0 ? (
+        <ServicioGallery
+          images={s.gallery}
+          cover={s.image_url ?? s.gallery[0]}
+          title={s.title}
+          design={design}
+          overlay
+        />
+      ) : (
+        s.image_url && (
+          <Image
+            src={s.image_url}
+            alt={s.title}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 50vw, 100vw"
+          />
+        )
+      );
+
+    const chips = (s: Servicio) =>
+      s.tags && s.tags.length > 0 ? (
+        <ul className="exc-chips" role="list">
+          {s.tags.map((t, i) => (
+            <li key={`${s.key}-${i}`} className="exc-chip">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                {CHIP_ICONS[i] ?? CHIP_ICONS[2]}
+              </svg>
+              {t}
+            </li>
+          ))}
+        </ul>
+      ) : null;
+
+    const priceBlock = (s: Servicio) => {
+      if (s.price_ars == null) return null;
+      const pct = offerPct(s);
+      const show = pct >= 10;
+      return (
+        <div className="exc-pricewrap">
+          <span className="exc-price">
+            {show && (
+              <span className="exc-reg">
+                {arsPrice.format(s.price_regular_ars!)}
+              </span>
+            )}
+            <span className="exc-amt" style={{ fontFamily: heading }}>
+              {arsPrice.format(s.price_ars)}
+            </span>
+            {show && <span className="exc-off">-{pct}%</span>}
+          </span>
+          <span className="exc-per">por persona</span>
+        </div>
+      );
+    };
+
+    const ctaLink = (s: Servicio) => {
+      const href = waCta
+        ? `https://wa.me/${waCta}?text=${encodeURIComponent(
+            `Hola! Quiero consultar por ${s.title}.`,
+          )}`
+        : "#contacto";
+      return (
+        <a
+          className="exc-cta"
+          href={href}
+          {...(waCta && { target: "_blank", rel: "noopener noreferrer" })}
+          aria-label={`Consultar por ${s.title}${waCta ? " por WhatsApp (se abre en una nueva pestaña)" : ""}`}
+        >
+          Consultar
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </a>
+      );
+    };
+
+    return (
+      <section
+        id="servicios"
+        aria-labelledby="servicios-heading"
+        className="exc-sec"
+      >
+        <div className="exc-wrap">
+          <header className="exc-head">
+            <p className="exc-kicker">Bariloche y la comarca andina</p>
+            <h2
+              id="servicios-heading"
+              className="exc-title"
+              style={{ fontFamily: heading }}
+            >
+              Excursiones <em>de autor</em>
+            </h2>
+            <p className="exc-lead">
+              Salidas en grupos reducidos por los clásicos de la región, con
+              guías que nacieron y viven acá. Montaña, lago y bosque, contados
+              por dentro.
+            </p>
+            {anyOffer && (
+              <span className="exc-launch-pill">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                  style={{ width: 14, height: 14, color: "#b48448" }}
+                >
+                  <path d="M12 2 15 9l7 .5-5.5 4.5L20 21l-8-4.5L4 21l1.5-7L0 9.5 7 9z" />
+                </svg>
+                Mes de lanzamiento · precios promocionales
+              </span>
+            )}
+          </header>
+
+          <ul className="exc-grid" role="list">
+            {/* Featured (items[0]): photo + Pine panel (title NOT over photo). */}
+            {featured && (
+              <li key={featured.key}>
+                <article
+                  className="exc-card exc-card--feature"
+                  aria-labelledby={`servicio-${featured.key}-title`}
+                >
+                  <div className="exc-photo">{cover(featured)}</div>
+                  <div className="exc-feature-panel">
+                    <span className="exc-feature-eyebrow">
+                      El paseo más completo
+                    </span>
+                    <h3
+                      id={`servicio-${featured.key}-title`}
+                      style={{ fontFamily: heading }}
+                    >
+                      {featured.title}
+                    </h3>
+                    <p className="exc-desc">{featured.description}</p>
+                    {chips(featured)}
+                    <div className="exc-foot">
+                      {priceBlock(featured)}
+                      {ctaLink(featured)}
+                    </div>
+                  </div>
+                </article>
+              </li>
+            )}
+
+            {/* Remaining: photo-forward overlay cards. */}
+            {rest.map((s) => (
+              <li key={s.key}>
+                <article
+                  className="exc-card"
+                  aria-labelledby={`servicio-${s.key}-title`}
+                >
+                  <div className="exc-photo">
+                    {cover(s)}
+                    <span className="exc-scrim" aria-hidden="true" />
+                    <div className="exc-ovl">
+                      <h3
+                        id={`servicio-${s.key}-title`}
+                        style={{ fontFamily: heading }}
+                      >
+                        {s.title}
+                      </h3>
+                      {s.gallery && s.gallery.length > 0 && (
+                        <span className="exc-fotos">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            aria-hidden="true"
+                          >
+                            <rect x="3" y="5" width="18" height="14" rx="2" />
+                            <circle cx="9" cy="11" r="2" />
+                            <path d="m21 17-5-5-9 7" />
+                          </svg>
+                          {s.gallery.length}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="exc-body">
+                    <p className="exc-desc">{s.description}</p>
+                    {chips(s)}
+                    <div className="exc-foot">
+                      {priceBlock(s)}
+                      {ctaLink(s)}
+                    </div>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    );
+  }
+
+  // ----- STACK (default) — BYTE-IDENTICAL to pre-v3 (Hakuna + any tenant
+  // without the overlay opt-in). Do not modify. -----
   return (
     <section
       id="servicios"

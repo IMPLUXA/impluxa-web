@@ -12,6 +12,12 @@ export const ServicioSchema = z.object({
   // Optional "desde" price in ARS. Mirrors ComboSchema.price_ars. Absent for
   // existing tenants -> no price line rendered (backward-compatible).
   price_ars: z.number().optional(),
+  // s38 "Mes de lanzamiento" offer. When present AND > price_ars, the card shows
+  // the regular price struck-through + the launch price (price_ars = the CHARGED
+  // price) + a COMPUTED -X% badge (1 - price_ars/price_regular_ars). Discount
+  // under the ~10% threshold renders clean (no strike/badge). Absent -> single
+  // price as before (backward-compat; Hakuna has no servicios offer -> unaffected).
+  price_regular_ars: z.number().optional(),
   // Optional photo album (gallery) for the card. Absent (Hakuna) -> no gallery
   // rendered, no lightbox JS loaded. Each entry is an image URL.
   gallery: z.array(z.string()).optional(),
@@ -48,6 +54,10 @@ export const PaseoSchema = z.object({
   key: z.string(),
   title: z.string(),
   price_ars: z.number().optional(),
+  // s38 offer (same semantics as ServicioSchema.price_regular_ars): regular
+  // display struck-through + computed -X% when present AND > price_ars (over the
+  // ~10% threshold). Absent -> single price (backward-compat).
+  price_regular_ars: z.number().optional(),
   group: z.enum(["regulares", "especiales"]).optional(),
 });
 

@@ -28,6 +28,67 @@ export function Paseos({
   if (!items || items.length === 0) return null;
   const sc = resolveStructure(design.structure);
 
+  // ----- s38 v3 OVERLAY (turismo opt-in): dark Pine continuation of the
+  // Excursiones section, flat list with the launch offer (regular strike +
+  // computed -X% over the ~10% threshold). Hakuna never renders Paseos (null
+  // guard above) and default tenants stay on the stack render below. -----
+  if (sc.serviciosLayout === "overlay") {
+    const heading = design.fonts.heading;
+    const offerPct = (p: { price_ars?: number; price_regular_ars?: number }) =>
+      p.price_regular_ars == null ||
+      p.price_ars == null ||
+      p.price_regular_ars <= p.price_ars
+        ? 0
+        : Math.round((1 - p.price_ars / p.price_regular_ars) * 100);
+    return (
+      <section
+        id="paseos"
+        aria-labelledby="paseos-heading"
+        className="px-6 pt-4 pb-28"
+        style={{ background: "#0e2329" }}
+      >
+        <div className="mx-auto max-w-[1240px]">
+          <div className="exc-paseos-head">
+            <h3 id="paseos-heading" style={{ fontFamily: heading }}>
+              Otras excursiones
+            </h3>
+            <span className="exc-ln" aria-hidden="true" />
+          </div>
+          <ul className="exc-paseos-list" role="list">
+            {items.map((p) => {
+              const pct = offerPct(p);
+              const show = pct >= 10;
+              return (
+                <li key={p.key}>
+                  <span className="exc-pn">{p.title}</span>
+                  {p.price_ars != null &&
+                    (show ? (
+                      <span className="exc-poffer">
+                        <span className="exc-preg">
+                          {arsPrice.format(p.price_regular_ars!)}
+                        </span>
+                        <span
+                          className="exc-pp"
+                          style={{ fontFamily: heading }}
+                        >
+                          {arsPrice.format(p.price_ars)}
+                        </span>
+                        <span className="exc-off">-{pct}%</span>
+                      </span>
+                    ) : (
+                      <span className="exc-pp" style={{ fontFamily: heading }}>
+                        {arsPrice.format(p.price_ars)}
+                      </span>
+                    ))}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+    );
+  }
+
   const grouped = GROUPS.map((g) => ({
     ...g,
     list: items.filter((i) => i.group === g.key),
