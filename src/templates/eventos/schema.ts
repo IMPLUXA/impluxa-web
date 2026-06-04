@@ -24,6 +24,38 @@ export const ServicioSchema = z.object({
   // Optional difficulty/category chips. Absent -> no chips. (No turismo data in
   // PR #1; deferred to follow-up — the schema slot exists, render is conditional.)
   tags: z.array(z.string()).optional(),
+  // s39 P1 — Detalle de excursión (modal sobre la card). OPT-IN, render SOLO en
+  // el branch overlay (design_json.structure.servicios.layout="overlay"). Absent
+  // (Hakuna / stack) -> no modal, no chunk JS del modal (dynamic import +
+  // content-gate). .optional() NUNCA .default({}) (nested-default trap: .default({})
+  // NO cascadea defaults a los leaves; .optional() deja el objeto absent como
+  // undefined y la card null-guarda). Cada leaf .optional() -> absent-safe individual
+  // (un detalle con solo "duracion" es válido). Listas = string[] (1 ítem por línea);
+  // prosa = string. SIN .min() en arrays: un [] degrada a "no renderizado" vía
+  // length-guard en el componente (mismo patrón que gallery/tags).
+  detalle: z
+    .object({
+      itinerario: z.array(z.string()).optional(),
+      incluye: z.array(z.string()).optional(),
+      no_incluye: z.array(z.string()).optional(),
+      // string[]: cada línea "HH:MM ..." o frase libre (el caso día+temporada de
+      // Circuito Grande entra como UNA línea). Display-only en el modal; no se
+      // filtra ni agenda por horario (decisión CEO: string[] congelado s39).
+      horarios: z.array(z.string()).optional(),
+      duracion: z.string().optional(),
+      dificultad: z.string().optional(),
+      cancelacion: z.string().optional(),
+      punto_salida: z.string().optional(),
+      // s39 P1 — FAQs específicas de la excursión (acordeón dentro del modal).
+      // Array de objetos {q,a}, OPT-IN: absent (Hakuna/stack/excursión sin faqs)
+      // -> no acordeón. .optional() NUNCA .default([]) (mismo patrón que
+      // itinerario/incluye: un [] degrada a "no renderizado" vía length-guard).
+      // SIN `id` (Squad Two-Pass cold s39 Pass-2: index-key, consistente con
+      // trust_badges/hero_slideshow/nav.items). `a` = prosa -> render como texto
+      // plano en el componente, NUNCA dangerouslySetInnerHTML.
+      faqs: z.array(z.object({ q: z.string(), a: z.string() })).optional(),
+    })
+    .optional(),
 });
 
 export const ComboSchema = z.object({
