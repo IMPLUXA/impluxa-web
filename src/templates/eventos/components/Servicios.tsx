@@ -18,6 +18,15 @@ const ServicioGallery = dynamic(
   { ssr: true },
 );
 
+// s39 P1 — Detalle modal. Lazy + overlay-only (mismo patrón que ServicioGallery):
+// solo se monta dentro del branch overlay cuando el servicio tiene `detalle`, así
+// un tenant en "stack" (hakunamatata) nunca importa este JS chunk -> byte-idéntico.
+const ServicioDetalle = dynamic(
+  () =>
+    import("./ServicioDetalle").then((m) => ({ default: m.ServicioDetalle })),
+  { ssr: true },
+);
+
 type Servicio = EventosContent["servicios"][number];
 
 // v3 overlay chip icons, mapped by tags index: 0 = duración (clock),
@@ -49,6 +58,25 @@ function offerPct(s: {
   )
     return 0;
   return Math.round((1 - s.price_ars / s.price_regular_ars) * 100);
+}
+
+// s39 P1 — true si el servicio tiene al menos un campo de detalle con contenido.
+// Gate de render del trigger/modal (content-gate). Un `detalle` ausente o {} vacío
+// -> false -> no se monta ServicioDetalle (Hakuna no tiene detalle -> nunca true).
+function hasDetalle(s: Servicio): boolean {
+  const d = s.detalle;
+  if (!d) return false;
+  return Boolean(
+    d.duracion ||
+    d.dificultad ||
+    d.punto_salida ||
+    d.cancelacion ||
+    (d.horarios && d.horarios.length) ||
+    (d.itinerario && d.itinerario.length) ||
+    (d.incluye && d.incluye.length) ||
+    (d.no_incluye && d.no_incluye.length) ||
+    (d.faqs && d.faqs.length),
+  );
 }
 
 export function Servicios({
@@ -232,6 +260,14 @@ export function Servicios({
                       {priceBlock(featured)}
                       {ctaLink(featured)}
                     </div>
+                    {hasDetalle(featured) && (
+                      <ServicioDetalle
+                        detalle={featured.detalle!}
+                        title={featured.title}
+                        cover={featured.image_url ?? featured.gallery?.[0]}
+                        design={design}
+                      />
+                    )}
                   </div>
                 </article>
               </li>
@@ -279,6 +315,14 @@ export function Servicios({
                       {priceBlock(s)}
                       {ctaLink(s)}
                     </div>
+                    {hasDetalle(s) && (
+                      <ServicioDetalle
+                        detalle={s.detalle!}
+                        title={s.title}
+                        cover={s.image_url ?? s.gallery?.[0]}
+                        design={design}
+                      />
+                    )}
                   </div>
                 </article>
               </li>
