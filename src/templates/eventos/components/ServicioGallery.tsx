@@ -10,8 +10,15 @@ import { resolveStructure } from "../structure";
  * imported by Servicios ONLY when a servicio has `gallery`, so a tenant without
  * galleries (hakunamatata) never loads this JS chunk.
  *
- * The trigger is the card's cover image + a "N fotos" badge; clicking opens the
- * modal dialog (Esc / backdrop / ✕ to close, ← → to navigate).
+ * s39 visor mejoras (mockup-aprobado SPEC):
+ *  - SWIPE movil sobre la card (overlay): deslizar horizontal cicla
+ *    [cover + gallery] inline con DOTS. Umbral 40px + dominancia |dx|>|dy|
+ *    (leccion hero-swipe: no secuestrar scroll vertical -> touch-action: pan-y).
+ *    Tap (sin swipe) abre el modal en la imagen actual. Desktop: click abre modal.
+ *  - ZOOM rueda PC en el visor: scale 1-3 (wheel, passive:false -> no scrollea).
+ *  - PAN follow-cursor (desktop, scale>1): el mouse desplaza la imagen,
+ *    proporcional al zoom + clamp a bordes. Reset pan+zoom al cerrar/navegar.
+ *  Todo overlay/visor-only -> Hakuna (stack, sin gallery) nunca monta este chunk.
  */
 export function ServicioGallery({
   images,
@@ -31,23 +38,45 @@ export function ServicioGallery({
 }) {
   const sc = resolveStructure(design.structure);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [index, setIndex] = useState(0);
+  const stageRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
 
-  const open = useCallback((i: number) => {
-    setIndex(i);
-    dialogRef.current?.showModal();
-  }, []);
-  const close = useCallback(() => dialogRef.current?.close(), []);
-  const prev = useCallback(
-    () => setIndex((i) => (i - 1 + images.length) % images.length),
-    [images.length],
-  );
-  const next = useCallback(
-    () => setIndex((i) => (i + 1) % images.length),
-    [images.length],
-  );
+  // s39: el set del visor cicla [cover + gallery] (portada incluida). Dedup
+  // (Pass-2 cold): si cover deriva de gallery[0] (servicio sin image_url ->
+  // `cover = image_url ?? gallery[0]`), NO prepender -> evita la primera foto
+  // duplicada. PV (cover 2k/cover.webp != gallery[0] 2k/g1.webp) -> N+1 completo.
+  const slides = cover && cover !== images[0] ? [cover, ...images] : images;
+  const total = slides.length;
 
+  const [index, setIndex] = useState(0); // imagen activa en el dialog
+  const [coverIdx, setCoverIdx] = useState(0); // slide activo en la card (overlay)
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  const resetZoom = useCallback(() => {
+    setScale(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  const open = useCallback(
+    (i: number) => {
+      setIndex(i);
+      resetZoom();
+      dialogRef.current?.showModal();
+    },
+    [resetZoom],
+  );
+  const close = useCallback(() => dialogRef.current?.close(), []);
+  const prev = useCallback(() => {
+    setIndex((i) => (i - 1 + total) % total);
+    resetZoom();
+  }, [total, resetZoom]);
+  const next = useCallback(() => {
+    setIndex((i) => (i + 1) % total);
+    resetZoom();
+  }, [total, resetZoom]);
+
+  // Keyboard arrows in the open dialog (existing behavior, preserved).
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
@@ -59,24 +88,176 @@ export function ServicioGallery({
     return () => dlg.removeEventListener("keydown", onKey);
   }, [prev, next]);
 
+  // s39: wheel zoom on the dialog stage (desktop). Non-passive so preventDefault
+  // stops the page from scrolling while zooming.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    function onWheel(e: WheelEvent) {
+      e.preventDefault();
+      setScale((s) =>
+        Math.min(3, Math.max(1, s + (e.deltaY < 0 ? 0.2 : -0.2))),
+      );
+    }
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // s39: when zoom returns to 1 -> reset pan; when scale changes -> clamp pan to
+  // bounds so it never reveals empty space.
+  useEffect(() => {
+    if (scale <= 1) {
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+    const r = stageRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const mx = ((scale - 1) * r.width) / 2;
+    const my = ((scale - 1) * r.height) / 2;
+    setPan((p) => ({
+      x: Math.min(mx, Math.max(-mx, p.x)),
+      y: Math.min(my, Math.max(-my, p.y)),
+    }));
+  }, [scale]);
+
+  // s39: pan follow-cursor (desktop, scale>1). Maps cursor position in the stage
+  // -> image translate, proportional to zoom, clamped (px/py in [0,1]).
+  const onStageMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (scale <= 1) return;
+      const r = stageRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      const py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+      setPan({
+        x: (0.5 - px) * (scale - 1) * r.width,
+        y: (0.5 - py) * (scale - 1) * r.height,
+      });
+    },
+    [scale],
+  );
+
+  // s39: card swipe (overlay, movil). Distingue tap (abre modal) de swipe
+  // (cicla coverIdx) por umbral + dominancia horizontal.
+  const touch = useRef({ x: 0, y: 0, swiped: false, multi: false });
+  const onCoverTouchStart = useCallback((e: React.TouchEvent) => {
+    // multi-touch (pinch u otro): NO es swipe de card -> ignorar (Pass-2 cold).
+    if (e.touches.length > 1) {
+      touch.current.multi = true;
+      return;
+    }
+    const t = e.changedTouches[0];
+    touch.current = { x: t.clientX, y: t.clientY, swiped: false, multi: false };
+  }, []);
+  const onCoverTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (touch.current.multi) {
+        if (e.touches.length === 0) touch.current.multi = false; // ultimo dedo -> reset
+        return;
+      }
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touch.current.x;
+      const dy = t.clientY - touch.current.y;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        touch.current.swiped = true;
+        setCoverIdx((i) => (i + (dx < 0 ? 1 : -1) + total) % total);
+      }
+    },
+    [total],
+  );
+  const onCoverClick = useCallback(() => {
+    if (touch.current.swiped) {
+      touch.current.swiped = false;
+      return; // fue swipe, no abrir modal
+    }
+    open(coverIdx);
+  }, [open, coverIdx]);
+  // touchcancel (gesto interrumpido por OS): resetear para no dejar multi/swiped
+  // pegados y deshabilitar silenciosamente el swipe inline (Pass cold nit).
+  const onCoverTouchCancel = useCallback(() => {
+    touch.current.multi = false;
+    touch.current.swiped = false;
+  }, []);
+
   return (
     <>
       {overlay ? (
         <button
           type="button"
-          onClick={() => open(0)}
+          onClick={onCoverClick}
+          onTouchStart={onCoverTouchStart}
+          onTouchEnd={onCoverTouchEnd}
+          onTouchCancel={onCoverTouchCancel}
           aria-haspopup="dialog"
-          aria-label={`Ver galería de ${title}, ${images.length} fotos`}
+          aria-label={`Ver galería de ${title}, ${total} fotos`}
           className="exc-cover-btn focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
-          style={{ outlineColor: design.colors.accent }}
+          style={{
+            outlineColor: design.colors.accent,
+            touchAction: "pan-y",
+            overflow: "hidden",
+          }}
         >
-          <Image
-            src={cover}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="(min-width: 1024px) 50vw, 100vw"
-          />
+          <span
+            style={{
+              display: "flex",
+              height: "100%",
+              width: "100%",
+              transform: `translateX(-${coverIdx * 100}%)`,
+              transition: "transform .28s cubic-bezier(.22,1,.36,1)",
+            }}
+          >
+            {slides.map((src, i) => (
+              <span
+                key={i}
+                style={{
+                  position: "relative",
+                  display: "block",
+                  minWidth: "100%",
+                  height: "100%",
+                }}
+              >
+                <Image
+                  src={src}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
+              </span>
+            ))}
+          </span>
+          {total > 1 && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 10,
+                display: "flex",
+                gap: 6,
+                justifyContent: "center",
+                pointerEvents: "none",
+                zIndex: 2,
+              }}
+            >
+              {slides.map((_, i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: i === coverIdx ? 16 : 6,
+                    height: 6,
+                    borderRadius: 999,
+                    background:
+                      i === coverIdx
+                        ? design.colors.accent
+                        : "rgba(247,242,232,.55)",
+                    transition: "width .2s, background .2s",
+                  }}
+                />
+              ))}
+            </span>
+          )}
         </button>
       ) : (
         <button
@@ -117,6 +298,7 @@ export function ServicioGallery({
         onClick={(e) => {
           if (e.target === dialogRef.current) close();
         }}
+        onClose={resetZoom}
       >
         <div className="p-4">
           <div className="mb-3 flex items-center justify-between gap-4">
@@ -141,17 +323,27 @@ export function ServicioGallery({
               <span aria-hidden="true">✕</span>
             </button>
           </div>
-          <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl">
+          <div
+            ref={stageRef}
+            onMouseMove={onStageMove}
+            className="relative aspect-[3/2] w-full overflow-hidden rounded-xl"
+            style={{ cursor: scale > 1 ? "zoom-out" : "zoom-in" }}
+          >
             <Image
               key={index}
-              src={images[index]}
-              alt={`${title} — foto ${index + 1} de ${images.length}`}
+              src={slides[index]}
+              alt={`${title} — foto ${index + 1} de ${total}`}
               fill
               className="object-contain"
               sizes="92vw"
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                transformOrigin: "center center",
+                transition: "transform .14s ease-out",
+              }}
             />
           </div>
-          {images.length > 1 && (
+          {total > 1 && (
             <div className="mt-3 flex items-center justify-between">
               <button
                 type="button"
@@ -167,7 +359,7 @@ export function ServicioGallery({
                 <span aria-hidden="true">←</span>
               </button>
               <span className="text-sm font-medium" aria-live="polite">
-                {index + 1} / {images.length}
+                {index + 1} / {total}
               </span>
               <button
                 type="button"
