@@ -102,12 +102,9 @@ export function Servicios({
   if (sc.serviciosLayout === "overlay") {
     const heading = design.fonts.heading;
     const anyOffer = items.some((s) => offerPct(s) >= 10);
-    // s40 — 2-up featured hero row (items[0..1]) + 4-up grid (rest). Degrades
-    // gracefully for <2 items: heroes = up to 2, rest = the remainder. With 1
-    // item -> 1 hero, no 4-up; with 0 -> neither block renders (empty section).
-    const heroes = items.slice(0, 2);
-    const rest = items.slice(2);
-    const heroBadges = ["La más elegida", "Top turistas"];
+    // s40 — uniform 2-col grid: ALL services as same-size overlay cards (photo
+    // 3:2 + scrim + title-over-photo + N-fotos badge, then body). No hero/
+    // featured treatment. 2-col desktop -> 1-col mobile (.exc-grid).
 
     const cover = (s: Servicio) =>
       s.gallery && s.gallery.length > 0 ? (
@@ -240,67 +237,12 @@ export function Servicios({
             )}
           </header>
 
-          {/* s40 — 2-up featured hero row. Two grids hermanos = zero gaps by
-              construction (2 + 4 divide clean at every breakpoint). The hero
-              photo keeps the gallery cover button as its ONLY interactive child
-              (lightbox tap + mobile swipe over the whole photo). The overlay
-              over the photo is NON-interactive (.exc-hero-ovl pointer-events:
-              none -> badge + title only) so it never nests a button-in-button
-              and never steals the cover tap. All interactive controls (price,
-              CTA, "Ver detalle") sit in the .exc-hero-body strip BELOW. */}
-          {heroes.length > 0 && (
-            <div className="exc-2up">
-              {heroes.map((s, i) => (
+          {/* s40 — uniform 2-col grid: every service is the SAME photo-forward
+              overlay card (no hero/featured). 2-col desktop -> 1-col mobile. */}
+          <ul className="exc-grid" role="list">
+            {items.map((s) => (
+              <li key={s.key}>
                 <article
-                  key={s.key}
-                  className={`exc-card exc-hero${i === 0 ? "exc-hero--dom" : ""}`}
-                  aria-labelledby={`servicio-${s.key}-title`}
-                >
-                  <div className="exc-photo">
-                    {cover(s)}
-                    <span
-                      className="exc-scrim exc-scrim--tall"
-                      aria-hidden="true"
-                    />
-                    <div className="exc-hero-ovl">
-                      <span className="exc-hero-badge">
-                        {heroBadges[i] ?? "Destacada"}
-                      </span>
-                      <h3
-                        id={`servicio-${s.key}-title`}
-                        style={{ fontFamily: heading }}
-                      >
-                        {s.title}
-                      </h3>
-                      <p className="exc-hero-desc">{s.description}</p>
-                    </div>
-                  </div>
-                  <div className="exc-hero-body">
-                    {chips(s)}
-                    <div className="exc-hero-foot">
-                      {priceBlock(s)}
-                      {ctaLink(s)}
-                    </div>
-                    {hasDetalle(s) && (
-                      <ServicioDetalle
-                        detalle={s.detalle!}
-                        title={s.title}
-                        cover={s.image_url ?? s.gallery?.[0]}
-                        design={design}
-                      />
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          {/* 4-up grid: the remaining services as photo-forward overlay cards. */}
-          {rest.length > 0 && (
-            <div className="exc-4up">
-              {rest.map((s) => (
-                <article
-                  key={s.key}
                   className="exc-card"
                   aria-labelledby={`servicio-${s.key}-title`}
                 >
@@ -349,9 +291,9 @@ export function Servicios({
                     )}
                   </div>
                 </article>
-              ))}
-            </div>
-          )}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     );
