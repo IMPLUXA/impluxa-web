@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<title>PV s41 · Visor · MOCKUP interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--accent:#B48448;--primary:#143038;--secondary:#3E7C95;--cream:#F7F2E8;--text:#1E2B2C;
+    --head:'Cinzel',serif;--body:'Hanken Grotesk',sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--body);background:radial-gradient(120% 80% at 80% -10%,rgba(62,124,149,.16),transparent 50%),linear-gradient(180deg,#143038,#0e2329);color:var(--cream);min-height:100%}
+
+  .stagewrap{max-width:560px;margin:0 auto;padding:34px 18px 60px}
+  .lab{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(247,242,232,.5);margin:0 0 14px}
+  .h{font-family:var(--head);font-weight:700;font-size:1.5rem;margin:0 0 4px;color:#f6f1e8}
+  .sub{font-size:13.5px;color:rgba(247,242,232,.62);margin:0 0 22px}
+
+  /* trigger card (como una exc-card real) */
+  .card{position:relative;display:block;width:100%;aspect-ratio:3/2;border:0;padding:0;cursor:pointer;
+    border-radius:20px;overflow:hidden;background:#16363f;
+    box-shadow:0 22px 50px -18px rgba(0,0,0,.7)}
+  .card img{width:100%;height:100%;object-fit:cover}
+  .card .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,35,41,0) 40%,rgba(14,35,41,.55) 72%,rgba(14,35,41,.95) 100%)}
+  .card .ovl{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between}
+  .card .ovl h3{font-family:var(--head);font-weight:600;color:#f6f1e8;font-size:1.4rem;margin:0;text-shadow:0 2px 18px rgba(8,20,24,.6)}
+  .card .fotos{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#f6f1e8;
+    background:rgba(20,48,56,.55);border:1px solid rgba(247,242,232,.2);border-radius:999px;padding:4px 9px;backdrop-filter:blur(8px)}
+  .hint{margin-top:14px;font-size:12px;color:rgba(247,242,232,.45);text-align:center}
+
+  /* ====== VISOR overlay (propuesta s41) ====== */
+  .visor{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;
+    background:rgba(6,14,17,.93);backdrop-filter:blur(3px)}        /* backdrop MAS oscuro */
+  .visor.open{display:flex}
+  .vtop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;flex:none}
+  .vtitle{font-family:var(--head);font-weight:600;font-size:1.05rem;color:#f6f1e8;margin:0}
+  .vclose{width:46px;height:46px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+    border:0;border-radius:999px;cursor:pointer;color:#10242a;font-size:20px;
+    background:var(--accent);box-shadow:0 6px 18px -6px rgba(0,0,0,.7)}      /* cerrar VISIBLE */
+
+  /* stage: imagen mas PROTAGONISTA (ocupa el alto disponible) */
+  .vstage{position:relative;flex:1;min-height:0;margin:0 8px;overflow:hidden;
+    touch-action:none;cursor:zoom-in}
+  .vstage.zoom{cursor:zoom-out}
+  .vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    transform-origin:center center;transition:transform .14s ease-out;will-change:transform;user-select:none;-webkit-user-drag:none}
+
+  /* flechas LATERALES centradas verticalmente (antes estaban abajo) */
+  .varr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:52px;height:52px;display:inline-flex;align-items:center;justify-content:center;
+    border:0;border-radius:999px;cursor:pointer;color:#f6f1e8;
+    background:rgba(10,24,28,.5);border:1px solid rgba(247,242,232,.22);
+    backdrop-filter:blur(6px);transition:background .2s,transform .2s}
+  .varr:hover{background:rgba(180,132,72,.85);color:#10242a}
+  .varr--prev{left:10px}
+  .varr--next{right:10px}
+  .varr svg{width:24px;height:24px}
+
+  /* abajo: contador N/M + dots */
+  .vbar{flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 16px 22px}
+  .vcount{font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(247,242,232,.85)}
+  .vcount b{color:var(--accent)}
+  .vdots{display:flex;gap:7px;align-items:center}
+  .vdot{width:7px;height:7px;border-radius:999px;border:0;padding:0;cursor:pointer;
+    background:rgba(247,242,232,.4);transition:width .2s,background .2s}
+  .vdot.on{width:20px;background:var(--accent)}
+
+  @media (max-width:520px){
+    .varr{width:44px;height:44px}
+    .vclose{width:42px;height:42px}
+  }
+</style>
+</head>
+<body>
+<div class="stagewrap">
+  <p class="lab">▾ Mockup s41 · Visor de álbumes</p>
+  <h1 class="h">Cerro Catedral</h1>
+  <p class="sub">Tocá la foto para abrir el visor. Probá: <b>celular</b> → swipe horizontal · <b>desktop</b> → rueda del mouse hace zoom, y al estar ampliada el mouse mueve la imagen (pan). Flechas a los costados, contador y dots abajo.</p>
+
+  <button class="card" id="open" aria-haspopup="dialog" aria-label="Ver galería de Cerro Catedral, 8 fotos">
+    <img id="coverimg" alt="" />
+    <span class="scrim"></span>
+    <span class="ovl"><h3>Cerro Catedral</h3>
+      <span class="fotos">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        8 fotos
+      </span>
+    </span>
+  </button>
+  <p class="hint">El diseño actual tiene las flechas <i>abajo</i>. Esta propuesta las pone a los <b>costados, centradas</b>.</p>
+</div>
+
+<!-- ====== VISOR ====== -->
+<div class="visor" id="visor" role="dialog" aria-modal="true" aria-label="Galería Cerro Catedral">
+  <div class="vtop">
+    <p class="vtitle">Cerro Catedral</p>
+    <button class="vclose" id="close" aria-label="Cerrar galería">✕</button>
+  </div>
+  <div class="vstage" id="stage">
+    <img id="vimg" alt="" draggable="false" />
+    <button class="varr varr--prev" id="prev" aria-label="Foto anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="varr varr--next" id="next" aria-label="Foto siguiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div class="vbar">
+    <span class="vcount"><b id="cn">1</b> / <span id="ct">8</span></span>
+    <div class="vdots" id="dots"></div>
+  </div>
+</div>
+
+<script>
+  var BASE="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/excursions/cerro-catedral/2k/";
+  // slides = cover + g1..g7 (igual que el componente real: cover != g1 -> 8 slides)
+  var SLIDES=["cover","g1","g2","g3","g4","g5","g6","g7"].map(function(f){return BASE+f+".webp"});
+  var total=SLIDES.length;
+  document.getElementById("coverimg").src=SLIDES[0];
+  document.getElementById("ct").textContent=total;
+
+  var visor=document.getElementById("visor"),stage=document.getElementById("stage"),
+      vimg=document.getElementById("vimg"),cn=document.getElementById("cn"),
+      dotsBox=document.getElementById("dots");
+  var index=0,scale=1,pan={x:0,y:0};
+
+  // dots
+  for(var i=0;i<total;i++){(function(i){var d=document.createElement("button");
+    d.className="vdot"+(i===0?" on":"");d.setAttribute("aria-label","Ver foto "+(i+1));
+    d.onclick=function(){go(i)};dotsBox.appendChild(d);})(i)}
+
+  function applyTransform(){vimg.style.transform="translate("+pan.x+"px,"+pan.y+"px) scale("+scale+")"}
+  function resetZoom(){scale=1;pan={x:0,y:0};stage.classList.remove("zoom");applyTransform()}
+  function render(){vimg.src=SLIDES[index];cn.textContent=index+1;
+    Array.prototype.forEach.call(dotsBox.children,function(d,i){d.classList.toggle("on",i===index)})}
+  function go(i){index=((i%total)+total)%total;resetZoom();render()}
+  function prev(){go(index-1)} function next(){go(index+1)}
+
+  document.getElementById("open").onclick=function(){visor.classList.add("open");resetZoom();render();document.body.style.overflow="hidden"};
+  function close(){visor.classList.remove("open");document.body.style.overflow=""}
+  document.getElementById("close").onclick=close;
+  document.getElementById("prev").onclick=function(e){e.stopPropagation();prev()};
+  document.getElementById("next").onclick=function(e){e.stopPropagation();next()};
+
+  // keyboard
+  document.addEventListener("keydown",function(e){
+    if(!visor.classList.contains("open"))return;
+    if(e.key==="ArrowLeft")prev();else if(e.key==="ArrowRight")next();else if(e.key==="Escape")close();
+  });
+
+  // wheel zoom (desktop) scale 1-3, paso .2, no scrollea
+  stage.addEventListener("wheel",function(e){e.preventDefault();
+    scale=Math.min(3,Math.max(1,scale+(e.deltaY<0?0.2:-0.2)));
+    stage.classList.toggle("zoom",scale>1);
+    if(scale<=1)pan={x:0,y:0};applyTransform();
+  },{passive:false});
+
+  // pan follow-cursor (desktop, scale>1)
+  stage.addEventListener("mousemove",function(e){
+    if(scale<=1)return;var r=stage.getBoundingClientRect();
+    var px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+    var py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
+    pan={x:(0.5-px)*(scale-1)*r.width,y:(0.5-py)*(scale-1)*r.height};applyTransform();
+  });
+
+  // swipe movil: umbral 40 + dominancia horizontal (no secuestra scroll); multitouch ignorado
+  var sx=null,sy=0,multi=false;
+  stage.addEventListener("touchstart",function(e){
+    if(e.touches.length>1){multi=true;return}
+    var t=e.changedTouches[0];sx=t.clientX;sy=t.clientY;multi=false;
+  },{passive:true});
+  stage.addEventListener("touchend",function(e){
+    if(multi){if(e.touches.length===0)multi=false;return}
+    if(sx==null)return;var t=e.changedTouches[0];var dx=t.clientX-sx,dy=t.clientY-sy;sx=null;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}
+  },{passive:true});
+
+  // click en backdrop (fuera de la imagen) cierra
+  stage.addEventListener("click",function(e){if(e.target===stage&&scale<=1)close()});
+</script>
+</body>
+</html>
