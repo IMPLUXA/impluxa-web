@@ -102,7 +102,12 @@ export function Servicios({
   if (sc.serviciosLayout === "overlay") {
     const heading = design.fonts.heading;
     const anyOffer = items.some((s) => offerPct(s) >= 10);
-    const [featured, ...rest] = items;
+    // s40 — 2-up featured hero row (items[0..1]) + 4-up grid (rest). Degrades
+    // gracefully for <2 items: heroes = up to 2, rest = the remainder. With 1
+    // item -> 1 hero, no 4-up; with 0 -> neither block renders (empty section).
+    const heroes = items.slice(0, 2);
+    const rest = items.slice(2);
+    const heroBadges = ["La más elegida", "Top turistas"];
 
     const cover = (s: Servicio) =>
       s.gallery && s.gallery.length > 0 ? (
@@ -235,48 +240,67 @@ export function Servicios({
             )}
           </header>
 
-          <ul className="exc-grid" role="list">
-            {/* Featured (items[0]): photo + Pine panel (title NOT over photo). */}
-            {featured && (
-              <li key={featured.key}>
+          {/* s40 — 2-up featured hero row. Two grids hermanos = zero gaps by
+              construction (2 + 4 divide clean at every breakpoint). The hero
+              photo keeps the gallery cover button as its ONLY interactive child
+              (lightbox tap + mobile swipe over the whole photo). The overlay
+              over the photo is NON-interactive (.exc-hero-ovl pointer-events:
+              none -> badge + title only) so it never nests a button-in-button
+              and never steals the cover tap. All interactive controls (price,
+              CTA, "Ver detalle") sit in the .exc-hero-body strip BELOW. */}
+          {heroes.length > 0 && (
+            <div className="exc-2up">
+              {heroes.map((s, i) => (
                 <article
-                  className="exc-card exc-card--feature"
-                  aria-labelledby={`servicio-${featured.key}-title`}
+                  key={s.key}
+                  className={`exc-card exc-hero${i === 0 ? "exc-hero--dom" : ""}`}
+                  aria-labelledby={`servicio-${s.key}-title`}
                 >
-                  <div className="exc-photo">{cover(featured)}</div>
-                  <div className="exc-feature-panel">
-                    <span className="exc-feature-eyebrow">
-                      El paseo más completo
-                    </span>
-                    <h3
-                      id={`servicio-${featured.key}-title`}
-                      style={{ fontFamily: heading }}
-                    >
-                      {featured.title}
-                    </h3>
-                    <p className="exc-desc">{featured.description}</p>
-                    {chips(featured)}
-                    <div className="exc-foot">
-                      {priceBlock(featured)}
-                      {ctaLink(featured)}
+                  <div className="exc-photo">
+                    {cover(s)}
+                    <span
+                      className="exc-scrim exc-scrim--tall"
+                      aria-hidden="true"
+                    />
+                    <div className="exc-hero-ovl">
+                      <span className="exc-hero-badge">
+                        {heroBadges[i] ?? "Destacada"}
+                      </span>
+                      <h3
+                        id={`servicio-${s.key}-title`}
+                        style={{ fontFamily: heading }}
+                      >
+                        {s.title}
+                      </h3>
+                      <p className="exc-hero-desc">{s.description}</p>
                     </div>
-                    {hasDetalle(featured) && (
+                  </div>
+                  <div className="exc-hero-body">
+                    {chips(s)}
+                    <div className="exc-hero-foot">
+                      {priceBlock(s)}
+                      {ctaLink(s)}
+                    </div>
+                    {hasDetalle(s) && (
                       <ServicioDetalle
-                        detalle={featured.detalle!}
-                        title={featured.title}
-                        cover={featured.image_url ?? featured.gallery?.[0]}
+                        detalle={s.detalle!}
+                        title={s.title}
+                        cover={s.image_url ?? s.gallery?.[0]}
                         design={design}
                       />
                     )}
                   </div>
                 </article>
-              </li>
-            )}
+              ))}
+            </div>
+          )}
 
-            {/* Remaining: photo-forward overlay cards. */}
-            {rest.map((s) => (
-              <li key={s.key}>
+          {/* 4-up grid: the remaining services as photo-forward overlay cards. */}
+          {rest.length > 0 && (
+            <div className="exc-4up">
+              {rest.map((s) => (
                 <article
+                  key={s.key}
                   className="exc-card"
                   aria-labelledby={`servicio-${s.key}-title`}
                 >
@@ -325,9 +349,9 @@ export function Servicios({
                     )}
                   </div>
                 </article>
-              </li>
-            ))}
-          </ul>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     );
