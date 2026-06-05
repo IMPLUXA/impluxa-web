@@ -588,42 +588,96 @@
   outline-offset: 3px;
   border-radius: 4px;
 }
-/* featured split (items[0]): photo + Pine panel (title NOT over photo) */
-.exc-card--feature {
-  grid-column: span 2;
-  grid-row: span 2;
+/* s40 — two sibling grids, zero-gap by construction (counts 2 + 4 divide clean
+   at every breakpoint). 2-up = featured hero row, 4-up = rest in a 2x2. */
+.exc-2up {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 22px;
+  margin: 0 0 22px;
 }
-.exc-card--feature .exc-photo {
+.exc-4up {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+/* hero card (2-up): height-follower. The card is a flex column; the photo grows
+   (flex:1) so both hero cards stretch to the SAME height -> no empty space. The
+   photo keeps the full-bleed gallery cover button as its only interactive child
+   (tap = lightbox, swipe = mobile gallery). The overlay over the photo is
+   NON-INTERACTIVE (badge + title, pointer-events:none) so it never steals the
+   cover-button tap / never nests a button-in-button. The interactive controls
+   (desc, price, CTA, "Ver detalle") live in the body strip BELOW the photo. */
+.exc-hero {
+  min-height: 440px;
+}
+.exc-hero .exc-photo {
+  flex: 1;
   aspect-ratio: auto;
-  height: 100%;
-  min-height: 300px;
+  min-height: 0;
 }
-.exc-feature-panel {
+.exc-scrim--tall {
+  background: linear-gradient(
+    180deg,
+    rgba(14, 35, 41, 0) 26%,
+    rgba(14, 35, 41, 0.5) 58%,
+    rgba(14, 35, 41, 0.96) 100%
+  );
+}
+.exc-hero-ovl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 30px;
-  justify-content: center;
-  background: linear-gradient(180deg, #16363f, #122d35);
+  gap: 10px;
+  /* non-interactive: taps pass THROUGH to the .exc-cover-btn underneath, so the
+     gallery lightbox + mobile swipe keep the whole photo as their hit area. */
+  pointer-events: none;
 }
-.exc-feature-eyebrow {
-  font-weight: 600;
-  font-size: 11.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #f6f1e8;
-}
-.exc-feature-panel h3 {
+.exc-hero-badge {
+  align-self: flex-start;
+  font-size: 11px;
   font-weight: 700;
-  color: #f6f1e8;
-  font-size: 2rem;
-  line-height: 1.1;
-  margin: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0e2329;
+  background: #b48448;
+  border-radius: 999px;
+  padding: 5px 11px;
 }
-.exc-feature-panel .exc-amt {
-  font-size: 1.9rem;
+.exc-hero-ovl h3 {
+  margin: 0;
+  color: #f6f1e8;
+  font-weight: 700;
+  line-height: 1.05;
+  text-shadow: 0 2px 22px rgba(8, 20, 24, 0.7);
+  font-size: 1.85rem;
+}
+.exc-hero--dom .exc-hero-ovl h3 {
+  font-size: 2.4rem;
+}
+.exc-hero-desc {
+  margin: 0;
+  font-size: 0.96rem;
+  color: rgba(247, 242, 232, 0.82);
+}
+/* hero body strip (below the photo): holds the INTERACTIVE controls. */
+.exc-hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 20px;
+}
+.exc-hero-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 4px;
 }
 /* the gallery cover button fills the photo area and is the click target */
 .exc-photo .exc-cover-btn {
@@ -640,14 +694,11 @@
   .exc-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .exc-card--feature {
-    grid-column: span 2;
-    grid-row: auto;
-    grid-template-columns: 1fr;
+  .exc-2up {
+    grid-template-columns: repeat(2, 1fr);
   }
-  .exc-card--feature .exc-photo {
-    aspect-ratio: 16 / 10;
-    min-height: 0;
+  .exc-4up {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 @media (max-width: 640px) {
@@ -657,8 +708,12 @@
   .exc-grid {
     grid-template-columns: 1fr;
   }
-  .exc-card--feature {
-    grid-column: span 1;
+  .exc-2up,
+  .exc-4up {
+    grid-template-columns: 1fr;
+  }
+  .exc-hero {
+    min-height: 360px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
