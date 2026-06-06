@@ -401,6 +401,10 @@
 .pv-vis-arrow:hover {
   background: rgba(20, 40, 46, 0.72);
 }
+.pv-vis-arrow:focus-visible {
+  outline: 2px solid;
+  outline-offset: 2px;
+}
 .pv-vis-arrow svg {
   width: 22px;
   height: 22px;

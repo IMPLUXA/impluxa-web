@@ -371,8 +371,8 @@ export function ServicioGallery({
             onTouchEnd={onStageTouchEnd}
             className="relative aspect-[3/2] overflow-hidden rounded-xl"
             style={{
-              width: "min(100%, calc((92vh - 150px) * 1.5))",
-              maxHeight: "calc(92vh - 96px)",
+              width: "min(100%, calc((92dvh - 150px) * 1.5))",
+              maxHeight: "calc(92dvh - 96px)",
               background: "#0a1417",
               boxShadow: "0 24px 70px -24px rgba(0,0,0,.85)",
               touchAction: "none",
@@ -385,7 +385,7 @@ export function ServicioGallery({
               alt={`${title} — foto ${index + 1} de ${total}`}
               fill
               className="object-contain"
-              sizes="92vw"
+              sizes="(min-width: 768px) calc((92dvh - 150px) * 1.5), 92vw"
               style={{
                 transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
                 transformOrigin: "center center",
