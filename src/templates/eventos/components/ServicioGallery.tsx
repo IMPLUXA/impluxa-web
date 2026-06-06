@@ -95,8 +95,13 @@ export function ServicioGallery({
     if (!stage) return;
     function onWheel(e: WheelEvent) {
       e.preventDefault();
+      // s41 zoom-fix: el zoom es transform:scale sobre la imagen 2560 cargada.
+      // Capar para que la magnificacion no exceda el source (2560px) -> no pixela.
+      // maxScale = source / ancho-display-del-stage, acotado [2,3].
+      const w = stageRef.current?.getBoundingClientRect().width || 1265;
+      const maxScale = Math.max(2, Math.min(3, 2560 / w));
       setScale((s) =>
-        Math.min(3, Math.max(1, s + (e.deltaY < 0 ? 0.2 : -0.2))),
+        Math.min(maxScale, Math.max(1, s + (e.deltaY < 0 ? 0.2 : -0.2))),
       );
     }
     stage.addEventListener("wheel", onWheel, { passive: false });
@@ -375,7 +380,10 @@ export function ServicioGallery({
               maxHeight: "calc(92dvh - 96px)",
               background: "#0a1417",
               boxShadow: "0 24px 70px -24px rgba(0,0,0,.85)",
-              touchAction: "none",
+              // s41 zoom-fix: pinch-zoom (NO none) -> restaura el zoom nativo del
+              // browser en movil (la foto 2560 se amplia crisp); el swipe (1 dedo
+              // horizontal) sigue navegando por touchend, multitouch -> pinch nativo.
+              touchAction: "pinch-zoom",
               cursor: scale > 1 ? "zoom-out" : "zoom-in",
             }}
           >
@@ -385,7 +393,8 @@ export function ServicioGallery({
               alt={`${title} — foto ${index + 1} de ${total}`}
               fill
               className="object-contain"
-              sizes="(min-width: 768px) calc((92dvh - 150px) * 1.5), 92vw"
+              quality={85}
+              sizes="2560px"
               style={{
                 transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
                 transformOrigin: "center center",
