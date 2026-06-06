@@ -147,6 +147,41 @@ export function Servicios({
         </ul>
       ) : null;
 
+    // s41 V3: banner de horario (lee detalle.horarios[0]). Parsea "main (dias)".
+    const horario = (s: Servicio) => {
+      const raw = s.detalle?.horarios?.[0];
+      if (!raw) return null;
+      const m = raw.match(/^([^(]+?)\s*(?:\(([^)]*)\))?$/);
+      const main = (m?.[1] ?? raw).trim();
+      const dias = m?.[2]?.trim();
+      return (
+        <div className="exc-horario">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          <span>
+            Salida: {main}
+            {dias && <span className="exc-horario-dias"> · {dias}</span>}
+          </span>
+        </div>
+      );
+    };
+
+    // s41 V3: badge -% en la FOTO (movido desde el foot del precio).
+    const offerBadge = (s: Servicio) => {
+      if (s.price_ars == null) return null;
+      const pct = offerPct(s);
+      if (pct < 10) return null;
+      return <span className="exc-off-photo">-{pct}%</span>;
+    };
+
     const priceBlock = (s: Servicio) => {
       if (s.price_ars == null) return null;
       const pct = offerPct(s);
@@ -162,7 +197,6 @@ export function Servicios({
             <span className="exc-amt" style={{ fontFamily: heading }}>
               {arsPrice.format(s.price_ars)}
             </span>
-            {show && <span className="exc-off">-{pct}%</span>}
           </span>
           <span className="exc-per">por persona</span>
         </div>
@@ -249,6 +283,7 @@ export function Servicios({
                 >
                   <div className="exc-photo">
                     {cover(s)}
+                    {offerBadge(s)}
                     <span className="exc-scrim" aria-hidden="true" />
                     <div className="exc-ovl">
                       <h3
@@ -276,6 +311,7 @@ export function Servicios({
                     </div>
                   </div>
                   <div className="exc-body">
+                    {horario(s)}
                     <p className="exc-desc">{s.description}</p>
                     {chips(s)}
                     <div className="exc-foot">

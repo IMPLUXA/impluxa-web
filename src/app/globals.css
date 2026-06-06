@@ -599,7 +599,7 @@
 }
 .exc-amt {
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   color: #b48448;
   letter-spacing: 0.01em;
 }
@@ -617,6 +617,44 @@
 .exc-per {
   font-size: 11.5px;
   color: rgba(247, 242, 232, 0.6);
+}
+/* s41 V3 — banner de horario de salida (turismo-only, overlay) */
+.exc-horario {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e9e2d4;
+  background: rgba(180, 132, 72, 0.12);
+  border: 1px solid rgba(180, 132, 72, 0.3);
+  border-radius: 10px;
+  padding: 8px 11px;
+}
+.exc-horario svg {
+  width: 15px;
+  height: 15px;
+  color: #b48448;
+  flex: none;
+}
+.exc-horario-dias {
+  font-weight: 500;
+  color: rgba(247, 242, 232, 0.62);
+  font-size: 12px;
+}
+/* s41 V3 — badge -% sobre la foto (movido del foot) */
+.exc-off-photo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  font-size: 12px;
+  font-weight: 700;
+  color: #10242a;
+  background: #b48448;
+  border-radius: 8px;
+  padding: 4px 9px;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
 }
 .exc-cta {
   display: inline-flex;
@@ -668,6 +706,34 @@
   }
   .exc-grid {
     grid-template-columns: 1fr;
+  }
+  /* s41 V3 — legibilidad móvil: subir las fuentes chicas de la card
+     (antes quedaban tamaño-desktop en el celu). turismo-only. */
+  .exc-desc {
+    font-size: 1.02rem;
+    line-height: 1.5;
+  }
+  .exc-chip {
+    font-size: 13.5px;
+    padding: 7px 12px;
+  }
+  .exc-horario {
+    font-size: 14px;
+  }
+  .exc-horario-dias {
+    font-size: 13px;
+  }
+  .exc-amt {
+    font-size: 1.6rem;
+  }
+  .exc-per {
+    font-size: 12.5px;
+  }
+  .exc-cta {
+    font-size: 14px;
+  }
+  .exc-ovl h3 {
+    font-size: 1.5rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
