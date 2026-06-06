@@ -79,7 +79,7 @@ export async function generateMetadata({
   const supabase = getSupabaseServiceClient();
   const { data: site } = await supabase
     .from("sites")
-    .select("seo_json")
+    .select("seo_json,media_json")
     .eq("tenant_id", tenant.id)
     .single();
 
@@ -88,7 +88,12 @@ export async function generateMetadata({
   const description: string =
     seo.description ?? `Sitio oficial de ${tenant.name}`;
 
-  return {
+  // Build the base metadata identical to before. `icons` is added ONLY when the
+  // tenant has a media_json.favicon_url — tenants without it (e.g. Hakuna) return
+  // the exact same object as before, so their <head> stays byte-identical and keeps
+  // serving the global app/favicon.ico. Raw read + string guard (no schema.parse:
+  // a strict parse throw here would break metadata for ALL tenants).
+  const metadata: Metadata = {
     title: tenant.name,
     description,
     robots: { index: true, follow: true },
@@ -98,4 +103,19 @@ export async function generateMetadata({
       type: "website",
     },
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const media = (site?.media_json ?? {}) as Record<string, any>;
+  const faviconUrl = media.favicon_url;
+  if (typeof faviconUrl === "string" && faviconUrl.length > 0) {
+    // sizes="any" on the multi-res .ico wins the tab over the global 256x256
+    // (emitted after the root link → also wins the browser tiebreaker).
+    const appleUrl = faviconUrl.replace(/[^/]+$/, "apple-touch-180.png");
+    metadata.icons = {
+      icon: [{ url: faviconUrl, sizes: "any" }],
+      apple: appleUrl,
+    };
+  }
+
+  return metadata;
 }
