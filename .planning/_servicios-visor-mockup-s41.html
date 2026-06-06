@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-<title>PV s41 · Visor v2 · MOCKUP interactivo</title>
+<title>PV s41 · Visor CREAM (base live) · MOCKUP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
@@ -29,87 +29,70 @@
     background:rgba(20,48,56,.55);border:1px solid rgba(247,242,232,.2);border-radius:999px;padding:4px 9px;backdrop-filter:blur(8px)}
   .hint{margin-top:14px;font-size:12px;color:rgba(247,242,232,.45);text-align:center}
 
-  /* ====== VISOR overlay v2 ====== */
-  /* backdrop OPACO (era rgba(...,.93) translúcido -> se veía la página detrás) */
-  .visor{position:fixed;inset:0;z-index:100;display:none;background:#06121a}
-  .visor.open{display:block}
+  /* ====== VISOR CREAM (réplica del live + 2 cambios) ====== */
+  .visor{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+    padding:16px;background:rgba(0,0,0,.7);overflow:hidden}   /* backdrop black/70 como el live; sin scroll de página */
+  .visor.open{display:flex}
 
-  /* cerrar cobre, flotante arriba-derecha (chrome mínimo) */
-  .vclose{position:absolute;top:14px;right:14px;z-index:10;width:46px;height:46px;
-    display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;
-    cursor:pointer;color:#10242a;font-size:20px;background:var(--accent);
-    box-shadow:0 6px 18px -6px rgba(0,0,0,.8)}
+  /* panel cream — bg/radius del live; CAP de altura (fix scrollbar) */
+  .vpanel{position:relative;display:flex;flex-direction:column;
+    width:92vw;max-width:896px;max-height:92vh;        /* max-w-4xl + cap altura */
+    background:var(--cream);color:var(--text);border-radius:16px;padding:16px;  /* rounded-2xl + p-4 */
+    box-shadow:0 30px 80px -24px rgba(0,0,0,.7)}
 
-  /* toggle marco-fijo / natural — SOLO desktop (oculto en móvil) */
-  .vmode{display:none;position:absolute;top:16px;left:16px;z-index:10;gap:4px;padding:4px;
-    border-radius:999px;background:rgba(10,20,26,.7);border:1px solid rgba(247,242,232,.14);backdrop-filter:blur(6px)}
-  .vmode button{font:inherit;font-size:12px;color:var(--cream);cursor:pointer;border:0;background:transparent;border-radius:999px;padding:5px 12px}
-  .vmode button.on{background:var(--accent);color:#10242a;font-weight:700}
+  .vhead{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex:none}
+  .vtitle{font-family:var(--head);font-weight:600;font-size:1.125rem;margin:0;color:var(--text)}
+  .vclose{flex:none;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;
+    border:0;border-radius:999px;cursor:pointer;font-size:20px;
+    background:var(--primary);color:var(--cream)}   /* cerrar como el live (primary pine) */
 
-  /* stage: foto PROTAGONISTA — ocupa casi todo el viewport (deja 64px abajo p/ barra) */
-  .vstage{position:absolute;inset:0 0 64px 0;display:flex;align-items:center;justify-content:center;
-    overflow:hidden;padding:12px;touch-action:none;cursor:zoom-in}
+  /* stage 3:2 — foto llena + rounded (look live). Ancho = el mayor que entre en
+     el alto disponible -> SIEMPRE entra (sin overflow -> sin scrollbar). */
+  .vstage{position:relative;align-self:center;width:min(100%,calc((92vh - 150px) * 1.5));
+    aspect-ratio:3/2;overflow:hidden;border-radius:12px;background:#e9e2d4;
+    touch-action:none;cursor:zoom-in}
   .vstage.zoom{cursor:zoom-out}
-  /* frame = tamaño REAL de la imagen (shrink-to-fit) -> las flechas caen sobre los
-     bordes de la foto, no en el margen negro. overflow hidden recorta el zoom. */
-  .vframe{position:relative;display:inline-flex;max-width:100%;max-height:100%;overflow:hidden;border-radius:6px}
-  .vframe img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;
+  .vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
     transform-origin:center center;transition:transform .14s ease-out;will-change:transform;
     user-select:none;-webkit-user-drag:none}
 
-  /* flechas: overlay SUTIL sobre los bordes de la imagen, sin círculo pesado.
-     OCULTAS en móvil; visibles sólo desktop/pointer-fino. Se realzan on-hover. */
-  .varr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;
-    width:46px;height:72px;display:none;align-items:center;justify-content:center;
-    border:0;background:transparent;color:#fff;cursor:pointer;border-radius:12px;
-    filter:drop-shadow(0 2px 7px rgba(0,0,0,.75));transition:background .2s}
-  .varr svg{width:32px;height:32px;transition:transform .2s}
-  .varr--prev{left:6px}
-  .varr--next{right:6px}
-  .varr:hover{background:linear-gradient(90deg,rgba(6,18,26,.0),rgba(6,18,26,.0))}
-  .varr--prev:hover{background:linear-gradient(90deg,rgba(6,18,26,.5),rgba(6,18,26,0))}
-  .varr--next:hover{background:linear-gradient(270deg,rgba(6,18,26,.5),rgba(6,18,26,0))}
-  .varr:hover svg{transform:scale(1.12)}
+  /* CAMBIO 2: flechas a los COSTADOS, centradas verticalmente. Minimalistas.
+     OCULTAS en móvil (CEO: móvil navega con swipe). */
+  .varr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:42px;height:42px;display:none;align-items:center;justify-content:center;
+    border:0;border-radius:999px;cursor:pointer;color:#fff;
+    background:rgba(20,40,46,.42);backdrop-filter:blur(6px);
+    box-shadow:0 2px 10px -2px rgba(0,0,0,.45);transition:background .2s,transform .2s}
+  .varr:hover{background:rgba(20,40,46,.72)}
+  .varr:active{transform:translateY(-50%) scale(.94)}
+  .varr svg{width:22px;height:22px}
+  .varr--prev{left:12px}
+  .varr--next{right:12px}
   @media (min-width:768px) and (pointer:fine){
     .varr{display:inline-flex}
   }
-  /* DESKTOP (>=768px) v4: marco moderado NO dominante + toggle marco-fijo/natural.
-     Móvil (<768px) NO entra acá -> congelado byte-idéntico al v2 aprobado. */
-  @media (min-width:768px){
-    .vstage{padding:28px}
-    .vmode{display:inline-flex}
-    /* chrome común del marco (ambos modos) */
-    .vframe{border-radius:10px;border:1px solid rgba(247,242,232,.16);
-      box-shadow:0 24px 70px -24px rgba(0,0,0,.85);background:#06121a}
-    /* MARCO FIJO (default): caja 3:2 moderada; fotos anchas letterbox sutil
-       contra el fondo opaco; las 3:2 llenan la caja -> todas mismo tamaño */
-    body.mode-fixed .vframe{width:860px;max-width:92vw;aspect-ratio:3/2;max-height:64vh}
-    body.mode-fixed .vframe img{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain}
-    /* NATURAL: cada foto su propio aspecto, capeada chica (no dominante) */
-    body.mode-natural .vframe{max-width:860px;max-height:64vh}
-  }
 
-  /* barra abajo: contador N/M + dots (siempre, móvil y desktop) */
-  .vbar{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:5;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
-  .vcount{font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(247,242,232,.85)}
+  /* abajo: contador N/M + dots */
+  .vbar{flex:none;display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:12px}
+  .vcount{font-size:13px;font-weight:600;color:var(--text)}
   .vcount b{color:var(--accent)}
   .vdots{display:flex;gap:7px;align-items:center}
   .vdot{width:7px;height:7px;border-radius:999px;border:0;padding:0;cursor:pointer;
-    background:rgba(247,242,232,.4);transition:width .2s,background .2s}
+    background:rgba(30,43,44,.28);transition:width .2s,background .2s}
   .vdot.on{width:20px;background:var(--accent)}
 
   @media (max-width:520px){
-    .vstage{padding:0}
-    .vclose{width:42px;height:42px;top:12px;right:12px}
+    .visor{padding:10px}
+    .vpanel{padding:12px;max-height:94vh}
+    .vstage{width:min(100%,calc((94vh - 130px) * 1.5))}
   }
 </style>
 </head>
 <body>
 <div class="stagewrap">
-  <p class="lab">▾ Mockup s41 · Visor de álbumes · v2</p>
+  <p class="lab">▾ Mockup s41 · Visor CREAM (base = live)</p>
   <h1 class="h">Cerro Catedral</h1>
-  <p class="sub">Tocá la foto para abrir el visor. <b>Celular</b> → swipe horizontal (sin flechas) · <b>desktop</b> → flechas a los costados, rueda del mouse hace zoom, y al ampliar el mouse mueve la imagen (pan).</p>
+  <p class="sub">Réplica del visor live (cream, foto llenando, redondeado) + 2 cambios: <b>sin scrollbar</b> y <b>flechas a los costados</b>. Tocá la foto para abrir. Celu → swipe · desktop → flechas + rueda zoom + pan.</p>
 
   <button class="card" id="open" aria-haspopup="dialog" aria-label="Ver galería de Cerro Catedral, 8 fotos">
     <img id="coverimg" alt="" />
@@ -121,18 +104,17 @@
       </span>
     </span>
   </button>
-  <p class="hint">v2: móvil sin flechas (swipe) · desktop foto grande + flechas sutiles sobre la imagen · fondo opaco.</p>
+  <p class="hint">Base cream del live · sin barra de scroll · flechas centradas a los lados (desktop) · móvil swipe.</p>
 </div>
 
 <!-- ====== VISOR ====== -->
 <div class="visor" id="visor" role="dialog" aria-modal="true" aria-label="Galería Cerro Catedral">
-  <div class="vmode" id="vmode" role="group" aria-label="Tamaño de la foto (desktop)">
-    <button type="button" data-m="fixed" class="on">Marco fijo</button>
-    <button type="button" data-m="natural">Tamaño natural</button>
-  </div>
-  <button class="vclose" id="close" aria-label="Cerrar galería">✕</button>
-  <div class="vstage" id="stage">
-    <div class="vframe" id="frame">
+  <div class="vpanel">
+    <div class="vhead">
+      <h3 class="vtitle">Cerro Catedral</h3>
+      <button class="vclose" id="close" aria-label="Cerrar galería">✕</button>
+    </div>
+    <div class="vstage" id="stage">
       <img id="vimg" alt="" draggable="false" />
       <button class="varr varr--prev" id="prev" aria-label="Foto anterior">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -141,10 +123,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
-  </div>
-  <div class="vbar">
-    <span class="vcount"><b id="cn">1</b> / <span id="ct">8</span></span>
-    <div class="vdots" id="dots"></div>
+    <div class="vbar">
+      <span class="vcount"><b id="cn">1</b> / <span id="ct">8</span></span>
+      <div class="vdots" id="dots"></div>
+    </div>
   </div>
 </div>
 
@@ -156,7 +138,6 @@
   document.getElementById("ct").textContent=total;
 
   var visor=document.getElementById("visor"),stage=document.getElementById("stage"),
-      frame=document.getElementById("frame"),
       vimg=document.getElementById("vimg"),cn=document.getElementById("cn"),
       dotsBox=document.getElementById("dots");
   var index=0,scale=1,pan={x:0,y:0};
@@ -177,25 +158,25 @@
   document.getElementById("close").onclick=close;
   document.getElementById("prev").onclick=function(e){e.stopPropagation();prev()};
   document.getElementById("next").onclick=function(e){e.stopPropagation();next()};
+  // click en backdrop (fuera del panel) cierra, como el dialog live
+  visor.addEventListener("click",function(e){if(e.target===visor)close()});
 
   document.addEventListener("keydown",function(e){
     if(!visor.classList.contains("open"))return;
     if(e.key==="ArrowLeft")prev();else if(e.key==="ArrowRight")next();else if(e.key==="Escape")close();
   });
 
-  // wheel zoom (desktop) scale 1-3, paso .2, no scrollea
+  // wheel zoom (desktop) scale 1-3
   stage.addEventListener("wheel",function(e){e.preventDefault();
     scale=Math.min(3,Math.max(1,scale+(e.deltaY<0?0.2:-0.2)));
     stage.classList.toggle("zoom",scale>1);
     if(scale<=1)pan={x:0,y:0};applyTransform();
   },{passive:false});
 
-  // pan follow-cursor (desktop, scale>1) — clamp contra el MARCO sin transformar
-  // (frame), NO contra vimg (que ya viene escalado por el transform y sobre-estimaba
-  // el máximo ~×scale, sacando la foto del marco). overscan = (scale-1)*lado/2 ->
-  // pan ∈ [-max,+max] exacto: el borde de la imagen nunca entra al marco (sin vacío).
+  // pan follow-cursor (desktop, scale>1) — clamp contra el STAGE (no transformado)
+  // -> el cursor mueve la imagen DENTRO del marco, sin sacarla (lección v5).
   stage.addEventListener("mousemove",function(e){
-    if(scale<=1)return;var r=frame.getBoundingClientRect();
+    if(scale<=1)return;var r=stage.getBoundingClientRect();
     var px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
     var py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
     pan={x:(0.5-px)*(scale-1)*r.width,y:(0.5-py)*(scale-1)*r.height};applyTransform();
@@ -212,20 +193,6 @@
     if(sx==null)return;var t=e.changedTouches[0];var dx=t.clientX-sx,dy=t.clientY-sy;sx=null;
     if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}
   },{passive:true});
-
-  // click en margen (fuera de la imagen) cierra
-  stage.addEventListener("click",function(e){if(e.target===stage&&scale<=1)close()});
-
-  // toggle marco-fijo / natural (desktop). Default = marco fijo. Móvil ignora (CSS desktop-only).
-  document.body.classList.add("mode-fixed");
-  var vmode=document.getElementById("vmode");
-  vmode.addEventListener("click",function(e){
-    if(e.target.tagName!=="BUTTON")return;var m=e.target.dataset.m;
-    document.body.classList.toggle("mode-fixed",m==="fixed");
-    document.body.classList.toggle("mode-natural",m==="natural");
-    Array.prototype.forEach.call(vmode.children,function(b){b.classList.toggle("on",b.dataset.m===m)});
-    resetZoom();
-  });
 </script>
 </body>
 </html>
