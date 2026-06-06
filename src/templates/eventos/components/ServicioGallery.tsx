@@ -179,6 +179,36 @@ export function ServicioGallery({
     touch.current.swiped = false;
   }, []);
 
+  // s41 visor redesign: swipe en el STAGE del dialog (movil, sin flechas) ->
+  // navega prev/next. Umbral 40 + dominancia horizontal; multitouch ignorado;
+  // no navega con zoom (scale>1). Pan sigue siendo desktop (onMouseMove).
+  const stageTouch = useRef({ x: 0, y: 0, multi: false });
+  const onStageTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length > 1) {
+      stageTouch.current.multi = true;
+      return;
+    }
+    const t = e.changedTouches[0];
+    stageTouch.current = { x: t.clientX, y: t.clientY, multi: false };
+  }, []);
+  const onStageTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (stageTouch.current.multi) {
+        if (e.touches.length === 0) stageTouch.current.multi = false;
+        return;
+      }
+      if (scale > 1) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - stageTouch.current.x;
+      const dy = t.clientY - stageTouch.current.y;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) next();
+        else prev();
+      }
+    },
+    [scale, next, prev],
+  );
+
   return (
     <>
       {overlay ? (
@@ -290,44 +320,64 @@ export function ServicioGallery({
       <dialog
         ref={dialogRef}
         aria-labelledby={labelId}
-        className="m-auto w-[92vw] max-w-4xl rounded-2xl p-0 backdrop:bg-black/70"
-        style={{
-          background: design.colors.background,
-          color: design.colors.text,
-        }}
+        className="m-0 h-screen w-screen max-w-none bg-transparent p-0 backdrop:bg-[#0a1417]"
         onClick={(e) => {
           if (e.target === dialogRef.current) close();
         }}
         onClose={resetZoom}
       >
-        <div className="p-4">
-          <div className="mb-3 flex items-center justify-between gap-4">
-            <h3
-              id={labelId}
-              className="text-lg font-semibold"
-              style={{ fontFamily: design.fonts.heading }}
-            >
-              {title}
-            </h3>
-            <button
-              type="button"
-              onClick={close}
-              aria-label="Cerrar galería"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-xl focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{
-                background: design.colors.primary,
-                color: design.colors.background,
-                outlineColor: design.colors.accent,
-              }}
-            >
-              <span aria-hidden="true">✕</span>
-            </button>
-          </div>
+        {/* s41 redesign: panel CREAM -> contenedor full-screen OPACO #0a1417.
+            La foto FLOTA; el fondo opaco no transparenta la pagina (sin fantasma). */}
+        <div
+          className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden"
+          style={{ background: "#0a1417", padding: 16 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) close();
+          }}
+        >
+          {/* titulo CLARO (legible sobre oscuro) */}
+          <h3
+            id={labelId}
+            className="absolute top-5 left-5 z-10 text-base font-semibold"
+            style={{
+              fontFamily: design.fonts.heading,
+              color: "#f6f1e8",
+              textShadow: "0 1px 10px rgba(0,0,0,.55)",
+            }}
+          >
+            {title}
+          </h3>
+          {/* cerrar COBRE, flotante arriba-derecha (visible sobre oscuro) */}
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Cerrar galería"
+            className="absolute top-4 right-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full text-xl focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{
+              background: design.colors.accent,
+              color: "#10242a",
+              outlineColor: design.colors.accent,
+              boxShadow: "0 4px 14px -4px rgba(0,0,0,.6)",
+            }}
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+
+          {/* stage 3:2 capado al viewport (sin scrollbar) + foto rounded + sombra */}
           <div
             ref={stageRef}
             onMouseMove={onStageMove}
-            className="relative aspect-[3/2] w-full overflow-hidden rounded-xl"
-            style={{ cursor: scale > 1 ? "zoom-out" : "zoom-in" }}
+            onTouchStart={onStageTouchStart}
+            onTouchEnd={onStageTouchEnd}
+            className="relative aspect-[3/2] overflow-hidden rounded-xl"
+            style={{
+              width: "min(100%, calc((92dvh - 150px) * 1.5))",
+              maxHeight: "calc(92dvh - 96px)",
+              background: "#0a1417",
+              boxShadow: "0 24px 70px -24px rgba(0,0,0,.85)",
+              touchAction: "none",
+              cursor: scale > 1 ? "zoom-out" : "zoom-in",
+            }}
           >
             <Image
               key={index}
@@ -335,45 +385,102 @@ export function ServicioGallery({
               alt={`${title} — foto ${index + 1} de ${total}`}
               fill
               className="object-contain"
-              sizes="92vw"
+              sizes="(min-width: 768px) calc((92dvh - 150px) * 1.5), 92vw"
               style={{
                 transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
                 transformOrigin: "center center",
                 transition: "transform .14s ease-out",
               }}
             />
+            {/* flechas LATERALES centradas — SOLO desktop pointer:fine (CSS .pv-vis-arrow).
+                Movil: ocultas -> navega por swipe del stage. */}
+            {total > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prev();
+                  }}
+                  aria-label="Foto anterior"
+                  className="pv-vis-arrow pv-vis-arrow--prev"
+                  style={{ outlineColor: design.colors.accent }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    next();
+                  }}
+                  aria-label="Foto siguiente"
+                  className="pv-vis-arrow pv-vis-arrow--next"
+                  style={{ outlineColor: design.colors.accent }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
+
+          {/* contador + dots CLAROS (debajo) */}
           {total > 1 && (
-            <div className="mt-3 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={prev}
-                aria-label="Foto anterior"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 font-semibold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
-                style={{
-                  background: design.colors.secondary,
-                  color: design.colors.background,
-                  outlineColor: design.colors.accent,
-                }}
+            <div className="mt-3 flex flex-col items-center gap-2">
+              <span
+                className="text-sm font-medium"
+                aria-live="polite"
+                style={{ color: "rgba(247,242,232,.9)" }}
               >
-                <span aria-hidden="true">←</span>
-              </button>
-              <span className="text-sm font-medium" aria-live="polite">
-                {index + 1} / {total}
+                <b style={{ color: design.colors.accent }}>{index + 1}</b> /{" "}
+                {total}
               </span>
-              <button
-                type="button"
-                onClick={next}
-                aria-label="Foto siguiente"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full px-5 font-semibold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
-                style={{
-                  background: design.colors.secondary,
-                  color: design.colors.background,
-                  outlineColor: design.colors.accent,
-                }}
-              >
-                <span aria-hidden="true">→</span>
-              </button>
+              <div className="flex items-center" style={{ gap: 7 }}>
+                {slides.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setIndex(i);
+                      resetZoom();
+                    }}
+                    aria-label={`Ver foto ${i + 1}`}
+                    style={{
+                      width: i === index ? 20 : 7,
+                      height: 7,
+                      borderRadius: 999,
+                      border: 0,
+                      padding: 0,
+                      cursor: "pointer",
+                      background:
+                        i === index
+                          ? design.colors.accent
+                          : "rgba(247,242,232,.4)",
+                      transition: "width .2s, background .2s",
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
