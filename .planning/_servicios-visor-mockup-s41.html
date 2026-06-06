@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-<title>PV s41 · Visor · MOCKUP interactivo</title>
+<title>PV s41 · Visor v2 · MOCKUP interactivo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
@@ -18,10 +18,9 @@
   .h{font-family:var(--head);font-weight:700;font-size:1.5rem;margin:0 0 4px;color:#f6f1e8}
   .sub{font-size:13.5px;color:rgba(247,242,232,.62);margin:0 0 22px}
 
-  /* trigger card (como una exc-card real) */
+  /* trigger card */
   .card{position:relative;display:block;width:100%;aspect-ratio:3/2;border:0;padding:0;cursor:pointer;
-    border-radius:20px;overflow:hidden;background:#16363f;
-    box-shadow:0 22px 50px -18px rgba(0,0,0,.7)}
+    border-radius:20px;overflow:hidden;background:#16363f;box-shadow:0 22px 50px -18px rgba(0,0,0,.7)}
   .card img{width:100%;height:100%;object-fit:cover}
   .card .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,35,41,0) 40%,rgba(14,35,41,.55) 72%,rgba(14,35,41,.95) 100%)}
   .card .ovl{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between}
@@ -30,36 +29,48 @@
     background:rgba(20,48,56,.55);border:1px solid rgba(247,242,232,.2);border-radius:999px;padding:4px 9px;backdrop-filter:blur(8px)}
   .hint{margin-top:14px;font-size:12px;color:rgba(247,242,232,.45);text-align:center}
 
-  /* ====== VISOR overlay (propuesta s41) ====== */
-  .visor{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;
-    background:rgba(6,14,17,.93);backdrop-filter:blur(3px)}        /* backdrop MAS oscuro */
-  .visor.open{display:flex}
-  .vtop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;flex:none}
-  .vtitle{font-family:var(--head);font-weight:600;font-size:1.05rem;color:#f6f1e8;margin:0}
-  .vclose{width:46px;height:46px;flex:none;display:inline-flex;align-items:center;justify-content:center;
-    border:0;border-radius:999px;cursor:pointer;color:#10242a;font-size:20px;
-    background:var(--accent);box-shadow:0 6px 18px -6px rgba(0,0,0,.7)}      /* cerrar VISIBLE */
+  /* ====== VISOR overlay v2 ====== */
+  /* backdrop OPACO (era rgba(...,.93) translúcido -> se veía la página detrás) */
+  .visor{position:fixed;inset:0;z-index:100;display:none;background:#06121a}
+  .visor.open{display:block}
 
-  /* stage: imagen mas PROTAGONISTA (ocupa el alto disponible) */
-  .vstage{position:relative;flex:1;min-height:0;margin:0 8px;overflow:hidden;
-    touch-action:none;cursor:zoom-in}
+  /* cerrar cobre, flotante arriba-derecha (chrome mínimo) */
+  .vclose{position:absolute;top:14px;right:14px;z-index:10;width:46px;height:46px;
+    display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;
+    cursor:pointer;color:#10242a;font-size:20px;background:var(--accent);
+    box-shadow:0 6px 18px -6px rgba(0,0,0,.8)}
+
+  /* stage: foto PROTAGONISTA — ocupa casi todo el viewport (deja 64px abajo p/ barra) */
+  .vstage{position:absolute;inset:0 0 64px 0;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;padding:12px;touch-action:none;cursor:zoom-in}
   .vstage.zoom{cursor:zoom-out}
-  .vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-    transform-origin:center center;transition:transform .14s ease-out;will-change:transform;user-select:none;-webkit-user-drag:none}
+  /* frame = tamaño REAL de la imagen (shrink-to-fit) -> las flechas caen sobre los
+     bordes de la foto, no en el margen negro. overflow hidden recorta el zoom. */
+  .vframe{position:relative;display:inline-flex;max-width:100%;max-height:100%;overflow:hidden;border-radius:6px}
+  .vframe img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;
+    transform-origin:center center;transition:transform .14s ease-out;will-change:transform;
+    user-select:none;-webkit-user-drag:none}
 
-  /* flechas LATERALES centradas verticalmente (antes estaban abajo) */
-  .varr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
-    width:52px;height:52px;display:inline-flex;align-items:center;justify-content:center;
-    border:0;border-radius:999px;cursor:pointer;color:#f6f1e8;
-    background:rgba(10,24,28,.5);border:1px solid rgba(247,242,232,.22);
-    backdrop-filter:blur(6px);transition:background .2s,transform .2s}
-  .varr:hover{background:rgba(180,132,72,.85);color:#10242a}
-  .varr--prev{left:10px}
-  .varr--next{right:10px}
-  .varr svg{width:24px;height:24px}
+  /* flechas: overlay SUTIL sobre los bordes de la imagen, sin círculo pesado.
+     OCULTAS en móvil; visibles sólo desktop/pointer-fino. Se realzan on-hover. */
+  .varr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;
+    width:46px;height:72px;display:none;align-items:center;justify-content:center;
+    border:0;background:transparent;color:#fff;cursor:pointer;border-radius:12px;
+    filter:drop-shadow(0 2px 7px rgba(0,0,0,.75));transition:background .2s}
+  .varr svg{width:32px;height:32px;transition:transform .2s}
+  .varr--prev{left:6px}
+  .varr--next{right:6px}
+  .varr:hover{background:linear-gradient(90deg,rgba(6,18,26,.0),rgba(6,18,26,.0))}
+  .varr--prev:hover{background:linear-gradient(90deg,rgba(6,18,26,.5),rgba(6,18,26,0))}
+  .varr--next:hover{background:linear-gradient(270deg,rgba(6,18,26,.5),rgba(6,18,26,0))}
+  .varr:hover svg{transform:scale(1.12)}
+  @media (min-width:768px) and (pointer:fine){
+    .varr{display:inline-flex}
+  }
 
-  /* abajo: contador N/M + dots */
-  .vbar{flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 16px 22px}
+  /* barra abajo: contador N/M + dots (siempre, móvil y desktop) */
+  .vbar{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:5;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
   .vcount{font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(247,242,232,.85)}
   .vcount b{color:var(--accent)}
   .vdots{display:flex;gap:7px;align-items:center}
@@ -68,16 +79,16 @@
   .vdot.on{width:20px;background:var(--accent)}
 
   @media (max-width:520px){
-    .varr{width:44px;height:44px}
-    .vclose{width:42px;height:42px}
+    .vstage{padding:0}
+    .vclose{width:42px;height:42px;top:12px;right:12px}
   }
 </style>
 </head>
 <body>
 <div class="stagewrap">
-  <p class="lab">▾ Mockup s41 · Visor de álbumes</p>
+  <p class="lab">▾ Mockup s41 · Visor de álbumes · v2</p>
   <h1 class="h">Cerro Catedral</h1>
-  <p class="sub">Tocá la foto para abrir el visor. Probá: <b>celular</b> → swipe horizontal · <b>desktop</b> → rueda del mouse hace zoom, y al estar ampliada el mouse mueve la imagen (pan). Flechas a los costados, contador y dots abajo.</p>
+  <p class="sub">Tocá la foto para abrir el visor. <b>Celular</b> → swipe horizontal (sin flechas) · <b>desktop</b> → flechas a los costados, rueda del mouse hace zoom, y al ampliar el mouse mueve la imagen (pan).</p>
 
   <button class="card" id="open" aria-haspopup="dialog" aria-label="Ver galería de Cerro Catedral, 8 fotos">
     <img id="coverimg" alt="" />
@@ -89,23 +100,22 @@
       </span>
     </span>
   </button>
-  <p class="hint">El diseño actual tiene las flechas <i>abajo</i>. Esta propuesta las pone a los <b>costados, centradas</b>.</p>
+  <p class="hint">v2: móvil sin flechas (swipe) · desktop foto grande + flechas sutiles sobre la imagen · fondo opaco.</p>
 </div>
 
 <!-- ====== VISOR ====== -->
 <div class="visor" id="visor" role="dialog" aria-modal="true" aria-label="Galería Cerro Catedral">
-  <div class="vtop">
-    <p class="vtitle">Cerro Catedral</p>
-    <button class="vclose" id="close" aria-label="Cerrar galería">✕</button>
-  </div>
+  <button class="vclose" id="close" aria-label="Cerrar galería">✕</button>
   <div class="vstage" id="stage">
-    <img id="vimg" alt="" draggable="false" />
-    <button class="varr varr--prev" id="prev" aria-label="Foto anterior">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <button class="varr varr--next" id="next" aria-label="Foto siguiente">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
+    <div class="vframe" id="frame">
+      <img id="vimg" alt="" draggable="false" />
+      <button class="varr varr--prev" id="prev" aria-label="Foto anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="varr varr--next" id="next" aria-label="Foto siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
   </div>
   <div class="vbar">
     <span class="vcount"><b id="cn">1</b> / <span id="ct">8</span></span>
@@ -115,7 +125,6 @@
 
 <script>
   var BASE="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/excursions/cerro-catedral/2k/";
-  // slides = cover + g1..g7 (igual que el componente real: cover != g1 -> 8 slides)
   var SLIDES=["cover","g1","g2","g3","g4","g5","g6","g7"].map(function(f){return BASE+f+".webp"});
   var total=SLIDES.length;
   document.getElementById("coverimg").src=SLIDES[0];
@@ -126,7 +135,6 @@
       dotsBox=document.getElementById("dots");
   var index=0,scale=1,pan={x:0,y:0};
 
-  // dots
   for(var i=0;i<total;i++){(function(i){var d=document.createElement("button");
     d.className="vdot"+(i===0?" on":"");d.setAttribute("aria-label","Ver foto "+(i+1));
     d.onclick=function(){go(i)};dotsBox.appendChild(d);})(i)}
@@ -144,7 +152,6 @@
   document.getElementById("prev").onclick=function(e){e.stopPropagation();prev()};
   document.getElementById("next").onclick=function(e){e.stopPropagation();next()};
 
-  // keyboard
   document.addEventListener("keydown",function(e){
     if(!visor.classList.contains("open"))return;
     if(e.key==="ArrowLeft")prev();else if(e.key==="ArrowRight")next();else if(e.key==="Escape")close();
@@ -157,15 +164,15 @@
     if(scale<=1)pan={x:0,y:0};applyTransform();
   },{passive:false});
 
-  // pan follow-cursor (desktop, scale>1)
+  // pan follow-cursor (desktop, scale>1) — clamp respecto al box REAL de la imagen
   stage.addEventListener("mousemove",function(e){
-    if(scale<=1)return;var r=stage.getBoundingClientRect();
+    if(scale<=1)return;var r=vimg.getBoundingClientRect();
     var px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
     var py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
     pan={x:(0.5-px)*(scale-1)*r.width,y:(0.5-py)*(scale-1)*r.height};applyTransform();
   });
 
-  // swipe movil: umbral 40 + dominancia horizontal (no secuestra scroll); multitouch ignorado
+  // swipe móvil: umbral 40 + dominancia horizontal; multitouch ignorado
   var sx=null,sy=0,multi=false;
   stage.addEventListener("touchstart",function(e){
     if(e.touches.length>1){multi=true;return}
@@ -177,7 +184,7 @@
     if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}
   },{passive:true});
 
-  // click en backdrop (fuera de la imagen) cierra
+  // click en margen (fuera de la imagen) cierra
   stage.addEventListener("click",function(e){if(e.target===stage&&scale<=1)close()});
 </script>
 </body>
