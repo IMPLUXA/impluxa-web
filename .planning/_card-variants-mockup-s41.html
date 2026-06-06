@@ -79,15 +79,23 @@
   body.view-mobile .ovl h3{font-size:1.5rem}
 
   /* V1 actual: horario oculto (no existe hoy), fuentes sin bump (el problema en movil) */
+
+  /* ====== PRECIO color (resaltar el valor) — impeccable ====== */
+  body.price-cream .amt{color:#f6f1e8}
+  body.price-cobre .amt{color:#B48448}
+  body.price-gold  .amt{color:#E7C99B;text-shadow:0 0 22px rgba(231,201,155,.25)}
+  body.price-verde .amt{color:#25D366}
 </style>
 </head>
-<body class="v-v2 view-desktop">
+<body class="v-v3 price-gold view-desktop">
 <div class="ctl">
   <span class="tag">Variante</span>
   <span class="grp" id="g-v"><button data-v="v1">V1 actual</button><button data-v="v2" class="on">V2 limpia <span class="rec">★</span></button><button data-v="v3">V3 moderna</button></span>
   <span class="tag">Vista</span>
   <span class="grp" id="g-view"><button data-v="desktop" class="on">Desktop</button><button data-v="mobile">Móvil (celu)</button></span>
-  <span class="note">★ impeccable: V2 sube las fuentes en móvil (chips/precio/desc) + agrega el horario. V1 muestra cómo se ve HOY (chico en celu, sin horario).</span>
+  <span class="tag">Precio</span>
+  <span class="grp" id="g-price"><button data-v="cream">Cream</button><button data-v="cobre">Cobre</button><button data-v="gold" class="on">Gold <span class="rec">★</span></button><button data-v="verde">Verde</button></span>
+  <span class="note">V3 moderna ratificada. ★ Precio Gold claro #E7C99B (8.1:1, premium, on-brand). Verde = color del CTA (parecería botón). Catedral horario "Media jornada · sin horario fijo" hasta horarios correctos.</span>
 </div>
 
 <div class="stage"><div class="stagewrap">
@@ -134,6 +142,7 @@
   function swap(p,v){[...body.classList].forEach(c=>{if(c.indexOf(p)===0)body.classList.remove(c)});body.classList.add(p+v);}
   function wire(id,fn){var g=document.getElementById(id);g.addEventListener("click",e=>{var b=e.target.closest("button");if(!b)return;[...g.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");fn(b.dataset.v);});}
   wire("g-v",v=>swap("v-",v));
+  wire("g-price",v=>swap("price-",v));
   wire("g-view",v=>{swap("view-",v);document.getElementById("mobnote").style.display=v==="mobile"?"block":"none";});
 </script>
 </body>
