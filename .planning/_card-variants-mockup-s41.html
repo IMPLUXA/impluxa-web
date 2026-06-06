@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>PV s41 · Cards excursiones · variantes (limpia/moderna + móvil legible + horario)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--accent:#B48448;--primary:#143038;--secondary:#3E7C95;--cream:#F7F2E8;--cream2:#F6F1E8;
+    --text:#1E2B2C;--cta:#25D366;--head:'Cinzel',serif;--body:'Hanken Grotesk',sans-serif;}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{font-family:var(--body);background:linear-gradient(180deg,#143038,#0e2329);color:var(--cream);min-height:100vh}
+  .ctl{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 14px;background:#0e2329;border-bottom:1px solid rgba(180,132,72,.35);font-size:12px}
+  .tag{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .grp{display:inline-flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(247,242,232,.12);border-radius:999px;padding:3px}
+  .grp button{font:inherit;font-size:11.5px;color:var(--cream);cursor:pointer;border:0;background:transparent;border-radius:999px;padding:5px 11px;white-space:nowrap}
+  .grp button.on{background:var(--accent);color:#10242a;font-weight:700}
+  .rec{font-size:8.5px;opacity:.75}
+  .note{font-size:10.5px;color:rgba(247,242,232,.5);width:100%}
+
+  .stage{padding:40px 24px 80px}
+  .stagewrap{margin:0 auto;transition:max-width .25s}
+  body.view-desktop .stagewrap{max-width:1080px}
+  body.view-mobile .stagewrap{max-width:390px}   /* simula celu real */
+  .grid{display:grid;gap:22px;grid-template-columns:repeat(2,1fr)}
+  body.view-mobile .grid{grid-template-columns:1fr}
+  .mobnote{text-align:center;font-size:11px;color:rgba(247,242,232,.5);margin:0 0 16px}
+
+  /* ===== CARD base (tokens reales .exc-*) ===== */
+  .card{position:relative;display:flex;flex-direction:column;border-radius:20px;overflow:hidden;isolation:isolate;
+    background:#16363f;box-shadow:0 1px 0 rgba(247,242,232,.05) inset,0 22px 50px -18px rgba(0,0,0,.7)}
+  .photo{position:relative;aspect-ratio:3/2;overflow:hidden}
+  .photo img{width:100%;height:100%;object-fit:cover}
+  .scrim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(14,35,41,0) 40%,rgba(14,35,41,.55) 72%,rgba(14,35,41,.95) 100%)}
+  .ovl{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;z-index:2}
+  .ovl h3{font-family:var(--head);font-weight:600;color:#f6f1e8;font-size:1.4rem;line-height:1.1;margin:0;text-shadow:0 2px 18px rgba(8,20,24,.6)}
+  .fotos{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#f6f1e8;background:rgba(20,48,56,.55);border:1px solid rgba(247,242,232,.2);border-radius:999px;padding:4px 9px;backdrop-filter:blur(8px);white-space:nowrap}
+  .fotos svg{width:12px;height:12px}
+  .body{display:flex;flex-direction:column;gap:12px;padding:18px 18px 20px}
+  .desc{font-size:.92rem;color:rgba(247,242,232,.78);margin:0}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0;list-style:none}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#f6f1e8;background:rgba(20,48,56,.55);border:1px solid rgba(247,242,232,.16);border-radius:999px;padding:5px 10px;backdrop-filter:blur(8px)}
+  .chip svg{width:13px;height:13px;color:var(--accent);flex:none}
+  /* HORARIO row (nuevo) */
+  .horario{display:none;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#e9e2d4}
+  .horario svg{width:15px;height:15px;color:var(--accent);flex:none}
+  .horario .dias{font-weight:500;color:rgba(247,242,232,.62);font-size:12px}
+  .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:2px}
+  .pricewrap{display:flex;flex-direction:column;gap:3px}
+  .price{display:flex;align-items:baseline;gap:9px}
+  .reg{font-size:.85rem;font-weight:500;color:rgba(247,242,232,.5);text-decoration:line-through}
+  .amt{font-family:var(--head);font-weight:700;font-size:1.5rem;color:#f6f1e8}
+  .off{font-size:11px;font-weight:700;color:#10242a;background:var(--accent);border-radius:6px;padding:2px 6px}
+  .per{font-size:11.5px;color:rgba(247,242,232,.6)}
+  .cta{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:#f6f1e8;background:transparent;border:1.5px solid rgba(180,132,72,.7);border-radius:999px;padding:9px 16px;text-decoration:none;white-space:nowrap}
+  .cta svg{width:16px;height:16px}
+  .verdet{font-size:12.5px;color:rgba(247,242,232,.6);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+  /* ====== V2 LIMPIA (★rec): horario visible, jerarquía, móvil legible ====== */
+  body.v-v2 .horario,body.v-v3 .horario{display:flex}
+  body.v-v2 .desc{font-size:1rem;color:rgba(247,242,232,.82)}
+  body.v-v2 .chip{font-size:12.5px;padding:6px 11px}
+
+  /* ====== V3 MODERNA: -% badge en la foto + horario chip integrado ====== */
+  body.v-v3 .off-foot{display:none}
+  body.v-v3 .photo .off-photo{display:inline-flex}
+  .off-photo{display:none;position:absolute;top:12px;left:12px;z-index:3;font-size:12px;font-weight:700;color:#10242a;background:var(--accent);border-radius:8px;padding:4px 9px;box-shadow:0 6px 16px -6px rgba(0,0,0,.5)}
+  body.v-v3 .horario{order:-1;background:rgba(180,132,72,.12);border:1px solid rgba(180,132,72,.3);border-radius:10px;padding:8px 11px}
+  body.v-v3 .amt{font-size:1.65rem}
+
+  /* ====== MÓVIL legible: V2/V3 suben fuentes; V1 queda chico (muestra el problema) ====== */
+  body.view-mobile.v-v2 .desc,body.view-mobile.v-v3 .desc{font-size:1.02rem;line-height:1.5}
+  body.view-mobile.v-v2 .chip,body.view-mobile.v-v3 .chip{font-size:13.5px;padding:7px 12px}
+  body.view-mobile.v-v2 .horario,body.view-mobile.v-v3 .horario{font-size:14px}
+  body.view-mobile.v-v2 .per,body.view-mobile.v-v3 .per{font-size:12.5px}
+  body.view-mobile.v-v2 .amt,body.view-mobile.v-v3 .amt{font-size:1.6rem}
+  body.view-mobile.v-v2 .cta,body.view-mobile.v-v3 .cta{font-size:14px;padding:10px 17px}
+  body.view-mobile .ovl h3{font-size:1.5rem}
+
+  /* V1 actual: horario oculto (no existe hoy), fuentes sin bump (el problema en movil) */
+</style>
+</head>
+<body class="v-v2 view-desktop">
+<div class="ctl">
+  <span class="tag">Variante</span>
+  <span class="grp" id="g-v"><button data-v="v1">V1 actual</button><button data-v="v2" class="on">V2 limpia <span class="rec">★</span></button><button data-v="v3">V3 moderna</button></span>
+  <span class="tag">Vista</span>
+  <span class="grp" id="g-view"><button data-v="desktop" class="on">Desktop</button><button data-v="mobile">Móvil (celu)</button></span>
+  <span class="note">★ impeccable: V2 sube las fuentes en móvil (chips/precio/desc) + agrega el horario. V1 muestra cómo se ve HOY (chico en celu, sin horario).</span>
+</div>
+
+<div class="stage"><div class="stagewrap">
+  <p class="mobnote" id="mobnote" style="display:none">▾ Simulación celu (390px) — compará V1 (chico) vs V2/V3 (legible)</p>
+  <div class="grid" id="grid"></div>
+</div></div>
+
+<script>
+  var BASE="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/excursions/";
+  // datos REALES (DB)
+  var CARDS=[
+    {key:"cerro-tronador",title:"Cerro Tronador",desc:"Jornada completa para visitar el Cerro Tronador y el Ventisquero Negro.",
+     tags:["Día completo · 9-9.5h","Centro Bariloche","Baja-media"],price:72000,reg:100000,off:28,fotos:3,
+     horario:"09:00 a 18:00",dias:"salidas diarias"},
+    {key:"villa-la-angostura",title:"Villa La Angostura",desc:"Un día para visitar Villa La Angostura y su zona costera.",
+     tags:["Día completo","Centro Bariloche","Baja"],price:80000,reg:null,off:0,fotos:4,
+     horario:"08:00 a 18:00",dias:""},
+    {key:"cerro-catedral",title:"Cerro Catedral",desc:"Salida para visitar la base del centro de ski más grande de Sudamérica.",
+     tags:["Media jornada","Centro Bariloche","Baja-media"],price:38000,reg:50000,off:24,fotos:7,
+     horario:"Media jornada",dias:"sin horario fijo"}  // ⚠ edge: sin hora-reloj
+  ];
+  var ARS=new Intl.NumberFormat("es-AR");
+  var clock='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  var chipIc='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>';
+  function card(c){
+    var off=c.reg? '<span class="reg">$'+ARS.format(c.reg)+'</span>':'';
+    var offBadge=c.off? '<span class="off off-foot">-'+c.off+'%</span>':'';
+    var offPhoto=c.off? '<span class="off-photo">-'+c.off+'%</span>':'';
+    var chips=c.tags.map(t=>'<li class="chip">'+chipIc+t+'</li>').join('');
+    var diaTxt=c.dias?'<span class="dias">· '+c.dias+'</span>':'';
+    return '<article class="card">'
+      +'<div class="photo">'+offPhoto+'<img src="'+BASE+c.key+'/2560/cover.webp" alt=""><span class="scrim"></span>'
+      +'<div class="ovl"><h3>'+c.title+'</h3><span class="fotos">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-9 7"/></svg>'+c.fotos+'</span></div></div>'
+      +'<div class="body"><p class="desc">'+c.desc+'</p>'
+      +'<ul class="chips">'+chips+'</ul>'
+      +'<div class="horario">'+clock+'<span>Salida: '+c.horario+'</span>'+diaTxt+'</div>'
+      +'<div class="foot"><div class="pricewrap"><span class="price">'+off+'<span class="amt">$'+ARS.format(c.price)+'</span>'+offBadge+'</span><span class="per">por persona</span></div>'
+      +'<a class="cta" href="#">Consultar <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></div>'
+      +'<span class="verdet">Ver detalle</span>'
+      +'</div></article>';
+  }
+  document.getElementById("grid").innerHTML=CARDS.map(card).join("");
+  var body=document.body;
+  function swap(p,v){[...body.classList].forEach(c=>{if(c.indexOf(p)===0)body.classList.remove(c)});body.classList.add(p+v);}
+  function wire(id,fn){var g=document.getElementById(id);g.addEventListener("click",e=>{var b=e.target.closest("button");if(!b)return;[...g.children].forEach(x=>x.classList.remove("on"));b.classList.add("on");fn(b.dataset.v);});}
+  wire("g-v",v=>swap("v-",v));
+  wire("g-view",v=>{swap("view-",v);document.getElementById("mobnote").style.display=v==="mobile"?"block":"none";});
+</script>
+</body>
+</html>
