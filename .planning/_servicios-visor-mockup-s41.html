@@ -31,25 +31,25 @@
 
   /* ====== VISOR CREAM (réplica del live + 2 cambios) ====== */
   .visor{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
-    padding:16px;background:rgba(0,0,0,.7);overflow:hidden}   /* backdrop black/70 como el live; sin scroll de página */
+    padding:16px;background:#0a1417;overflow:hidden}   /* backdrop OPACO sólido (sin panel cream tapando -> sin fantasma de la página) */
   .visor.open{display:flex}
 
   /* panel cream — bg/radius del live; CAP de altura (fix scrollbar) */
   .vpanel{position:relative;display:flex;flex-direction:column;
-    width:92vw;max-width:896px;max-height:92vh;        /* max-w-4xl + cap altura */
-    background:var(--cream);color:var(--text);border-radius:16px;padding:16px;  /* rounded-2xl + p-4 */
-    box-shadow:0 30px 80px -24px rgba(0,0,0,.7)}
+    width:92vw;max-width:896px;max-height:92vh;        /* cap altura (frozen) */
+    background:transparent;color:var(--cream);padding:16px}  /* panel CREAM -> TRANSPARENTE: la foto flota limpia sobre el backdrop */
 
   .vhead{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex:none}
-  .vtitle{font-family:var(--head);font-weight:600;font-size:1.125rem;margin:0;color:var(--text)}
+  .vtitle{font-family:var(--head);font-weight:600;font-size:1.125rem;margin:0;color:#f6f1e8;text-shadow:0 1px 10px rgba(0,0,0,.55)}  /* título claro -> legible sobre backdrop oscuro */
   .vclose{flex:none;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;
     border:0;border-radius:999px;cursor:pointer;font-size:20px;
-    background:var(--primary);color:var(--cream)}   /* cerrar como el live (primary pine) */
+    background:var(--accent);color:#10242a;box-shadow:0 4px 14px -4px rgba(0,0,0,.6)}   /* cerrar COBRE -> visible sobre fondo oscuro */
 
   /* stage 3:2 — foto llena + rounded (look live). Ancho = el mayor que entre en
      el alto disponible -> SIEMPRE entra (sin overflow -> sin scrollbar). */
   .vstage{position:relative;align-self:center;width:min(100%,calc((92vh - 150px) * 1.5));
-    aspect-ratio:3/2;overflow:hidden;border-radius:12px;background:#e9e2d4;
+    aspect-ratio:3/2;overflow:hidden;border-radius:12px;background:#0a1417;
+    box-shadow:0 24px 70px -24px rgba(0,0,0,.85);   /* sombra suave -> la foto se despega del fondo */
     touch-action:none;cursor:zoom-in}
   .vstage.zoom{cursor:zoom-out}
   .vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
@@ -74,11 +74,11 @@
 
   /* abajo: contador N/M + dots */
   .vbar{flex:none;display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:12px}
-  .vcount{font-size:13px;font-weight:600;color:var(--text)}
+  .vcount{font-size:13px;font-weight:600;color:rgba(247,242,232,.9)}   /* contador claro -> legible sobre oscuro */
   .vcount b{color:var(--accent)}
   .vdots{display:flex;gap:7px;align-items:center}
   .vdot{width:7px;height:7px;border-radius:999px;border:0;padding:0;cursor:pointer;
-    background:rgba(30,43,44,.28);transition:width .2s,background .2s}
+    background:rgba(247,242,232,.4);transition:width .2s,background .2s}   /* dots inactivos claros -> visibles sobre oscuro */
   .vdot.on{width:20px;background:var(--accent)}
 
   @media (max-width:520px){
