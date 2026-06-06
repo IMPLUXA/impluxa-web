@@ -156,6 +156,7 @@
   document.getElementById("ct").textContent=total;
 
   var visor=document.getElementById("visor"),stage=document.getElementById("stage"),
+      frame=document.getElementById("frame"),
       vimg=document.getElementById("vimg"),cn=document.getElementById("cn"),
       dotsBox=document.getElementById("dots");
   var index=0,scale=1,pan={x:0,y:0};
@@ -189,9 +190,12 @@
     if(scale<=1)pan={x:0,y:0};applyTransform();
   },{passive:false});
 
-  // pan follow-cursor (desktop, scale>1) — clamp respecto al box REAL de la imagen
+  // pan follow-cursor (desktop, scale>1) — clamp contra el MARCO sin transformar
+  // (frame), NO contra vimg (que ya viene escalado por el transform y sobre-estimaba
+  // el máximo ~×scale, sacando la foto del marco). overscan = (scale-1)*lado/2 ->
+  // pan ∈ [-max,+max] exacto: el borde de la imagen nunca entra al marco (sin vacío).
   stage.addEventListener("mousemove",function(e){
-    if(scale<=1)return;var r=vimg.getBoundingClientRect();
+    if(scale<=1)return;var r=frame.getBoundingClientRect();
     var px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
     var py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
     pan={x:(0.5-px)*(scale-1)*r.width,y:(0.5-py)*(scale-1)*r.height};applyTransform();
