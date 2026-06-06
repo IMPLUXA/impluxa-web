@@ -67,6 +67,15 @@
   @media (min-width:768px) and (pointer:fine){
     .varr{display:inline-flex}
   }
+  /* DESKTOP (>=768px): foto capeada NO-fullscreen, centrada con aire alrededor,
+     aspecto preservado (sizing auto del img, sin stretch) + borde minimalista.
+     Móvil (<768px) NO entra acá -> congelado byte-idéntico. */
+  @media (min-width:768px){
+    .vstage{padding:28px}
+    .vframe{max-width:1180px;max-height:80vh;border-radius:10px;
+      border:1px solid rgba(247,242,232,.16);
+      box-shadow:0 24px 70px -24px rgba(0,0,0,.85)}
+  }
 
   /* barra abajo: contador N/M + dots (siempre, móvil y desktop) */
   .vbar{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:5;
