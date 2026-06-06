@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>PV s41 · HERO subcopy + SERVICIOS header · variantes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--accent:#B48448;--primary:#143038;--secondary:#3E7C95;--cream:#F7F2E8;--cream2:#F6F1E8;
+    --text:#1E2B2C;--cta:#25D366;--gold:#E7C99B;--head:'Cinzel',serif;--body:'Hanken Grotesk',sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:var(--body);background:#0b1a1f;color:var(--cream)}
+
+  /* ---- control bar mockup ---- */
+  .ctl{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+    padding:10px 14px;background:#0e2329;border-bottom:1px solid rgba(180,132,72,.35);font-size:12px}
+  .ctl .tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-right:2px}
+  .grp{display:inline-flex;gap:4px;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(247,242,232,.12);border-radius:999px;padding:3px}
+  .grp button{font:inherit;font-size:11.5px;color:var(--cream);cursor:pointer;border:0;background:transparent;border-radius:999px;padding:5px 11px;white-space:nowrap}
+  .grp button.on{background:var(--accent);color:#10242a;font-weight:700}
+  .grp button .rec{font-size:9px;opacity:.7}
+  .lbl{font-size:10px;color:rgba(247,242,232,.45);letter-spacing:.1em;text-transform:uppercase;width:100%;margin-top:2px}
+
+  /* ============ HERO ============ */
+  .hero{position:relative;min-height:88vh;display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
+  .hero-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+  /* scrim: oscurece abajo-izq para legibilidad (como el real pv-hero-scrim) */
+  .hero-scrim{position:absolute;inset:0;z-index:-1;background:
+    linear-gradient(95deg,rgba(8,20,24,.72) 0%,rgba(8,20,24,.34) 42%,rgba(8,20,24,0) 70%),
+    linear-gradient(0deg,rgba(8,20,24,.78) 0%,rgba(8,20,24,.18) 38%,rgba(8,20,24,0) 60%)}
+  .hero-content{max-width:760px;padding:0 clamp(20px,6vw,72px) clamp(48px,8vh,96px);width:100%}
+  body.hpos-reubicado .hero{align-items:center}
+  .hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin:0 0 16px;font-weight:600;
+    font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  .hero-eyebrow::before{content:"";width:30px;height:2px;background:var(--accent);border-radius:999px}
+  .hero-h1{font-family:var(--head);font-weight:800;color:var(--cream2);line-height:1.05;margin:0 0 22px;
+    font-size:clamp(2.4rem,6vw,4.2rem);text-wrap:balance;text-shadow:0 2px 28px rgba(8,20,24,.55);max-width:18ch}
+
+  /* SUBCOPY — el target de las variantes */
+  .hero-sub{font-family:var(--body);font-size:clamp(1.05rem,2.2vw,1.5rem);line-height:1.5;
+    max-width:46ch;margin:0 0 30px;font-weight:400;color:#EAE4D8;
+    text-shadow:0 1px 16px rgba(10,26,31,.6)}
+  /* color */
+  body.hsub-white  .hero-sub{color:#ffffff}
+  body.hsub-cobre  .hero-sub{color:#B48448}
+  body.hsub-backdrop .hero-sub{color:#ffffff;display:inline;-webkit-box-decoration-break:clone;box-decoration-break:clone;
+    background:rgba(8,20,24,.46);backdrop-filter:blur(7px);padding:.35em .6em;border-radius:10px;
+    box-shadow:0 6px 24px -10px rgba(0,0,0,.5)}
+  /* peso + shadow reforzado (semibold) */
+  body.hweight-semibold .hero-sub{font-weight:600;text-shadow:0 2px 20px rgba(8,20,24,.85),0 1px 3px rgba(8,20,24,.7)}
+  /* posicion reubicado: regla cobre + mas aire */
+  body.hpos-reubicado .hero-sub{margin-top:6px}
+  body.hpos-reubicado .hero-sub::before{content:"";display:block;width:46px;height:3px;background:var(--accent);border-radius:999px;margin:0 0 18px}
+
+  .hero-cta{display:inline-flex;align-items:center;gap:9px;background:var(--cta);color:#06231a;font-weight:700;
+    font-size:15px;border-radius:999px;padding:13px 26px;text-decoration:none;box-shadow:0 12px 30px -12px rgba(0,0,0,.6)}
+
+  /* ============ SERVICIOS (CSS real) ============ */
+  .exc-sec{padding:96px 24px 104px;background:
+    radial-gradient(120% 80% at 80% -10%,rgba(62,124,149,.16) 0%,transparent 50%),
+    linear-gradient(180deg,#143038 0%,#0e2329 100%)}
+  .exc-wrap{max-width:1240px;margin:0 auto}
+  .exc-head{max-width:820px;margin:0}
+  .exc-kicker{display:inline-flex;align-items:center;gap:12px;margin:0 0 18px;font-weight:600;
+    font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:#f7f2e8}
+  .exc-kicker::before{content:"";width:34px;height:2px;background:#b48448;border-radius:999px}
+  .exc-title{font-family:var(--head);font-weight:800;color:#f6f1e8;font-size:clamp(2.6rem,6.5vw,4.5rem);line-height:1.04;margin:0}
+  .exc-title .ln1{display:block;color:#f6f1e8}
+  .exc-title .ln2{display:block;color:var(--accent)}      /* two-tone SOLIDO (no gradient-text, ban impeccable) */
+  body.s2-teal  .exc-title .ln2{color:var(--secondary)}
+  body.s2-cream .exc-title .ln2{color:#f6f1e8}
+  body.ln2-italic .exc-title .ln2{font-style:italic;font-weight:600}
+  .exc-lead{font-size:1.12rem;color:rgba(247,242,232,.78);max-width:52ch;margin:22px 0 0}
+  .lead-corto{display:none}
+  body.s-subcorto .lead-largo{display:none}
+  body.s-subcorto .lead-corto{display:block}
+
+  .pill-lab{margin:30px 0 10px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(247,242,232,.4)}
+  .pill-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .pill-p1{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.085em;
+    text-transform:uppercase;color:#1a1206;background:linear-gradient(180deg,#d9a566,#b48448);border:0;border-radius:999px;
+    padding:7px 14px 7px 11px;box-shadow:0 6px 16px -6px rgba(180,132,72,.6),0 1px 0 rgba(255,255,255,.35) inset}
+  .pill-p2{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;letter-spacing:.1em;
+    text-transform:uppercase;color:#f6f1e8;background:rgba(180,132,72,.18);border:1px solid rgba(180,132,72,.7);border-radius:999px;padding:7px 14px}
+  .pill-p1 svg,.pill-p2 svg{width:13px;height:13px;flex:none}
+  .pill-p1 svg{color:#3a2608}.pill-p2 svg{color:var(--accent)}
+  .pill-cell{display:flex;flex-direction:column;gap:6px}.pill-cell small{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(247,242,232,.4)}
+  body.s-cartelsoft .pill-suf{display:none}
+  body:not(.s-cartelp2) .pill-p2-cell{display:none}
+  body.s-cartelp2 .pill-p1-cell{display:none}
+
+  @media(max-width:560px){.hero-content{padding-bottom:40px}}
+</style>
+</head>
+<body class="hphoto-1 hsub-backdrop hweight-semibold hpos-actual s2-cobre s2-recta s-sublargo s-cartelfull">
+<div class="ctl">
+  <span class="lbl">HERO subcopy (sobre la foto — todas deben leerse)</span>
+  <span class="tag">Foto</span>
+  <span class="grp" id="g-photo"><button data-v="1" class="on">Slide 1</button><button data-v="5">Slide 5</button><button data-v="9">Slide 9</button></span>
+  <span class="tag">Color</span>
+  <span class="grp" id="g-hsub"><button data-v="cream">Cream actual</button><button data-v="white">Blanco</button><button data-v="cobre">Cobre</button><button data-v="backdrop" class="on">Blanco+backdrop <span class="rec">★rec</span></button></span>
+  <span class="tag">Peso</span>
+  <span class="grp" id="g-hweight"><button data-v="regular">Regular</button><button data-v="semibold" class="on">Semibold <span class="rec">★</span></button></span>
+  <span class="tag">Posición</span>
+  <span class="grp" id="g-hpos"><button data-v="actual" class="on">Actual (izq)</button><button data-v="reubicado">Reubicado</button></span>
+
+  <span class="lbl">SERVICIOS header two-tone + decisiones pendientes</span>
+  <span class="tag">Línea 2</span>
+  <span class="grp" id="g-s2"><button data-v="cobre" class="on">Cobre <span class="rec">★</span></button><button data-v="teal">Teal</button><button data-v="cream">Cream</button></span>
+  <span class="tag">Estilo</span>
+  <span class="grp" id="g-s2i"><button data-v="recta" class="on">Recta</button><button data-v="italic">Itálica</button></span>
+  <span class="tag">Subcopy</span>
+  <span class="grp" id="g-ssub"><button data-v="largo" class="on">Largo</button><button data-v="corto">Corto</button></span>
+  <span class="tag">Cartel</span>
+  <span class="grp" id="g-cartel"><button data-v="full" class="on">Completo</button><button data-v="soft">Suavizado</button></span>
+  <span class="tag">Pres</span>
+  <span class="grp" id="g-pres"><button data-v="p1" class="on">P1 sólido</button><button data-v="p2">P2 outline</button></span>
+</div>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <img class="hero-photo" id="heroPhoto" alt="" />
+  <span class="hero-scrim"></span>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Bariloche · Patagonia argentina</p>
+    <h1 class="hero-h1">Viví la Patagonia con quienes la conocen.</h1>
+    <p class="hero-sub">Excursiones guiadas por los lagos, bosques y montañas de Bariloche y alrededores. Consultanos y armamos tu salida ideal.</p>
+    <a class="hero-cta" href="#">Consultar por WhatsApp →</a>
+  </div>
+</section>
+
+<!-- ===== SERVICIOS ===== -->
+<section class="exc-sec">
+  <div class="exc-wrap">
+    <div class="exc-head">
+      <p class="exc-kicker">Bariloche y la comarca andina</p>
+      <h2 class="exc-title"><span class="ln1">EXCURSIONES EN</span><span class="ln2">PATAGONIA VIVA</span></h2>
+      <p class="exc-lead lead-largo">Salidas en grupos reducidos por los clásicos de la región, con guías que nacieron y viven acá. Montaña, lago y bosque, contados por dentro.</p>
+      <p class="exc-lead lead-corto">Conocé la Patagonia con quienes la viven.</p>
+      <p class="pill-lab">Cartel "Mes de lanzamiento"</p>
+      <div class="pill-row">
+        <div class="pill-cell pill-p1-cell"><small>P1 sólido</small>
+          <span class="pill-p1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 15 9l7 .5-5.5 4.5L20 21l-8-4.5L4 21l1.5-7L0 9.5 7 9z"/></svg><span>Mes de lanzamiento<span class="pill-suf"> · precios promocionales</span></span></span></div>
+        <div class="pill-cell pill-p2-cell"><small>P2 outline</small>
+          <span class="pill-p2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 15 9l7 .5-5.5 4.5L20 21l-8-4.5L4 21l1.5-7L0 9.5 7 9z"/></svg><span>Mes de lanzamiento<span class="pill-suf"> · precios promocionales</span></span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  var B="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/hero-slideshow/";
+  var photo=document.getElementById("heroPhoto");
+  function setPhoto(v){photo.src=B+"pv-hero-0"+v+".webp"}
+  setPhoto("1");
+  function wire(id,fn){var g=document.getElementById(id);g.addEventListener("click",function(e){
+    if(e.target.tagName!=="BUTTON"&&!e.target.closest("button"))return;
+    var b=e.target.closest("button");Array.prototype.forEach.call(g.children,function(x){x.classList.remove("on")});b.classList.add("on");fn(b.dataset.v);});}
+  var body=document.body;
+  function swap(prefix,v){[...body.classList].forEach(c=>{if(c.indexOf(prefix)===0)body.classList.remove(c)});body.classList.add(prefix+v);}
+  wire("g-photo",function(v){setPhoto(v)});
+  wire("g-hsub",function(v){swap("hsub-",v)});
+  wire("g-hweight",function(v){swap("hweight-",v)});
+  wire("g-hpos",function(v){swap("hpos-",v)});
+  wire("g-s2",function(v){swap("s2-",v)});
+  wire("g-s2i",function(v){body.classList.toggle("ln2-italic",v==="italic")});
+  wire("g-ssub",function(v){body.classList.toggle("s-subcorto",v==="corto")});
+  wire("g-cartel",function(v){body.classList.toggle("s-cartelsoft",v==="soft")});
+  wire("g-pres",function(v){body.classList.toggle("s-cartelp2",v==="p2")});
+</script>
+</body>
+</html>
