@@ -40,6 +40,12 @@
     cursor:pointer;color:#10242a;font-size:20px;background:var(--accent);
     box-shadow:0 6px 18px -6px rgba(0,0,0,.8)}
 
+  /* toggle marco-fijo / natural — SOLO desktop (oculto en móvil) */
+  .vmode{display:none;position:absolute;top:16px;left:16px;z-index:10;gap:4px;padding:4px;
+    border-radius:999px;background:rgba(10,20,26,.7);border:1px solid rgba(247,242,232,.14);backdrop-filter:blur(6px)}
+  .vmode button{font:inherit;font-size:12px;color:var(--cream);cursor:pointer;border:0;background:transparent;border-radius:999px;padding:5px 12px}
+  .vmode button.on{background:var(--accent);color:#10242a;font-weight:700}
+
   /* stage: foto PROTAGONISTA — ocupa casi todo el viewport (deja 64px abajo p/ barra) */
   .vstage{position:absolute;inset:0 0 64px 0;display:flex;align-items:center;justify-content:center;
     overflow:hidden;padding:12px;touch-action:none;cursor:zoom-in}
@@ -67,14 +73,20 @@
   @media (min-width:768px) and (pointer:fine){
     .varr{display:inline-flex}
   }
-  /* DESKTOP (>=768px): foto capeada NO-fullscreen, centrada con aire alrededor,
-     aspecto preservado (sizing auto del img, sin stretch) + borde minimalista.
-     Móvil (<768px) NO entra acá -> congelado byte-idéntico. */
+  /* DESKTOP (>=768px) v4: marco moderado NO dominante + toggle marco-fijo/natural.
+     Móvil (<768px) NO entra acá -> congelado byte-idéntico al v2 aprobado. */
   @media (min-width:768px){
     .vstage{padding:28px}
-    .vframe{max-width:1180px;max-height:80vh;border-radius:10px;
-      border:1px solid rgba(247,242,232,.16);
-      box-shadow:0 24px 70px -24px rgba(0,0,0,.85)}
+    .vmode{display:inline-flex}
+    /* chrome común del marco (ambos modos) */
+    .vframe{border-radius:10px;border:1px solid rgba(247,242,232,.16);
+      box-shadow:0 24px 70px -24px rgba(0,0,0,.85);background:#06121a}
+    /* MARCO FIJO (default): caja 3:2 moderada; fotos anchas letterbox sutil
+       contra el fondo opaco; las 3:2 llenan la caja -> todas mismo tamaño */
+    body.mode-fixed .vframe{width:860px;max-width:92vw;aspect-ratio:3/2;max-height:64vh}
+    body.mode-fixed .vframe img{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain}
+    /* NATURAL: cada foto su propio aspecto, capeada chica (no dominante) */
+    body.mode-natural .vframe{max-width:860px;max-height:64vh}
   }
 
   /* barra abajo: contador N/M + dots (siempre, móvil y desktop) */
@@ -114,6 +126,10 @@
 
 <!-- ====== VISOR ====== -->
 <div class="visor" id="visor" role="dialog" aria-modal="true" aria-label="Galería Cerro Catedral">
+  <div class="vmode" id="vmode" role="group" aria-label="Tamaño de la foto (desktop)">
+    <button type="button" data-m="fixed" class="on">Marco fijo</button>
+    <button type="button" data-m="natural">Tamaño natural</button>
+  </div>
   <button class="vclose" id="close" aria-label="Cerrar galería">✕</button>
   <div class="vstage" id="stage">
     <div class="vframe" id="frame">
@@ -195,6 +211,17 @@
 
   // click en margen (fuera de la imagen) cierra
   stage.addEventListener("click",function(e){if(e.target===stage&&scale<=1)close()});
+
+  // toggle marco-fijo / natural (desktop). Default = marco fijo. Móvil ignora (CSS desktop-only).
+  document.body.classList.add("mode-fixed");
+  var vmode=document.getElementById("vmode");
+  vmode.addEventListener("click",function(e){
+    if(e.target.tagName!=="BUTTON")return;var m=e.target.dataset.m;
+    document.body.classList.toggle("mode-fixed",m==="fixed");
+    document.body.classList.toggle("mode-natural",m==="natural");
+    Array.prototype.forEach.call(vmode.children,function(b){b.classList.toggle("on",b.dataset.m===m)});
+    resetZoom();
+  });
 </script>
 </body>
 </html>
