@@ -56,6 +56,47 @@ export function Hero({
   );
   const onPhoto = hasPhoto || hasSlideshow;
 
+  // s41: badges extraídos a const para reubicarlos (L2: arriba del CTA en
+  // turismo). onPhoto -> inline-dotted (.pv-hero-badges, turismo-only); sin
+  // onPhoto -> markup ACTUAL exacto (Hakuna byte-idéntico por construcción).
+  const badgesJsx =
+    content.trust_badges && content.trust_badges.length > 0 ? (
+      <ul
+        className={
+          onPhoto
+            ? "pv-anim-in pv-hero-badges flex list-none flex-wrap p-0"
+            : "pv-anim-in mt-6 flex list-none flex-wrap gap-x-6 gap-y-2 p-0"
+        }
+        style={{ animationDelay: "0.41s" }}
+      >
+        {content.trust_badges.map((badge) => (
+          <li
+            key={badge.label}
+            className="inline-flex items-center gap-2 text-sm font-semibold"
+            style={{
+              color: onPhoto ? "#F1ECE0" : "#E0DACE",
+              textShadow: "0 1px 10px rgba(10,26,31,0.6)",
+            }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#C79A63"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {BADGE_ICON_INNER[badge.icon] ?? BADGE_ICON_INNER.check}
+            </svg>
+            {badge.label}
+          </li>
+        ))}
+      </ul>
+    ) : null;
+
   // Hero text/CTAs — identical markup in all variants (the copy is "fixed";
   // only the background changes). Photo-variant styling keys off `onPhoto`.
   const heroBody = (
@@ -106,20 +147,40 @@ export function Hero({
       <p
         className={
           onPhoto
-            ? "pv-anim-in mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
+            ? "pv-anim-in mb-10 max-w-2xl text-lg font-semibold md:text-2xl"
             : "mx-auto mb-10 max-w-2xl text-lg md:text-2xl"
         }
         style={{
           fontFamily: design.fonts.body,
-          color: onPhoto ? "#EAE4D8" : undefined,
+          color: undefined,
           maxWidth: onPhoto ? "46ch" : undefined,
           marginLeft: onPhoto ? "0" : undefined,
-          textShadow: onPhoto ? "0 1px 16px rgba(10,26,31,0.6)" : undefined,
           animationDelay: onPhoto ? "0.23s" : undefined,
         }}
       >
-        {content.subtitle}
+        {onPhoto ? (
+          // s41: subcopy con backdrop sutil -> legibilidad garantizada sobre
+          // cualquiera de las 11 fotos (impeccable contraste-first). turismo-only.
+          <span
+            style={{
+              color: "#FFFFFF",
+              background: "rgba(8,20,24,0.46)",
+              backdropFilter: "blur(7px)",
+              WebkitBackdropFilter: "blur(7px)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+              padding: "0.3em 0.55em",
+              borderRadius: "10px",
+              textShadow: "0 2px 20px rgba(8,20,24,0.85)",
+            }}
+          >
+            {content.subtitle}
+          </span>
+        ) : (
+          content.subtitle
+        )}
       </p>
+      {onPhoto && badgesJsx}
       <div
         className={
           onPhoto
@@ -145,12 +206,12 @@ export function Hero({
           style={
             onPhoto
               ? {
-                  // Photo variant (turismo): outline-light pill on the photo
-                  // (mockup .pv-btn-outline-light). Border inline ONLY here.
-                  background: "rgba(255,255,255,0.08)",
-                  color: "#FFFFFF",
-                  border: "1.5px solid rgba(255,255,255,0.55)",
+                  // s41 (turismo): CTA cobre filled prominente (L2). Border
+                  // removido. turismo-only (onPhoto); Hakuna usa la rama de abajo.
+                  background: design.colors.accent,
+                  color: "#10242a",
                   outlineColor: design.colors.accent,
+                  boxShadow: "0 12px 30px -12px rgba(0,0,0,0.6)",
                 }
               : {
                   // Hero primary CTA opens WhatsApp -> action color when set.
@@ -203,38 +264,7 @@ export function Hero({
           </a>
         )}
       </div>
-      {content.trust_badges && content.trust_badges.length > 0 && (
-        <ul
-          className="pv-anim-in mt-6 flex list-none flex-wrap gap-x-6 gap-y-2 p-0"
-          style={{ animationDelay: "0.41s" }}
-        >
-          {content.trust_badges.map((badge) => (
-            <li
-              key={badge.label}
-              className="inline-flex items-center gap-2 text-sm font-semibold"
-              style={{
-                color: "#E0DACE",
-                textShadow: "0 1px 10px rgba(10,26,31,0.6)",
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#C79A63"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                {BADGE_ICON_INNER[badge.icon] ?? BADGE_ICON_INNER.check}
-              </svg>
-              {badge.label}
-            </li>
-          ))}
-        </ul>
-      )}
+      {!onPhoto && badgesJsx}
     </>
   );
 
