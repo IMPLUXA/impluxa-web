@@ -213,7 +213,10 @@ export function Servicios({
               className="exc-title"
               style={{ fontFamily: heading }}
             >
-              Excursiones <em>de autor</em>
+              <span style={{ display: "block" }}>EXCURSIONES EN</span>
+              <span style={{ display: "block", color: "#b48448" }}>
+                PATAGONIA VIVA
+              </span>
             </h2>
             <p className="exc-lead">
               Salidas en grupos reducidos por los clásicos de la región, con
@@ -224,15 +227,13 @@ export function Servicios({
               <span className="exc-launch-pill">
                 <svg
                   viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  fill="currentColor"
                   aria-hidden="true"
-                  style={{ width: 14, height: 14, color: "#b48448" }}
+                  style={{ width: 13, height: 13, color: "#3a2608" }}
                 >
                   <path d="M12 2 15 9l7 .5-5.5 4.5L20 21l-8-4.5L4 21l1.5-7L0 9.5 7 9z" />
                 </svg>
-                Mes de lanzamiento · precios promocionales
+                Mes de lanzamiento
               </span>
             )}
           </header>
