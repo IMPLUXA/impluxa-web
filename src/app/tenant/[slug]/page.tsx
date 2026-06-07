@@ -117,5 +117,43 @@ export async function generateMetadata({
     };
   }
 
+  // SEO overrides — emitted ONLY when the tenant has the DEDICATED key, so
+  // tenants without it keep a byte-identical <head>. Note Hakuna has a
+  // `seo_json.title` (a DIFFERENT key) that stays intentionally ignored here:
+  // we read `title_seo`, NOT `title`, precisely so activating PV's title does
+  // not change Hakuna's served title. URLs are absolute (no metadataBase on
+  // this route → relative canonical/og would not resolve).
+  const titleSeo = seo.title_seo;
+  if (typeof titleSeo === "string" && titleSeo.length > 0) {
+    metadata.title = titleSeo;
+    metadata.openGraph = { ...metadata.openGraph, title: titleSeo };
+  }
+
+  const canonicalUrl = seo.canonical_url;
+  if (typeof canonicalUrl === "string" && canonicalUrl.length > 0) {
+    metadata.alternates = { canonical: canonicalUrl };
+    metadata.openGraph = { ...metadata.openGraph, url: canonicalUrl };
+  }
+
+  // OG image — inert until the tenant seeds `og_image_url` (fast-follow asset).
+  // Hakuna lacks the key → no og:image, no twitter card → head unchanged.
+  const ogImageUrl = seo.og_image_url;
+  if (typeof ogImageUrl === "string" && ogImageUrl.length > 0) {
+    metadata.openGraph = {
+      ...metadata.openGraph,
+      locale: "es_AR",
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
+    };
+    metadata.twitter = {
+      card: "summary_large_image",
+      title:
+        typeof titleSeo === "string" && titleSeo.length > 0
+          ? titleSeo
+          : tenant.name,
+      description,
+      images: [ogImageUrl],
+    };
+  }
+
   return metadata;
 }
