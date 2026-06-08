@@ -119,7 +119,8 @@
   .card:hover .ph img{transform:scale(1.04)}
   .pill{position:absolute;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(4px);
     color:var(--primary);font-weight:600;font-size:12px;padding:5px 11px;border-radius:var(--r-pill);box-shadow:var(--shadow-sm)}
-  .pill.cat{top:10px;left:10px}
+  .pill.cat{top:10px;left:10px;text-transform:uppercase;letter-spacing:.03em;font-size:11px}
+  .pill.off{top:10px;right:10px;background:#E23B3B;color:#fff;font-weight:700;font-size:12px;box-shadow:0 2px 8px rgba(226,59,59,.35)}
   .pill.dur{bottom:10px;right:10px;background:color-mix(in srgb,var(--primary) 86%,transparent);color:#fff}
   .card .body{padding:16px 17px 18px;display:flex;flex-direction:column;gap:9px;flex:1}
   .card h3{font-size:19px}
@@ -331,15 +332,17 @@ start();
 /* ===== Cards + filtro ===== */
 const grid=document.getElementById('grid');
 function cardHTML(e){
-  const off=e.was?` <span class="was">${money(e.was)}</span> <span class="off">-${Math.round((1-e.price/e.was)*100)}%</span>`:"";
+  const pct=e.was?Math.round((1-e.price/e.was)*100):0;
+  const offBadge=pct?`<span class="pill off">-${pct}% OFF</span>`:"";
+  const wasEl=e.was?` <span class="was">${money(e.was)}</span>`:"";
   return `<article class="card" data-cat="${e.cat}">
     <div class="ph"><img loading="lazy" src="${cover(e.key)}" alt="${e.title}">
-      <span class="pill cat">${CATLABEL[e.cat]}</span><span class="pill dur">${e.dur}</span></div>
+      <span class="pill cat">${CATLABEL[e.cat]}</span>${offBadge}<span class="pill dur">${e.dur}</span></div>
     <div class="body">
       <h3>${e.title}</h3>
       <div class="horario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${e.horario}</div>
       <p class="desc">${e.desc}</p>
-      <div class="price"><span class="now">${money(e.price)}</span>${off}</div>
+      <div class="price"><span class="now">${money(e.price)}</span>${wasEl}</div>
       <div class="acts">
         <button class="btn btn-act light" data-detail="${e.key}">${ICO.eye}Ver detalle</button>
         <button class="btn btn-act strong" data-book="${e.key}">${ICO.cal}Reservar</button>
