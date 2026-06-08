@@ -25,7 +25,9 @@ drop table if exists public.excursions cascade;
 drop table if exists public.providers cascade;
 drop table if exists public.agency_staff cascade;
 
--- Helper nuevo de esta migración.
-drop function if exists public.current_agency_role();
+-- Helper nuevo de esta migración. CASCADE defensivo (resuelve flag SE): tras dropear las 13
+-- tablas, las policies que lo referencian ya no existen -> el drop funciona sin CASCADE igual,
+-- pero CASCADE lo hace robusto a cualquier orden/dependiente residual. Probado en preview.
+drop function if exists public.current_agency_role() cascade;
 
 commit;
