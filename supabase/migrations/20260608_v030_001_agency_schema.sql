@@ -736,4 +736,31 @@ create policy commission_splits_admin_write on public.commission_splits
     and public.current_agency_role() = 'dueno_admin') );
 -- NOTA: el materializado de comisiones (F9) corre típicamente vía service_role (bypassa RLS).
 
+-- ============================================================================
+-- [FIX C5] PERMISSIVE base por tabla — IMPRESCINDIBLE.
+-- Postgres RLS = (OR de PERMISSIVE) AND (AND de RESTRICTIVE). Las 41 policies de arriba son
+-- RESTRICTIVE (recortan, no conceden). Sin PERMISSIVE base, el OR-set es vacio => deny-all para
+-- authenticated => back-office inaccesible (blocker C5, cazado por SE cold). Patron v2 vivo
+-- (leads_tenant.leads_member_read / sites): la PERMISSIVE concede acceso tenant-scoped, la
+-- RESTRICTIVE lo recorta por rol. Aca: PERMISSIVE FOR ALL concede acceso a filas del tenant
+-- activo (o admin); las RESTRICTIVE de arriba lo recortan a rol/own-rows. service_role bypassa
+-- RLS (seed / API publica), no depende de esto.
+-- ============================================================================
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'agency_staff','providers','excursions','passenger_categories','excursion_rates',
+    'excursion_departures','payment_methods','commission_rulesets','reservas',
+    'reserva_pasajeros','pagos','comprobantes','commission_splits'
+  ] loop
+    execute format('drop policy if exists %I on public.%I', t||'_tenant_base', t);
+    execute format(
+      'create policy %I on public.%I as permissive for all to authenticated '
+      || 'using ( public.is_admin() or tenant_id = public.current_active_tenant() ) '
+      || 'with check ( public.is_admin() or tenant_id = public.current_active_tenant() )',
+      t||'_tenant_base', t);
+  end loop;
+end$$;
+
 commit;
