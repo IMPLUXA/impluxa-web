@@ -71,20 +71,15 @@
 
   /* ===== HERO full-bleed con transicion en MOSAICO ===== */
   .hero{position:relative;min-height:min(86vh,660px);overflow:hidden;display:flex;align-items:flex-end}
-  /* ken-burns CONTINUO en el contenedor (infinite alternate) -> nunca reinicia, sin salto */
-  .hero-stage{position:absolute;inset:-5%;z-index:0;animation:kenburns 22s ease-in-out infinite alternate;will-change:transform}
-  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.12)}}
-  .kb-img{position:absolute;inset:0;background-size:cover;background-position:center 44%}
-  /* transicion = flip 3D de cuadrados ("da vueltas la imagen, la hace cuadrados") */
-  .flip{position:absolute;inset:0;z-index:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(4,1fr);
-    perspective:1300px;opacity:0;pointer-events:none;transition:opacity .12s ease}
-  .flip.on{opacity:1}
-  .cell{position:relative;transform-style:preserve-3d;transition:transform .62s cubic-bezier(.4,0,.2,1);will-change:transform}
-  .cell.go{transform:rotateY(180deg)}
-  .face{position:absolute;inset:0;backface-visibility:hidden;background-size:800% 400%;background-repeat:no-repeat}
-  .face.back{transform:rotateY(180deg)}
+  /* HERO slideshow: Ken Burns POR SLIDE (zoom desde scale 1) + CROSSFADE (sin tiles/slide/wipe) */
+  .slideshow{position:absolute;inset:0;z-index:0}
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s cubic-bezier(.4,0,.2,1)}
+  .slide.active{opacity:1}
+  .slide .img{position:absolute;inset:0;background-size:cover;background-position:center 44%;transform:scale(1);will-change:transform}
+  @keyframes ken{from{transform:scale(1)}to{transform:scale(1.12)}}
   @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-  .reveal{animation:revealUp .7s cubic-bezier(.2,.8,.2,1) both}
+  .reveal{animation:revealUp .8s cubic-bezier(.2,.8,.2,1) both}
+  .hero h1 .gold{color:#EBC87E}
   .hero-scrim{position:absolute;inset:0;z-index:2;
     background:linear-gradient(90deg,rgba(15,38,44,.62) 0%,rgba(15,38,44,.26) 42%,transparent 70%),
                linear-gradient(180deg,transparent 46%,rgba(15,38,44,.46) 100%)}
@@ -94,7 +89,7 @@
   .hero .eyebrow::before{content:"";width:26px;height:2px;background:var(--bronze-soft);border-radius:2px}
   .hero h1{color:#fff;font-size:clamp(2.4rem,5.6vw,4.2rem);font-weight:700;max-width:16ch;text-shadow:0 2px 18px rgba(0,0,0,.4)}
   .hero h1 .hl{color:var(--bronze-soft)}
-  .hero .lead{margin-top:16px;font-size:19px;max-width:54ch;color:#E7C892;font-weight:500;text-shadow:0 1px 10px rgba(0,0,0,.55)}
+  .hero .lead{margin-top:16px;font-size:19px;max-width:54ch;color:#ECE4D2;font-weight:500;text-shadow:0 1px 10px rgba(0,0,0,.55)}
   .hero .cta-row{margin-top:26px;display:flex;gap:13px;flex-wrap:wrap}
   .trust{margin-top:24px;display:flex;gap:22px;flex-wrap:wrap}
   .trust .t{display:flex;align-items:center;gap:8px;font-size:14px;color:#f3f0e8;font-weight:500;text-shadow:0 1px 8px rgba(0,0,0,.4)}
@@ -180,7 +175,7 @@
   .legend code{background:var(--bg-warm);padding:2px 7px;border-radius:6px;color:var(--primary);font-size:12px}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}
-    .cell{transition:none!important}.hero-stage{animation:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
+    .slide{transition:none!important}.slide .img{animation:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
 </style>
 </head>
 <body>
@@ -194,7 +189,7 @@
 </div></header>
 
 <section class="hero" id="inicio">
-  <div class="hero-stage"><div class="kb-img" id="kbImg"></div><div class="flip" id="flip" aria-hidden="true"></div></div>
+  <div class="slideshow" id="slideshow" aria-hidden="true"></div>
   <div class="hero-scrim"></div>
   <div class="hero-content"><div class="wrap">
     <span class="eyebrow">Bariloche · Patagonia argentina</span>
@@ -299,58 +294,43 @@ const gal=(k,n)=>Array.from({length:n},(_,i)=>BASE+k+"/2560/g"+(i+1)+".webp");
 const ICO={eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'};
 
-/* ===== HERO: ken-burns continuo (wrapper, sin salto) + transicion 3D FLIP de cuadrados + frases poeticas ===== */
+/* ===== HERO: Ken Burns por slide (zoom desde scale 1) + CROSSFADE 1.2s (sin tiles/slide/wipe) ===== */
 const SLIDES=[
-  {key:"cerro-catedral",h:"Donde la montaña toca el cielo",sub:"Cerro Catedral, el gigante de Bariloche."},
-  {key:"circuito-chico",h:"Un espejo de agua entre los bosques",sub:"El Circuito Chico y sus lagos."},
-  {key:"cerro-tronador",h:"El rugido eterno del hielo",sub:"Cerro Tronador y el Ventisquero Negro."},
-  {key:"villa-la-angostura",h:"Donde el bosque se asoma al lago",sub:"Villa La Angostura, entre montañas y agua."},
-  {key:"el-bolson",h:"El valle que huele a aventura",sub:"El Bolsón y su feria artesanal."},
-  {key:"circuito-grande",h:"Siete lagos, un solo horizonte",sub:"Circuito Grande, la Ruta de los 7 Lagos."},
+  {key:"cerro-catedral",h:'Subí a lo más alto del <span class="gold">Cerro Catedral</span>',sub:'El centro de ski más grande de Sudamérica te espera.'},
+  {key:"circuito-chico",h:'Perdete entre los <span class="gold">lagos de Bariloche</span>',sub:'El Circuito Chico, postal pura de la Patagonia.'},
+  {key:"cerro-tronador",h:'Animate a tocar el <span class="gold">hielo del Tronador</span>',sub:'Un día entero entre montañas y glaciares.'},
+  {key:"villa-la-angostura",h:'Descubrí los bosques de <span class="gold">Villa La Angostura</span>',sub:'Donde el bosque se asoma al lago.'},
+  {key:"el-bolson",h:'Escapate al valle de <span class="gold">El Bolsón</span>',sub:'Su feria, sus aromas y su magia de montaña.'},
+  {key:"circuito-grande",h:'Recorré la <span class="gold">Ruta de los 7 Lagos</span>',sub:'Siete lagos, un solo horizonte inolvidable.'},
 ].map(s=>({h:s.h,sub:s.sub,img:cover(s.key)}));
-const COLS=8,ROWS=4,FLIP=620,STAG=46,HOLD=5200;
-const kb=document.getElementById('kbImg'),flipEl=document.getElementById('flip'),dotsEl=document.getElementById('dots'),heroH=document.getElementById('heroH'),heroSub=document.getElementById('heroSub');
+const HOLD=6000,FADE=1200;
+const ss=document.getElementById('slideshow'),dotsEl=document.getElementById('dots'),heroH=document.getElementById('heroH'),heroSub=document.getElementById('heroSub');
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const u=s=>`url('${s}')`;
+const slideEls=SLIDES.map((s,i)=>{
+  const d=document.createElement('div');d.className='slide'+(i===0?' active':'');
+  const img=document.createElement('div');img.className='img';img.style.backgroundImage=u(s.img);
+  d.appendChild(img);ss.appendChild(d);return d;
+});
+function ken(i){const img=slideEls[i].firstChild;img.style.animation='none';void img.offsetWidth;img.style.animation=reduce?'none':'ken 7s ease-out forwards';}
 function paintText(i){
-  heroH.textContent=SLIDES[i].h;heroSub.textContent=SLIDES[i].sub;
+  heroH.innerHTML=SLIDES[i].h;heroSub.textContent=SLIDES[i].sub;
   heroH.classList.remove('reveal');heroSub.classList.remove('reveal');void heroH.offsetWidth;
-  heroSub.style.animationDelay='.12s';heroH.classList.add('reveal');heroSub.classList.add('reveal');
+  heroSub.style.animationDelay='.14s';heroH.classList.add('reveal');heroSub.classList.add('reveal');
 }
-const cells=[];
-for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-  const cell=document.createElement('div');cell.className='cell';
-  cell.style.transitionDelay=`${(r+c)*STAG}ms`;
-  const posX=(COLS>1?c/(COLS-1):0)*100, posY=(ROWS>1?r/(ROWS-1):0)*100;
-  const front=document.createElement('div');front.className='face front';
-  const back=document.createElement('div');back.className='face back';
-  front.style.backgroundPosition=`${posX}% ${posY}%`;back.style.backgroundPosition=`${posX}% ${posY}%`;
-  cell.appendChild(front);cell.appendChild(back);flipEl.appendChild(cell);cells.push({cell,front,back});
-}
-function setFaces(frontImg,backImg){cells.forEach(o=>{o.front.style.backgroundImage=u(frontImg);o.back.style.backgroundImage=u(backImg);});}
 dotsEl.innerHTML=SLIDES.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
 const dotEls=[...dotsEl.children];
 let cur=0,busy=false,timer=null;
-const maxD=(COLS-1+ROWS-1)*STAG+FLIP;
-kb.style.backgroundImage=u(SLIDES[0].img);paintText(0);
+ken(0);paintText(0);
 function goTo(next){
   if(busy||next===cur)return;busy=true;
   dotEls[cur].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
   paintText(next);
-  if(reduce){kb.style.backgroundImage=u(SLIDES[next].img);cur=next;busy=false;return;}
-  setFaces(SLIDES[cur].img,SLIDES[next].img);
-  cells.forEach(o=>o.cell.classList.remove('go'));
-  flipEl.classList.add('on');
-  void flipEl.offsetWidth;
-  cells.forEach(o=>o.cell.classList.add('go'));
-  setTimeout(()=>{
-    kb.style.backgroundImage=u(SLIDES[next].img);
-    flipEl.classList.remove('on');
-    cells.forEach(o=>{o.cell.style.transition='none';o.cell.classList.remove('go');});
-    void flipEl.offsetWidth;
-    cells.forEach(o=>{o.cell.style.transition='';});
-    cur=next;busy=false;
-  },maxD+90);
+  ken(next);                                  // el nuevo arranca su zoom desde scale 1
+  slideEls[next].classList.add('active');     // entra (opacity 0->1)
+  slideEls[cur].classList.remove('active');   // sale (opacity 1->0); su Ken Burns sigue corriendo
+  cur=next;
+  setTimeout(()=>{busy=false;},FADE);
 }
 function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%SLIDES.length),HOLD);}
 function stop(){if(timer)clearInterval(timer);}
