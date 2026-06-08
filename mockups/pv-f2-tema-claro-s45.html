@@ -75,16 +75,16 @@
   .slideshow{position:absolute;inset:0;z-index:0}
   .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s cubic-bezier(.4,0,.2,1),filter 1.2s ease}
   .slide.active{opacity:1}
-  .slide.blurout{filter:blur(13px)}
+  .slide.blurout{filter:blur(18px) brightness(1.08)}
   .slide .img{position:absolute;inset:0;background-size:cover;background-position:center 44%;transform:scale(1);will-change:transform}
   @keyframes ken{from{transform:scale(1)}to{transform:scale(1.12)}}
   /* desintegrar: grilla fina de celdas que se encogen + desvanecen en orden aleatorio */
   .dissolve{position:absolute;inset:0;z-index:1;display:grid;
-    grid-template-columns:repeat(22,1fr);grid-template-rows:repeat(12,1fr);pointer-events:none;opacity:0}
-  .dissolve.on{opacity:1}
-  .dcell{background-repeat:no-repeat;background-size:2200% 1200%;opacity:1;
-    transition:opacity .55s ease,transform .55s ease;will-change:opacity,transform}
-  .dcell.gone{opacity:0;transform:scale(.35) translateY(12px)}
+    grid-template-columns:repeat(22,1fr);grid-template-rows:repeat(12,1fr);pointer-events:none}
+  .dcell{background-repeat:no-repeat;background-size:2200% 1200%;opacity:0;will-change:opacity,transform}
+  @keyframes shatter{from{opacity:1;transform:translate(0,0) rotate(0) scale(1)}
+    to{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) rotate(var(--rot,0deg)) scale(.12)}}
+  .dcell.boom{animation:shatter .8s cubic-bezier(.3,.4,.2,1) forwards}
   @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
   .reveal{animation:revealUp .8s cubic-bezier(.2,.8,.2,1) both}
   .hero h1 .gold{color:#EBC87E}
@@ -312,7 +312,7 @@ const SLIDES=[
   {key:"el-bolson",h:'Escapate al valle de <span class="gold">El Bolsón</span>',sub:'Su feria, sus aromas y su magia de montaña.'},
   {key:"circuito-grande",h:'Recorré la <span class="gold">Ruta de los 7 Lagos</span>',sub:'Siete lagos, un solo horizonte inolvidable.'},
 ].map(s=>({h:s.h,sub:s.sub,img:cover(s.key)}));
-const HOLD=6000,FADE=1200;
+const HOLD=5000,FADE=1200;
 const ss=document.getElementById('slideshow'),dotsEl=document.getElementById('dots'),heroH=document.getElementById('heroH'),heroSub=document.getElementById('heroSub');
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const u=s=>`url('${s}')`;
@@ -349,13 +349,19 @@ function goTo(next){
   dotEls[prev].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
   paintText(next);ken(next);
   if(fx==='desintegrar'){
-    show(next,true);                                  // incoming crisp debajo del overlay
+    show(next,true);                                  // incoming crisp debajo
     const out=u(SLIDES[prev].img);
-    dcells.forEach(c=>{c.style.backgroundImage=out;c.classList.remove('gone');c.style.transitionDelay='0s';});
-    dEl.classList.add('on');void dEl.offsetWidth;
-    dcells.forEach(c=>{c.style.transitionDelay=(Math.random()*0.6).toFixed(3)+'s';c.classList.add('gone');});
+    dcells.forEach(c=>{                               // preparo cada celda: imagen saliente + direccion random
+      c.classList.remove('boom');c.style.backgroundImage=out;
+      c.style.setProperty('--tx',((Math.random()-.5)*180).toFixed(0)+'px');
+      c.style.setProperty('--ty',(-Math.random()*120-20).toFixed(0)+'px');
+      c.style.setProperty('--rot',((Math.random()-.5)*140).toFixed(0)+'deg');
+      c.style.animationDelay=(Math.random()*0.45).toFixed(3)+'s';
+    });
+    void dEl.offsetWidth;
+    dcells.forEach(c=>c.classList.add('boom'));        // estallido confeti: opacas -> vuelan + rotan + se achican + fade
     slideEls[prev].classList.remove('active');
-    setTimeout(()=>{dEl.classList.remove('on');busy=false;},1300);
+    setTimeout(()=>{dcells.forEach(c=>c.classList.remove('boom'));busy=false;},1350);
   } else if(fx==='blur'){
     show(next);
     slideEls[prev].classList.add('blurout');slideEls[prev].classList.remove('active');
