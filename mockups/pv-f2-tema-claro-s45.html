@@ -71,10 +71,14 @@
 
   /* ===== HERO full-bleed con transicion en MOSAICO ===== */
   .hero{position:relative;min-height:min(86vh,660px);overflow:hidden;display:flex;align-items:flex-end}
-  .hero-base{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 44%}
-  .tiles{position:absolute;inset:0;z-index:1;display:grid;
-    grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(4,1fr);pointer-events:none}
-  .tile{background-size:800% 400%;opacity:0;transition:opacity .5s ease;will-change:opacity}
+  .hero-stage{position:absolute;inset:0;z-index:0;overflow:hidden}
+  .kb-img{position:absolute;inset:-2%;background-size:cover;background-position:center 44%;
+    animation:kenburns 6s ease-out forwards;will-change:transform}
+  @keyframes kenburns{from{transform:scale(1.001)}to{transform:scale(1.10)}}
+  .slices{position:absolute;inset:0;z-index:1;display:flex;pointer-events:none;overflow:hidden}
+  .slice{height:100%;flex:1 1 0;background-repeat:no-repeat;opacity:0;transform:translateY(-16px) scaleY(.94);
+    transform-origin:top;transition:opacity .52s ease,transform .52s cubic-bezier(.2,.8,.2,1);will-change:opacity,transform}
+  .slice.show{opacity:1;transform:none}
   .hero-scrim{position:absolute;inset:0;z-index:2;
     background:linear-gradient(180deg,rgba(20,48,56,.10) 0%,transparent 32%,rgba(20,48,56,.20) 62%,rgba(20,48,56,.58) 100%)}
   .hero-content{position:relative;z-index:3;color:#fff;padding:0 0 56px;width:100%}
@@ -168,7 +172,7 @@
   .legend code{background:var(--bg-warm);padding:2px 7px;border-radius:6px;color:var(--primary);font-size:12px}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}
-    .tile{transition:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
+    .slice{transition:none!important}.kb-img{animation:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
 </style>
 </head>
 <body>
@@ -182,8 +186,8 @@
 </div></header>
 
 <section class="hero" id="inicio">
-  <div class="hero-base" id="heroBase" aria-hidden="true"></div>
-  <div class="tiles" id="tiles" aria-hidden="true"></div>
+  <div class="hero-stage"><div class="kb-img" id="kbImg"></div></div>
+  <div class="slices" id="slices" aria-hidden="true"></div>
   <div class="hero-scrim"></div>
   <div class="hero-content"><div class="wrap">
     <span class="eyebrow">Bariloche · Patagonia argentina</span>
@@ -239,8 +243,8 @@
 <footer><div class="wrap"><div class="brand">Patagonia Viva</div>Bariloche, Patagonia argentina · <a href="#">Instagram</a></div></footer>
 
 <div class="legend">
-  <strong>Maqueta F2 v4 (mockup-first)</strong> — dirección visual, NO el sitio live. <strong>Hero con transición en mosaico</strong>
-  (estilo del video siturismo: tiles que revelan la siguiente foto escalonados), con los 11 assets propios de PV.
+  <strong>Maqueta F2 v5 (mockup-first)</strong> — dirección visual, NO el sitio live. <strong>Hero con ken-burns (zoom lento continuo) + transición en slats verticales</strong>
+  (el movimiento del video siturismo: zoom permanente + columnas que barren la foto nueva), con los 11 assets propios de PV.
   Cards estilo siturismo (categoría + duración; dificultad en el modal). Botones unificados (Reservar marcado, Ver detalle liviano).
   Features preservadas. Sin claims inventados. Hakuna sin tocar.
 </div>
@@ -290,39 +294,36 @@ const gal=(k,n)=>Array.from({length:n},(_,i)=>BASE+k+"/2560/g"+(i+1)+".webp");
 const ICO={eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'};
 
-/* ===== HERO: transicion en MOSAICO (tiles escalonados) ===== */
-const COLS=8,ROWS=4,TILE_FADE=500,STAGGER=55;
-const heroBase=document.getElementById('heroBase'),tilesEl=document.getElementById('tiles'),dotsEl=document.getElementById('dots');
+/* ===== HERO: ken-burns (zoom continuo) + transicion en SLATS verticales (wipe L->R) ===== */
+const N=14,SL_FADE=520,SL_STAGGER=42,HOLD=5200;
+const kb=document.getElementById('kbImg'),slicesEl=document.getElementById('slices'),dotsEl=document.getElementById('dots');
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-heroBase.style.backgroundImage=`url('${HERO[0]}')`;
-const tiles=[];
-for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-  const t=document.createElement('div');t.className='tile';
-  t.style.backgroundPosition=`${(COLS>1?c/(COLS-1):0)*100}% ${(ROWS>1?r/(ROWS-1):0)*100}%`;
-  t.style.transitionDelay=`${(r+c)*STAGGER}ms`;
-  tilesEl.appendChild(t);tiles.push(t);
-}
+function setBase(i){kb.style.backgroundImage=`url('${HERO[i]}')`;kb.style.animation='none';void kb.offsetWidth;kb.style.animation=reduce?'none':'kenburns 6s ease-out forwards';}
+setBase(0);
+const slices=[];
+for(let i=0;i<N;i++){const s=document.createElement('div');s.className='slice';
+  s.style.backgroundSize=`${N*100}% 100%`;s.style.backgroundPositionX=`${(N>1?i/(N-1):0)*100}%`;
+  s.style.transitionDelay=`${i*SL_STAGGER}ms`;slicesEl.appendChild(s);slices.push(s);}
 dotsEl.innerHTML=HERO.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
 const dotEls=[...dotsEl.children];
 let cur=0,busy=false,timer=null;
-const maxDelay=(COLS-1+ROWS-1)*STAGGER+TILE_FADE;
+const maxD=(N-1)*SL_STAGGER+SL_FADE;
 function goTo(next){
-  if(busy||next===cur){return;}
-  busy=true;
+  if(busy||next===cur)return;busy=true;
   dotEls[cur].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
-  if(reduce){heroBase.style.backgroundImage=`url('${HERO[next]}')`;cur=next;busy=false;return;}
-  tiles.forEach(t=>{t.style.backgroundImage=`url('${HERO[next]}')`;});
-  void tilesEl.offsetWidth;                 // reflow para que el opacity:0 inicial tome
-  tiles.forEach(t=>t.style.opacity='1');
+  if(reduce){setBase(next);cur=next;busy=false;return;}
+  slices.forEach(s=>{s.style.backgroundImage=`url('${HERO[next]}')`;s.classList.remove('show');});
+  void slicesEl.offsetWidth;
+  slices.forEach(s=>s.classList.add('show'));
   setTimeout(()=>{
-    heroBase.style.backgroundImage=`url('${HERO[next]}')`;
-    tiles.forEach(t=>{t.style.transition='none';t.style.opacity='0';});
-    void tilesEl.offsetWidth;
-    tiles.forEach(t=>{t.style.transition='';});  // restaura transition+delay del CSS
+    setBase(next);
+    slices.forEach(s=>{s.style.transition='none';s.classList.remove('show');});
+    void slicesEl.offsetWidth;
+    slices.forEach(s=>{s.style.transition='';});
     cur=next;busy=false;
-  },maxDelay+40);
+  },maxD+60);
 }
-function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%HERO.length),5500);}
+function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%HERO.length),HOLD);}
 function stop(){if(timer)clearInterval(timer);}
 dotEls.forEach(d=>d.addEventListener('click',()=>{goTo(+d.dataset.i);start();}));
 start();
