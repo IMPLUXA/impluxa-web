@@ -71,25 +71,30 @@
 
   /* ===== HERO full-bleed con transicion en MOSAICO ===== */
   .hero{position:relative;min-height:min(86vh,660px);overflow:hidden;display:flex;align-items:flex-end}
-  .hero-stage{position:absolute;inset:0;z-index:0;overflow:hidden}
-  .kb-img{position:absolute;inset:-4%;background-size:cover;background-position:center 44%;
-    animation:kenburns 14s linear forwards;will-change:transform}
-  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
+  /* ken-burns CONTINUO en el contenedor (infinite alternate) -> nunca reinicia, sin salto */
+  .hero-stage{position:absolute;inset:-5%;z-index:0;animation:kenburns 22s ease-in-out infinite alternate;will-change:transform}
+  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.12)}}
+  .kb-img{position:absolute;inset:0;background-size:cover;background-position:center 44%}
+  /* transicion = flip 3D de cuadrados ("da vueltas la imagen, la hace cuadrados") */
+  .flip{position:absolute;inset:0;z-index:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(4,1fr);
+    perspective:1300px;opacity:0;pointer-events:none;transition:opacity .12s ease}
+  .flip.on{opacity:1}
+  .cell{position:relative;transform-style:preserve-3d;transition:transform .62s cubic-bezier(.4,0,.2,1);will-change:transform}
+  .cell.go{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;background-size:800% 400%;background-repeat:no-repeat}
+  .face.back{transform:rotateY(180deg)}
   @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
   .reveal{animation:revealUp .7s cubic-bezier(.2,.8,.2,1) both}
-  .slices{position:absolute;inset:0;z-index:1;display:flex;pointer-events:none;overflow:hidden}
-  .slice{height:100%;flex:1 1 0;background-repeat:no-repeat;opacity:0;transform:translateY(-16px) scaleY(.94);
-    transform-origin:top;transition:opacity .52s ease,transform .52s cubic-bezier(.2,.8,.2,1);will-change:opacity,transform}
-  .slice.show{opacity:1;transform:none}
   .hero-scrim{position:absolute;inset:0;z-index:2;
-    background:linear-gradient(180deg,rgba(20,48,56,.10) 0%,transparent 32%,rgba(20,48,56,.20) 62%,rgba(20,48,56,.58) 100%)}
+    background:linear-gradient(90deg,rgba(15,38,44,.62) 0%,rgba(15,38,44,.26) 42%,transparent 70%),
+               linear-gradient(180deg,transparent 46%,rgba(15,38,44,.46) 100%)}
   .hero-content{position:relative;z-index:3;color:#fff;padding:0 0 56px;width:100%}
   .hero .eyebrow{display:inline-flex;align-items:center;gap:9px;color:#fff;font-weight:600;font-size:14px;
     margin-bottom:14px;opacity:.95;text-shadow:0 1px 8px rgba(0,0,0,.35)}
   .hero .eyebrow::before{content:"";width:26px;height:2px;background:var(--bronze-soft);border-radius:2px}
   .hero h1{color:#fff;font-size:clamp(2.4rem,5.6vw,4.2rem);font-weight:700;max-width:16ch;text-shadow:0 2px 18px rgba(0,0,0,.4)}
   .hero h1 .hl{color:var(--bronze-soft)}
-  .hero .lead{margin-top:16px;font-size:19px;max-width:54ch;color:#f3f0e8;text-shadow:0 1px 10px rgba(0,0,0,.4)}
+  .hero .lead{margin-top:16px;font-size:19px;max-width:54ch;color:#E7C892;font-weight:500;text-shadow:0 1px 10px rgba(0,0,0,.55)}
   .hero .cta-row{margin-top:26px;display:flex;gap:13px;flex-wrap:wrap}
   .trust{margin-top:24px;display:flex;gap:22px;flex-wrap:wrap}
   .trust .t{display:flex;align-items:center;gap:8px;font-size:14px;color:#f3f0e8;font-weight:500;text-shadow:0 1px 8px rgba(0,0,0,.4)}
@@ -175,7 +180,7 @@
   .legend code{background:var(--bg-warm);padding:2px 7px;border-radius:6px;color:var(--primary);font-size:12px}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}
-    .slice{transition:none!important}.kb-img{animation:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
+    .cell{transition:none!important}.hero-stage{animation:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
 </style>
 </head>
 <body>
@@ -189,8 +194,7 @@
 </div></header>
 
 <section class="hero" id="inicio">
-  <div class="hero-stage"><div class="kb-img" id="kbImg"></div></div>
-  <div class="slices" id="slices" aria-hidden="true"></div>
+  <div class="hero-stage"><div class="kb-img" id="kbImg"></div><div class="flip" id="flip" aria-hidden="true"></div></div>
   <div class="hero-scrim"></div>
   <div class="hero-content"><div class="wrap">
     <span class="eyebrow">Bariloche · Patagonia argentina</span>
@@ -295,48 +299,58 @@ const gal=(k,n)=>Array.from({length:n},(_,i)=>BASE+k+"/2560/g"+(i+1)+".webp");
 const ICO={eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'};
 
-/* ===== HERO: ken-burns lento/lineal + slats verticales + frases por foto (animadas) ===== */
+/* ===== HERO: ken-burns continuo (wrapper, sin salto) + transicion 3D FLIP de cuadrados + frases poeticas ===== */
 const SLIDES=[
-  {key:"cerro-catedral",h:"El Catedral te espera arriba",sub:"Subí al centro de ski más grande de Sudamérica."},
-  {key:"circuito-chico",h:"Los lagos, en su mejor postal",sub:"Llao Llao, Campanario y las bahías del Circuito Chico."},
-  {key:"cerro-tronador",h:"Hielo y montaña en un día",sub:"El Cerro Tronador y el Ventisquero Negro."},
-  {key:"villa-la-angostura",h:"Bosques al borde del lago",sub:"Villa La Angostura y su costanera de montaña."},
-  {key:"el-bolson",h:"El valle que enamora",sub:"El Bolsón, su feria artesanal y sus aromas."},
-  {key:"circuito-grande",h:"La Ruta de los 7 Lagos, a pleno",sub:"Circuito Grande hasta San Martín de los Andes."},
+  {key:"cerro-catedral",h:"Donde la montaña toca el cielo",sub:"Cerro Catedral, el gigante de Bariloche."},
+  {key:"circuito-chico",h:"Un espejo de agua entre los bosques",sub:"El Circuito Chico y sus lagos."},
+  {key:"cerro-tronador",h:"El rugido eterno del hielo",sub:"Cerro Tronador y el Ventisquero Negro."},
+  {key:"villa-la-angostura",h:"Donde el bosque se asoma al lago",sub:"Villa La Angostura, entre montañas y agua."},
+  {key:"el-bolson",h:"El valle que huele a aventura",sub:"El Bolsón y su feria artesanal."},
+  {key:"circuito-grande",h:"Siete lagos, un solo horizonte",sub:"Circuito Grande, la Ruta de los 7 Lagos."},
 ].map(s=>({h:s.h,sub:s.sub,img:cover(s.key)}));
-const N=14,SL_FADE=520,SL_STAGGER=42,HOLD=5200,KB='kenburns 14s linear forwards';
-const kb=document.getElementById('kbImg'),slicesEl=document.getElementById('slices'),dotsEl=document.getElementById('dots'),heroH=document.getElementById('heroH'),heroSub=document.getElementById('heroSub');
+const COLS=8,ROWS=4,FLIP=620,STAG=46,HOLD=5200;
+const kb=document.getElementById('kbImg'),flipEl=document.getElementById('flip'),dotsEl=document.getElementById('dots'),heroH=document.getElementById('heroH'),heroSub=document.getElementById('heroSub');
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const u=s=>`url('${s}')`;
 function paintText(i){
   heroH.textContent=SLIDES[i].h;heroSub.textContent=SLIDES[i].sub;
   heroH.classList.remove('reveal');heroSub.classList.remove('reveal');void heroH.offsetWidth;
   heroSub.style.animationDelay='.12s';heroH.classList.add('reveal');heroSub.classList.add('reveal');
 }
-function setBase(i){kb.style.backgroundImage=`url('${SLIDES[i].img}')`;kb.style.animation='none';void kb.offsetWidth;kb.style.animation=reduce?'none':KB;}
-const slices=[];
-for(let i=0;i<N;i++){const s=document.createElement('div');s.className='slice';
-  s.style.backgroundSize=`${N*100}% 100%`;s.style.backgroundPositionX=`${(N>1?i/(N-1):0)*100}%`;
-  s.style.transitionDelay=`${i*SL_STAGGER}ms`;slicesEl.appendChild(s);slices.push(s);}
+const cells=[];
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  const cell=document.createElement('div');cell.className='cell';
+  cell.style.transitionDelay=`${(r+c)*STAG}ms`;
+  const posX=(COLS>1?c/(COLS-1):0)*100, posY=(ROWS>1?r/(ROWS-1):0)*100;
+  const front=document.createElement('div');front.className='face front';
+  const back=document.createElement('div');back.className='face back';
+  front.style.backgroundPosition=`${posX}% ${posY}%`;back.style.backgroundPosition=`${posX}% ${posY}%`;
+  cell.appendChild(front);cell.appendChild(back);flipEl.appendChild(cell);cells.push({cell,front,back});
+}
+function setFaces(frontImg,backImg){cells.forEach(o=>{o.front.style.backgroundImage=u(frontImg);o.back.style.backgroundImage=u(backImg);});}
 dotsEl.innerHTML=SLIDES.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
 const dotEls=[...dotsEl.children];
 let cur=0,busy=false,timer=null;
-const maxD=(N-1)*SL_STAGGER+SL_FADE;
-setBase(0);paintText(0);
+const maxD=(COLS-1+ROWS-1)*STAG+FLIP;
+kb.style.backgroundImage=u(SLIDES[0].img);paintText(0);
 function goTo(next){
   if(busy||next===cur)return;busy=true;
   dotEls[cur].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
-  if(reduce){setBase(next);paintText(next);cur=next;busy=false;return;}
-  slices.forEach(s=>{s.style.backgroundImage=`url('${SLIDES[next].img}')`;s.classList.remove('show');});
-  void slicesEl.offsetWidth;
-  slices.forEach(s=>s.classList.add('show'));
   paintText(next);
+  if(reduce){kb.style.backgroundImage=u(SLIDES[next].img);cur=next;busy=false;return;}
+  setFaces(SLIDES[cur].img,SLIDES[next].img);
+  cells.forEach(o=>o.cell.classList.remove('go'));
+  flipEl.classList.add('on');
+  void flipEl.offsetWidth;
+  cells.forEach(o=>o.cell.classList.add('go'));
   setTimeout(()=>{
-    setBase(next);
-    slices.forEach(s=>{s.style.transition='none';s.classList.remove('show');});
-    void slicesEl.offsetWidth;
-    slices.forEach(s=>{s.style.transition='';});
+    kb.style.backgroundImage=u(SLIDES[next].img);
+    flipEl.classList.remove('on');
+    cells.forEach(o=>{o.cell.style.transition='none';o.cell.classList.remove('go');});
+    void flipEl.offsetWidth;
+    cells.forEach(o=>{o.cell.style.transition='';});
     cur=next;busy=false;
-  },maxD+60);
+  },maxD+90);
 }
 function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%SLIDES.length),HOLD);}
 function stop(){if(timer)clearInterval(timer);}
