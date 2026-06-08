@@ -72,9 +72,11 @@
   /* ===== HERO full-bleed con transicion en MOSAICO ===== */
   .hero{position:relative;min-height:min(86vh,660px);overflow:hidden;display:flex;align-items:flex-end}
   .hero-stage{position:absolute;inset:0;z-index:0;overflow:hidden}
-  .kb-img{position:absolute;inset:-2%;background-size:cover;background-position:center 44%;
-    animation:kenburns 6s ease-out forwards;will-change:transform}
-  @keyframes kenburns{from{transform:scale(1.001)}to{transform:scale(1.10)}}
+  .kb-img{position:absolute;inset:-4%;background-size:cover;background-position:center 44%;
+    animation:kenburns 14s linear forwards;will-change:transform}
+  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
+  @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  .reveal{animation:revealUp .7s cubic-bezier(.2,.8,.2,1) both}
   .slices{position:absolute;inset:0;z-index:1;display:flex;pointer-events:none;overflow:hidden}
   .slice{height:100%;flex:1 1 0;background-repeat:no-repeat;opacity:0;transform:translateY(-16px) scaleY(.94);
     transform-origin:top;transition:opacity .52s ease,transform .52s cubic-bezier(.2,.8,.2,1);will-change:opacity,transform}
@@ -192,8 +194,8 @@
   <div class="hero-scrim"></div>
   <div class="hero-content"><div class="wrap">
     <span class="eyebrow">Bariloche · Patagonia argentina</span>
-    <h1>Viví la Patagonia <span class="hl">con quienes la conocen</span></h1>
-    <p class="lead">Excursiones guiadas por cerros, lagos y bosques de Bariloche. Reservás por WhatsApp y coordinamos cada detalle.</p>
+    <h1 id="heroH"></h1>
+    <p class="lead" id="heroSub"></p>
     <div class="cta-row">
       <a class="btn btn-on-photo" href="#excursiones">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Ver excursiones</a>
@@ -253,8 +255,6 @@
 <dialog id="modal"></dialog>
 
 <script>
-const HERO=["pv-hero-01","pv-hero-02","pv-hero-03","pv-hero-04","pv-hero-05","pv-hero-06","pv-hero-07","pv-hero-08","pv-hero-09","pv-hero-10","pv-hero-11"]
-  .map(n=>"https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/hero-slideshow/"+n+".webp");
 const BASE="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/excursions/";
 const CATLABEL={terrestre:"Terrestre",lacustre:"Lacustre",aventura:"Aventura",nieve:"Nieve"};
 const EX=[
@@ -295,27 +295,41 @@ const gal=(k,n)=>Array.from({length:n},(_,i)=>BASE+k+"/2560/g"+(i+1)+".webp");
 const ICO={eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'};
 
-/* ===== HERO: ken-burns (zoom continuo) + transicion en SLATS verticales (wipe L->R) ===== */
-const N=14,SL_FADE=520,SL_STAGGER=42,HOLD=5200;
-const kb=document.getElementById('kbImg'),slicesEl=document.getElementById('slices'),dotsEl=document.getElementById('dots');
+/* ===== HERO: ken-burns lento/lineal + slats verticales + frases por foto (animadas) ===== */
+const SLIDES=[
+  {key:"cerro-catedral",h:"El Catedral te espera arriba",sub:"Subí al centro de ski más grande de Sudamérica."},
+  {key:"circuito-chico",h:"Los lagos, en su mejor postal",sub:"Llao Llao, Campanario y las bahías del Circuito Chico."},
+  {key:"cerro-tronador",h:"Hielo y montaña en un día",sub:"El Cerro Tronador y el Ventisquero Negro."},
+  {key:"villa-la-angostura",h:"Bosques al borde del lago",sub:"Villa La Angostura y su costanera de montaña."},
+  {key:"el-bolson",h:"El valle que enamora",sub:"El Bolsón, su feria artesanal y sus aromas."},
+  {key:"circuito-grande",h:"La Ruta de los 7 Lagos, a pleno",sub:"Circuito Grande hasta San Martín de los Andes."},
+].map(s=>({h:s.h,sub:s.sub,img:cover(s.key)}));
+const N=14,SL_FADE=520,SL_STAGGER=42,HOLD=5200,KB='kenburns 14s linear forwards';
+const kb=document.getElementById('kbImg'),slicesEl=document.getElementById('slices'),dotsEl=document.getElementById('dots'),heroH=document.getElementById('heroH'),heroSub=document.getElementById('heroSub');
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function setBase(i){kb.style.backgroundImage=`url('${HERO[i]}')`;kb.style.animation='none';void kb.offsetWidth;kb.style.animation=reduce?'none':'kenburns 6s ease-out forwards';}
-setBase(0);
+function paintText(i){
+  heroH.textContent=SLIDES[i].h;heroSub.textContent=SLIDES[i].sub;
+  heroH.classList.remove('reveal');heroSub.classList.remove('reveal');void heroH.offsetWidth;
+  heroSub.style.animationDelay='.12s';heroH.classList.add('reveal');heroSub.classList.add('reveal');
+}
+function setBase(i){kb.style.backgroundImage=`url('${SLIDES[i].img}')`;kb.style.animation='none';void kb.offsetWidth;kb.style.animation=reduce?'none':KB;}
 const slices=[];
 for(let i=0;i<N;i++){const s=document.createElement('div');s.className='slice';
   s.style.backgroundSize=`${N*100}% 100%`;s.style.backgroundPositionX=`${(N>1?i/(N-1):0)*100}%`;
   s.style.transitionDelay=`${i*SL_STAGGER}ms`;slicesEl.appendChild(s);slices.push(s);}
-dotsEl.innerHTML=HERO.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
+dotsEl.innerHTML=SLIDES.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
 const dotEls=[...dotsEl.children];
 let cur=0,busy=false,timer=null;
 const maxD=(N-1)*SL_STAGGER+SL_FADE;
+setBase(0);paintText(0);
 function goTo(next){
   if(busy||next===cur)return;busy=true;
   dotEls[cur].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
-  if(reduce){setBase(next);cur=next;busy=false;return;}
-  slices.forEach(s=>{s.style.backgroundImage=`url('${HERO[next]}')`;s.classList.remove('show');});
+  if(reduce){setBase(next);paintText(next);cur=next;busy=false;return;}
+  slices.forEach(s=>{s.style.backgroundImage=`url('${SLIDES[next].img}')`;s.classList.remove('show');});
   void slicesEl.offsetWidth;
   slices.forEach(s=>s.classList.add('show'));
+  paintText(next);
   setTimeout(()=>{
     setBase(next);
     slices.forEach(s=>{s.style.transition='none';s.classList.remove('show');});
@@ -324,7 +338,7 @@ function goTo(next){
     cur=next;busy=false;
   },maxD+60);
 }
-function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%HERO.length),HOLD);}
+function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%SLIDES.length),HOLD);}
 function stop(){if(timer)clearInterval(timer);}
 dotEls.forEach(d=>d.addEventListener('click',()=>{goTo(+d.dataset.i);start();}));
 start();
