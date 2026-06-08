@@ -52,3 +52,26 @@ coverage/lighthouse/
 
 # design handoffs (read-only reference bundles; assets go to storage bucket, NOT committed)
 .design/
+
+# ============================================================
+# Scratch operativo s33-s43 (Squad s43: BA a811a552 + SE a14d1405).
+# Scoped/anclado, collision-free verificado vs `git ls-files`.
+# Cubre los 49 ?? sin shadowear los 29 .sql tracked (migrations + rls).
+# NO usar blanket *.sql / *.bak / *.json (rompe versionado migrations).
+# ============================================================
+
+# scratch raiz prefijo _ (_apply_/_assemble_/_gate_/_recapture_/_upload_ .mjs + _turismo_*.json)
+/_*.mjs
+/_*.json
+
+# backup de refs one-off s43
+/branch-refs-backup-s43.txt
+
+# patches PowerShell operativos (scripts/ solo tiene .ts + README tracked)
+scripts/*.ps1
+
+# .planning/: NO entero (57 .md tracked dentro). Solo scratch prefijo _ + subdirs de assets.
+.planning/_*
+.planning/hero-4k-webp/
+.planning/hero-slideshow-src/
+.planning/video/
