@@ -71,12 +71,20 @@
 
   /* ===== HERO full-bleed con transicion en MOSAICO ===== */
   .hero{position:relative;min-height:min(86vh,660px);overflow:hidden;display:flex;align-items:flex-end}
-  /* HERO slideshow: Ken Burns POR SLIDE (zoom desde scale 1) + CROSSFADE (sin tiles/slide/wipe) */
+  /* HERO slideshow: Ken Burns por slide + VARIOS efectos (crossfade / desintegrar / blur) */
   .slideshow{position:absolute;inset:0;z-index:0}
-  .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s cubic-bezier(.4,0,.2,1)}
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s cubic-bezier(.4,0,.2,1),filter 1.2s ease}
   .slide.active{opacity:1}
+  .slide.blurout{filter:blur(13px)}
   .slide .img{position:absolute;inset:0;background-size:cover;background-position:center 44%;transform:scale(1);will-change:transform}
   @keyframes ken{from{transform:scale(1)}to{transform:scale(1.12)}}
+  /* desintegrar: grilla fina de celdas que se encogen + desvanecen en orden aleatorio */
+  .dissolve{position:absolute;inset:0;z-index:1;display:grid;
+    grid-template-columns:repeat(22,1fr);grid-template-rows:repeat(12,1fr);pointer-events:none;opacity:0}
+  .dissolve.on{opacity:1}
+  .dcell{background-repeat:no-repeat;background-size:2200% 1200%;opacity:1;
+    transition:opacity .55s ease,transform .55s ease;will-change:opacity,transform}
+  .dcell.gone{opacity:0;transform:scale(.35) translateY(12px)}
   @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
   .reveal{animation:revealUp .8s cubic-bezier(.2,.8,.2,1) both}
   .hero h1 .gold{color:#EBC87E}
@@ -190,6 +198,7 @@
 
 <section class="hero" id="inicio">
   <div class="slideshow" id="slideshow" aria-hidden="true"></div>
+  <div class="dissolve" id="dissolve" aria-hidden="true"></div>
   <div class="hero-scrim"></div>
   <div class="hero-content"><div class="wrap">
     <span class="eyebrow">Bariloche · Patagonia argentina</span>
@@ -318,19 +327,45 @@ function paintText(i){
   heroH.classList.remove('reveal');heroSub.classList.remove('reveal');void heroH.offsetWidth;
   heroSub.style.animationDelay='.14s';heroH.classList.add('reveal');heroSub.classList.add('reveal');
 }
+// grilla fina de desintegracion (22x12)
+const dEl=document.getElementById('dissolve'),DC=22,DR=12,dcells=[];
+for(let r=0;r<DR;r++)for(let c=0;c<DC;c++){
+  const cell=document.createElement('div');cell.className='dcell';
+  cell.style.backgroundPosition=`${(DC>1?c/(DC-1):0)*100}% ${(DR>1?r/(DR-1):0)*100}%`;
+  dEl.appendChild(cell);dcells.push(cell);
+}
 dotsEl.innerHTML=SLIDES.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
 const dotEls=[...dotsEl.children];
-let cur=0,busy=false,timer=null;
+const EFFECTS=['crossfade','desintegrar','blur'];
+let cur=0,busy=false,timer=null,fxi=0;
 ken(0);paintText(0);
+function show(i,instant){
+  if(instant){slideEls[i].style.transition='none';slideEls[i].classList.add('active');void slideEls[i].offsetWidth;slideEls[i].style.transition='';}
+  else slideEls[i].classList.add('active');
+}
 function goTo(next){
   if(busy||next===cur)return;busy=true;
-  dotEls[cur].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
-  paintText(next);
-  ken(next);                                  // el nuevo arranca su zoom desde scale 1
-  slideEls[next].classList.add('active');     // entra (opacity 0->1)
-  slideEls[cur].classList.remove('active');   // sale (opacity 1->0); su Ken Burns sigue corriendo
+  const prev=cur, fx=reduce?'crossfade':EFFECTS[fxi++%EFFECTS.length];
+  dotEls[prev].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
+  paintText(next);ken(next);
+  if(fx==='desintegrar'){
+    show(next,true);                                  // incoming crisp debajo del overlay
+    const out=u(SLIDES[prev].img);
+    dcells.forEach(c=>{c.style.backgroundImage=out;c.classList.remove('gone');c.style.transitionDelay='0s';});
+    dEl.classList.add('on');void dEl.offsetWidth;
+    dcells.forEach(c=>{c.style.transitionDelay=(Math.random()*0.6).toFixed(3)+'s';c.classList.add('gone');});
+    slideEls[prev].classList.remove('active');
+    setTimeout(()=>{dEl.classList.remove('on');busy=false;},1300);
+  } else if(fx==='blur'){
+    show(next);
+    slideEls[prev].classList.add('blurout');slideEls[prev].classList.remove('active');
+    setTimeout(()=>{slideEls[prev].classList.remove('blurout');busy=false;},FADE);
+  } else {
+    show(next);
+    slideEls[prev].classList.remove('active');
+    setTimeout(()=>{busy=false;},FADE);
+  }
   cur=next;
-  setTimeout(()=>{busy=false;},FADE);
 }
 function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%SLIDES.length),HOLD);}
 function stop(){if(timer)clearInterval(timer);}
