@@ -86,8 +86,8 @@
     to{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) rotate(var(--rot,0deg)) scale(.12)}}
   .dcell.boom{animation:shatter .8s cubic-bezier(.3,.4,.2,1) forwards}
   /* rejilla: la imagen nueva se abre cuadriculada desde el centro hacia afuera */
-  @keyframes openCell{from{opacity:0;transform:scale(.16)}to{opacity:1;transform:scale(1)}}
-  .dcell.open{animation:openCell .55s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes openCell{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.12)}}
+  .dcell.open{animation:openCell .55s cubic-bezier(.3,.1,.3,1) forwards}
   @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
   .reveal{animation:revealUp .8s cubic-bezier(.2,.8,.2,1) both}
   .hero h1 .gold{color:#EBC87E}
@@ -371,11 +371,13 @@ function goTo(next){
     slideEls[prev].classList.remove('active');
     setTimeout(()=>{dcells.forEach(c=>c.classList.remove('boom'));busy=false;},1350);
   } else if(fx==='rejilla'){
-    const inc=u(SLIDES[next].img);                   // la imagen NUEVA se abre cuadriculada desde el centro
-    dcells.forEach((c,k)=>{c.classList.remove('boom','open');c.style.backgroundImage=inc;c.style.animationDelay=(dDist[k]*0.5).toFixed(3)+'s';});
+    show(next);                                      // incoming REAL activo y zoomeando desde scale 1 (sin handoff = sin pop)
+    const out=u(SLIDES[prev].img);                   // overlay = imagen VIEJA en celdas
+    dcells.forEach((c,k)=>{c.classList.remove('boom','open');c.style.backgroundImage=out;c.style.animationDelay=(dDist[k]*0.5).toFixed(3)+'s';});
     void dEl.offsetWidth;
-    dcells.forEach(c=>c.classList.add('open'));
-    setTimeout(()=>{show(next,true);slideEls[prev].classList.remove('active');dcells.forEach(c=>c.classList.remove('open'));busy=false;},1150);
+    dcells.forEach(c=>c.classList.add('open'));       // celdas viejas se achican+desvanecen del centro hacia afuera -> revela la nueva
+    slideEls[prev].classList.remove('active');
+    setTimeout(()=>{dcells.forEach(c=>c.classList.remove('open'));busy=false;},1150);
   } else if(fx==='blur'){
     show(next);
     slideEls[prev].classList.add('blurout');slideEls[prev].classList.remove('active');
