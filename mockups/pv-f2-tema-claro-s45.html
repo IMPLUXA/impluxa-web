@@ -77,7 +77,7 @@
   .slide.active{opacity:1}
   .slide.blurout{filter:blur(18px) brightness(1.08)}
   .slide .img{position:absolute;inset:0;background-size:cover;background-position:center 44%;transform:scale(1);will-change:transform}
-  @keyframes ken{from{transform:scale(1)}to{transform:scale(1.12)}}
+  @keyframes ken{from{transform:scale(1)}to{transform:scale(1.08)}}
   /* desintegrar: grilla fina de celdas que se encogen + desvanecen en orden aleatorio */
   .dissolve{position:absolute;inset:0;z-index:1;display:grid;
     grid-template-columns:repeat(22,1fr);grid-template-rows:repeat(12,1fr);pointer-events:none}
@@ -85,6 +85,9 @@
   @keyframes shatter{from{opacity:1;transform:translate(0,0) rotate(0) scale(1)}
     to{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) rotate(var(--rot,0deg)) scale(.12)}}
   .dcell.boom{animation:shatter .8s cubic-bezier(.3,.4,.2,1) forwards}
+  /* rejilla: la imagen nueva se abre cuadriculada desde el centro hacia afuera */
+  @keyframes openCell{from{opacity:0;transform:scale(.16)}to{opacity:1;transform:scale(1)}}
+  .dcell.open{animation:openCell .55s cubic-bezier(.2,.7,.3,1) forwards}
   @keyframes revealUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
   .reveal{animation:revealUp .8s cubic-bezier(.2,.8,.2,1) both}
   .hero h1 .gold{color:#EBC87E}
@@ -92,12 +95,15 @@
     background:linear-gradient(90deg,rgba(15,38,44,.62) 0%,rgba(15,38,44,.26) 42%,transparent 70%),
                linear-gradient(180deg,transparent 46%,rgba(15,38,44,.46) 100%)}
   .hero-content{position:relative;z-index:3;color:#fff;padding:0 0 56px;width:100%}
-  .hero .eyebrow{display:inline-flex;align-items:center;gap:9px;color:#fff;font-weight:600;font-size:14px;
-    margin-bottom:14px;opacity:.95;text-shadow:0 1px 8px rgba(0,0,0,.35)}
-  .hero .eyebrow::before{content:"";width:26px;height:2px;background:var(--bronze-soft);border-radius:2px}
-  .hero h1{color:#fff;font-size:clamp(2.4rem,5.6vw,4.2rem);font-weight:700;max-width:16ch;text-shadow:0 2px 18px rgba(0,0,0,.4)}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:11px;color:var(--bronze-soft);font-weight:600;
+    font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;
+    margin-bottom:18px;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+  .hero .eyebrow::before{content:"";width:30px;height:2px;background:var(--bronze-soft);border-radius:2px}
+  .hero h1{color:#fff;font-size:clamp(2.3rem,5.2vw,3.9rem);font-weight:700;max-width:15ch;line-height:1.06;
+    letter-spacing:-.015em;text-wrap:balance;text-shadow:0 2px 22px rgba(0,0,0,.42)}
   .hero h1 .hl{color:var(--bronze-soft)}
-  .hero .lead{margin-top:16px;font-size:19px;max-width:54ch;color:#ECE4D2;font-weight:500;text-shadow:0 1px 10px rgba(0,0,0,.55)}
+  .hero .lead{margin-top:20px;font-size:20px;line-height:1.5;max-width:46ch;color:#ECE4D2;font-weight:500;
+    letter-spacing:.005em;text-shadow:0 1px 10px rgba(0,0,0,.55)}
   .hero .cta-row{margin-top:26px;display:flex;gap:13px;flex-wrap:wrap}
   .trust{margin-top:24px;display:flex;gap:22px;flex-wrap:wrap}
   .trust .t{display:flex;align-items:center;gap:8px;font-size:14px;color:#f3f0e8;font-weight:500;text-shadow:0 1px 8px rgba(0,0,0,.4)}
@@ -328,15 +334,17 @@ function paintText(i){
   heroSub.style.animationDelay='.14s';heroH.classList.add('reveal');heroSub.classList.add('reveal');
 }
 // grilla fina de desintegracion (22x12)
-const dEl=document.getElementById('dissolve'),DC=22,DR=12,dcells=[];
+const dEl=document.getElementById('dissolve'),DC=22,DR=12,dcells=[],dDist=[];
+const ccx=(DC-1)/2,ccy=(DR-1)/2,maxDist=Math.hypot(ccx,ccy);
 for(let r=0;r<DR;r++)for(let c=0;c<DC;c++){
   const cell=document.createElement('div');cell.className='dcell';
   cell.style.backgroundPosition=`${(DC>1?c/(DC-1):0)*100}% ${(DR>1?r/(DR-1):0)*100}%`;
   dEl.appendChild(cell);dcells.push(cell);
+  dDist.push(Math.hypot(c-ccx,r-ccy)/maxDist);     // 0 centro .. 1 borde (para abrir desde adentro)
 }
 dotsEl.innerHTML=SLIDES.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
 const dotEls=[...dotsEl.children];
-const EFFECTS=['crossfade','desintegrar','blur'];
+const EFFECTS=['crossfade','desintegrar','rejilla','blur'];
 let cur=0,busy=false,timer=null,fxi=0;
 ken(0);paintText(0);
 function show(i,instant){
@@ -362,6 +370,12 @@ function goTo(next){
     dcells.forEach(c=>c.classList.add('boom'));        // estallido confeti: opacas -> vuelan + rotan + se achican + fade
     slideEls[prev].classList.remove('active');
     setTimeout(()=>{dcells.forEach(c=>c.classList.remove('boom'));busy=false;},1350);
+  } else if(fx==='rejilla'){
+    const inc=u(SLIDES[next].img);                   // la imagen NUEVA se abre cuadriculada desde el centro
+    dcells.forEach((c,k)=>{c.classList.remove('boom','open');c.style.backgroundImage=inc;c.style.animationDelay=(dDist[k]*0.5).toFixed(3)+'s';});
+    void dEl.offsetWidth;
+    dcells.forEach(c=>c.classList.add('open'));
+    setTimeout(()=>{show(next,true);slideEls[prev].classList.remove('active');dcells.forEach(c=>c.classList.remove('open'));busy=false;},1150);
   } else if(fx==='blur'){
     show(next);
     slideEls[prev].classList.add('blurout');slideEls[prev].classList.remove('active');
