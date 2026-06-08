@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mockup F2 v3 — Patagonia Viva · hero rotativo + cards siturismo-style + botones unificados</title>
+<title>Mockup F2 v4 — Patagonia Viva · hero mosaico rotativo + cards siturismo-style + botones unificados</title>
 <!--
-  MOCKUP-FIRST (F2 v3). Maqueta para aprobacion de DIRECCION visual, NO el sitio live.
-  Cambios v3 (pedido CEO):
-   1. CARD: fuera el badge de DIFICULTAD de la cara. Queda categoria (arriba-izq) + duracion
-      (abajo-der), estilo siturismo. La dificultad SIGUE en el modal "Ver detalle" (no se borra del dato).
-   2. HERO: full-bleed que ROTA (crossfade) reusando los 11 assets PROPIOS de PV
-      (media_json->hero_slideshow, pv-hero-01..11.webp, verificado read-only en prod). siturismo = ref del
-      MOVIMIENTO, no de imagenes/textos. Tema claro nuevo conservado.
-   3. BOTONES: familia transparente + texto oscuro + icono (estilo "Consultar" siturismo) en Ver detalle /
-      Reservar / botones del modal. Jerarquia: Reservar (mueve plata) con borde/peso marcado; Ver detalle
-      mas liviano. No se aplana el CTA de conversion (criterio impeccable).
-  Sin claims inventados (agencia nueva). Hakuna NO se toca: cambio real iria por sites.design_json PV (gateado).
-  Data/fotos = read-only de prod content_json/media_json (s45).
+  MOCKUP-FIRST (F2 v4). Maqueta para aprobacion de DIRECCION visual, NO el sitio live.
+  v4 (tras ver el VIDEO de referencia siturismo que paso el CEO):
+   - HERO: transicion en MOSAICO/GRILLA (tiles que revelan la siguiente foto escalonados), NO crossfade
+     simple. Es el movimiento que se ve en el video de siturismo. Dots centrados abajo. Headline + 2 botones.
+     Reusa los 11 assets PROPIOS de PV (hero_slideshow pv-hero-01..11.webp, verificados read-only en prod).
+     siturismo = referencia del MOVIMIENTO, no de imagenes ni textos (IP de competidor).
+  Hereda de v3:
+   - CARD estilo siturismo: categoria arriba-izq + duracion abajo-der; dificultad solo en el modal.
+   - BOTONES transparentes + texto oscuro + icono; Reservar marcado (conversion) vs Ver detalle liviano.
+   - Features preservadas (modal detalle: FAQs/horarios/itinerario/dificultad/incluye/galeria + precio+tachado).
+   - Sin claims inventados (agencia nueva). Data/fotos REALES de prod.
+  Hakuna NO se toca: cambio real iria por sites.design_json PV (gateado).
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
     --line:rgba(20,48,56,.12); --line-warm:rgba(180,132,72,.30);
     --shadow-sm:0 1px 2px rgba(60,40,20,.06), 0 6px 16px rgba(60,40,20,.07);
     --shadow-lg:0 10px 30px rgba(40,30,15,.13), 0 3px 8px rgba(40,30,15,.07);
-    --r-lg:20px; --r-pill:999px; --maxw:1160px; --z-nav:50; --z-modal:100;
+    --r-lg:20px; --r-pill:999px; --maxw:1160px; --z-nav:50;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -48,13 +48,11 @@
     padding:11px 20px;font-size:15px;border:1.5px solid transparent;cursor:pointer;
     transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,background .18s,color .18s,border-color .18s}
   .btn svg{width:18px;height:18px}
-  /* Familia TRANSPARENTE + texto oscuro + icono (estilo "Consultar" siturismo) — sobre fondo claro */
   .btn-act{background:transparent;color:var(--primary)}
-  .btn-act.light{border-color:var(--line-warm);font-weight:600;color:var(--ink-soft)}      /* Ver detalle: liviano */
+  .btn-act.light{border-color:var(--line-warm);font-weight:600;color:var(--ink-soft)}
   .btn-act.light:hover{color:var(--primary);border-color:var(--primary)}
-  .btn-act.strong{border-color:var(--bronze);color:var(--primary);font-weight:700}          /* Reservar: marcado (conversion) */
+  .btn-act.strong{border-color:var(--bronze);color:var(--primary);font-weight:700}
   .btn-act.strong:hover{background:var(--bronze);border-color:var(--bronze);color:#fff;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
-  /* Sobre foto (hero): variantes legibles en blanco */
   .btn-on-photo{background:rgba(251,246,234,.92);color:var(--primary);font-weight:700}
   .btn-on-photo:hover{background:#fff;transform:translateY(-1px);box-shadow:var(--shadow-lg)}
   .btn-on-photo-ghost{background:transparent;border-color:rgba(255,255,255,.85);color:#fff}
@@ -71,30 +69,27 @@
   .navlinks a:hover{color:var(--teal)}
   @media(max-width:760px){.navlinks a:not(.btn){display:none}}
 
-  /* ===== HERO full-bleed rotativo ===== */
+  /* ===== HERO full-bleed con transicion en MOSAICO ===== */
   .hero{position:relative;min-height:min(86vh,660px);overflow:hidden;display:flex;align-items:flex-end}
-  .slides{position:absolute;inset:0;z-index:0}
-  .slide{position:absolute;inset:0;background-size:cover;background-position:center 44%;opacity:0;
-    transition:opacity 1.2s ease;will-change:opacity}
-  .slide.active{opacity:1}
-  .hero-scrim{position:absolute;inset:0;z-index:1;
+  .hero-base{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 44%}
+  .tiles{position:absolute;inset:0;z-index:1;display:grid;
+    grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(4,1fr);pointer-events:none}
+  .tile{background-size:800% 400%;opacity:0;transition:opacity .5s ease;will-change:opacity}
+  .hero-scrim{position:absolute;inset:0;z-index:2;
     background:linear-gradient(180deg,rgba(20,48,56,.10) 0%,transparent 32%,rgba(20,48,56,.20) 62%,rgba(20,48,56,.58) 100%)}
-  .hero-content{position:relative;z-index:2;color:#fff;padding:0 0 54px;width:100%}
-  .hero-content .wrap{max-width:var(--maxw)}
+  .hero-content{position:relative;z-index:3;color:#fff;padding:0 0 56px;width:100%}
   .hero .eyebrow{display:inline-flex;align-items:center;gap:9px;color:#fff;font-weight:600;font-size:14px;
     margin-bottom:14px;opacity:.95;text-shadow:0 1px 8px rgba(0,0,0,.35)}
   .hero .eyebrow::before{content:"";width:26px;height:2px;background:var(--bronze-soft);border-radius:2px}
-  .hero h1{color:#fff;font-size:clamp(2.4rem,5.6vw,4.2rem);font-weight:700;max-width:16ch;
-    text-shadow:0 2px 18px rgba(0,0,0,.4)}
+  .hero h1{color:#fff;font-size:clamp(2.4rem,5.6vw,4.2rem);font-weight:700;max-width:16ch;text-shadow:0 2px 18px rgba(0,0,0,.4)}
   .hero h1 .hl{color:var(--bronze-soft)}
   .hero .lead{margin-top:16px;font-size:19px;max-width:54ch;color:#f3f0e8;text-shadow:0 1px 10px rgba(0,0,0,.4)}
   .hero .cta-row{margin-top:26px;display:flex;gap:13px;flex-wrap:wrap}
-  /* trust = hechos VERDADEROS (NO antiguedad/credencial inventada) */
   .trust{margin-top:24px;display:flex;gap:22px;flex-wrap:wrap}
   .trust .t{display:flex;align-items:center;gap:8px;font-size:14px;color:#f3f0e8;font-weight:500;text-shadow:0 1px 8px rgba(0,0,0,.4)}
   .trust .t svg{width:18px;height:18px;color:var(--bronze-soft)}
-  .dots{position:absolute;z-index:3;right:24px;bottom:22px;display:flex;gap:8px}
-  .dots button{width:9px;height:9px;border-radius:50%;border:0;cursor:pointer;background:rgba(255,255,255,.45);padding:0}
+  .dots{position:absolute;z-index:4;left:50%;transform:translateX(-50%);bottom:20px;display:flex;gap:8px}
+  .dots button{width:9px;height:9px;border-radius:50%;border:0;cursor:pointer;background:rgba(255,255,255,.5);padding:0;transition:width .25s,background .25s}
   .dots button[aria-current="true"]{background:#fff;width:24px;border-radius:5px}
   @media(max-width:600px){.hero{min-height:74vh}.trust{gap:14px}}
 
@@ -118,7 +113,6 @@
   .card .ph{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--bg-warm)}
   .card .ph img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
   .card:hover .ph img{transform:scale(1.04)}
-  /* v3: categoria arriba-izq + duracion abajo-der (estilo siturismo). SIN dificultad en la cara. */
   .pill{position:absolute;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(4px);
     color:var(--primary);font-weight:600;font-size:12px;padding:5px 11px;border-radius:var(--r-pill);box-shadow:var(--shadow-sm)}
   .pill.cat{top:10px;left:10px}
@@ -140,7 +134,7 @@
   .empty .tag{display:inline-block;margin-top:10px;font-size:13px;color:var(--bronze);font-weight:600}
   [hidden]{display:none!important}
 
-  /* ===== MODAL detalle ===== */
+  /* ===== MODAL ===== */
   dialog{border:0;border-radius:var(--r-lg);padding:0;max-width:760px;width:calc(100% - 32px);background:var(--bg);color:var(--ink);box-shadow:var(--shadow-lg)}
   dialog::backdrop{background:rgba(20,30,30,.5);backdrop-filter:blur(2px)}
   .m-hd{position:relative}
@@ -174,7 +168,7 @@
   .legend code{background:var(--bg-warm);padding:2px 7px;border-radius:6px;color:var(--primary);font-size:12px}
 
   @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}
-    .slide{transition:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
+    .tile{transition:none!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
 </style>
 </head>
 <body>
@@ -187,9 +181,9 @@
   </nav>
 </div></header>
 
-<!-- HERO full-bleed rotativo (assets PROPIOS de PV) -->
 <section class="hero" id="inicio">
-  <div class="slides" id="slides" aria-hidden="true"></div>
+  <div class="hero-base" id="heroBase" aria-hidden="true"></div>
+  <div class="tiles" id="tiles" aria-hidden="true"></div>
   <div class="hero-scrim"></div>
   <div class="hero-content"><div class="wrap">
     <span class="eyebrow">Bariloche · Patagonia argentina</span>
@@ -228,7 +222,6 @@
     <img src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/hero-slideshow/pv-hero-07.webp" alt="Paisaje de la Patagonia argentina" style="width:100%;height:100%;object-fit:cover">
   </figure>
   <div>
-    <span class="eyebrow" style="color:var(--bronze);display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:14px"></span>
     <h2 style="font-size:clamp(1.7rem,3.4vw,2.3rem)">Conocé la Patagonia con quienes la viven</h2>
     <p style="margin-top:14px;color:var(--ink-soft)">Organizamos cada salida de principio a fin: transporte, guía y los detalles para que disfrutes sin preocupaciones. Reservás rápido por WhatsApp.</p>
     <div style="margin-top:22px"><a class="btn btn-act strong" href="#contacto">
@@ -246,10 +239,10 @@
 <footer><div class="wrap"><div class="brand">Patagonia Viva</div>Bariloche, Patagonia argentina · <a href="#">Instagram</a></div></footer>
 
 <div class="legend">
-  <strong>Maqueta F2 v3 (mockup-first)</strong> — dirección visual, NO el sitio live. <strong>Hero full-bleed rotativo</strong>
-  con los 11 assets propios de PV (<code>hero_slideshow</code>, verificados en prod). Cards estilo siturismo:
-  categoría arriba-izq + duración abajo-der, <strong>dificultad solo en el modal</strong>. Botones unificados transparentes
-  con icono (Reservar marcado = conversión, Ver detalle liviano). Sin claims inventados. Hakuna sin tocar.
+  <strong>Maqueta F2 v4 (mockup-first)</strong> — dirección visual, NO el sitio live. <strong>Hero con transición en mosaico</strong>
+  (estilo del video siturismo: tiles que revelan la siguiente foto escalonados), con los 11 assets propios de PV.
+  Cards estilo siturismo (categoría + duración; dificultad en el modal). Botones unificados (Reservar marcado, Ver detalle liviano).
+  Features preservadas. Sin claims inventados. Hakuna sin tocar.
 </div>
 
 <dialog id="modal"></dialog>
@@ -259,7 +252,6 @@ const HERO=["pv-hero-01","pv-hero-02","pv-hero-03","pv-hero-04","pv-hero-05","pv
   .map(n=>"https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/hero-slideshow/"+n+".webp");
 const BASE="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/excursions/";
 const CATLABEL={terrestre:"Terrestre",lacustre:"Lacustre",aventura:"Aventura",nieve:"Nieve"};
-// Data REAL de prod (content_json->servicios), s45 read-only. dificultad (diff) se conserva: vive en el MODAL.
 const EX=[
  {key:"cerro-catedral",cat:"terrestre",title:"Cerro Catedral",dur:"Media jornada",diff:"Baja-media",price:38000,was:50000,
   desc:"Salida para visitar la base del centro de ski más grande de Sudamérica.",horario:"Media jornada (sin horario fijo)",
@@ -298,18 +290,41 @@ const gal=(k,n)=>Array.from({length:n},(_,i)=>BASE+k+"/2560/g"+(i+1)+".webp");
 const ICO={eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'};
 
-/* ===== HERO slideshow ===== */
-const slidesEl=document.getElementById('slides'),dotsEl=document.getElementById('dots');
-slidesEl.innerHTML=HERO.map((u,i)=>`<div class="slide${i===0?' active':''}" style="background-image:url('${u}')"></div>`).join("");
+/* ===== HERO: transicion en MOSAICO (tiles escalonados) ===== */
+const COLS=8,ROWS=4,TILE_FADE=500,STAGGER=55;
+const heroBase=document.getElementById('heroBase'),tilesEl=document.getElementById('tiles'),dotsEl=document.getElementById('dots');
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+heroBase.style.backgroundImage=`url('${HERO[0]}')`;
+const tiles=[];
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  const t=document.createElement('div');t.className='tile';
+  t.style.backgroundPosition=`${(COLS>1?c/(COLS-1):0)*100}% ${(ROWS>1?r/(ROWS-1):0)*100}%`;
+  t.style.transitionDelay=`${(r+c)*STAGGER}ms`;
+  tilesEl.appendChild(t);tiles.push(t);
+}
 dotsEl.innerHTML=HERO.map((_,i)=>`<button role="tab" aria-current="${i===0}" data-i="${i}"></button>`).join("");
-const slideEls=[...slidesEl.children],dotEls=[...dotsEl.children];
-let cur=0,timer=null;
-function go(i){slideEls[cur].classList.remove('active');dotEls[cur].setAttribute('aria-current','false');
-  cur=(i+HERO.length)%HERO.length;slideEls[cur].classList.add('active');dotEls[cur].setAttribute('aria-current','true');}
-function start(){if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  stop();timer=setInterval(()=>go(cur+1),5500);}
+const dotEls=[...dotsEl.children];
+let cur=0,busy=false,timer=null;
+const maxDelay=(COLS-1+ROWS-1)*STAGGER+TILE_FADE;
+function goTo(next){
+  if(busy||next===cur){return;}
+  busy=true;
+  dotEls[cur].setAttribute('aria-current','false');dotEls[next].setAttribute('aria-current','true');
+  if(reduce){heroBase.style.backgroundImage=`url('${HERO[next]}')`;cur=next;busy=false;return;}
+  tiles.forEach(t=>{t.style.backgroundImage=`url('${HERO[next]}')`;});
+  void tilesEl.offsetWidth;                 // reflow para que el opacity:0 inicial tome
+  tiles.forEach(t=>t.style.opacity='1');
+  setTimeout(()=>{
+    heroBase.style.backgroundImage=`url('${HERO[next]}')`;
+    tiles.forEach(t=>{t.style.transition='none';t.style.opacity='0';});
+    void tilesEl.offsetWidth;
+    tiles.forEach(t=>{t.style.transition='';});  // restaura transition+delay del CSS
+    cur=next;busy=false;
+  },maxDelay+40);
+}
+function start(){if(reduce)return;stop();timer=setInterval(()=>goTo((cur+1)%HERO.length),5500);}
 function stop(){if(timer)clearInterval(timer);}
-dotEls.forEach(d=>d.addEventListener('click',()=>{go(+d.dataset.i);start();}));
+dotEls.forEach(d=>d.addEventListener('click',()=>{goTo(+d.dataset.i);start();}));
 start();
 
 /* ===== Cards + filtro ===== */
