@@ -3,320 +3,367 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mockup F2 — Patagonia Viva · tema claro + filtro categorías</title>
+<title>Mockup F2 v2 — Patagonia Viva · tema cálido-claro + filtro + features preservadas</title>
 <!--
-  MOCKUP-FIRST (F2). Maqueta para aprobacion de DIRECCION visual, NO el sitio live.
-  - Conserva identidad PV (paleta de marca real desde design_json: crema #F7F2E8,
-    teal #143038/#3E7C95, bronce #B48448, CTA #25D366, fonts Cinzel + Hanken Grotesk).
-  - Objetivo CEO: mas CLARO/LUMINOSO (el live se ve oscuro) + filtro de categorias
-    Terrestres/Lacustres/Aventura/Nieve listo (PV hoy todas terrestres).
-  - Hakuna NO se toca: el cambio real ira por override sites.design_json del tenant PV.
-  - Excursiones: nombres genericos/publicos de Bariloche terrestre. NO se copia copy
-    ni assets de competidores. Fotos = placeholders (Unsplash) solo para la maqueta.
+  MOCKUP-FIRST (F2 v2). Maqueta para aprobacion de DIRECCION visual, NO el sitio live.
+  Cambios v2 (pedido CEO):
+   1. Fondo BEIGE/CREMA conservado (calidez de marca), tarjetas calidas, NO blanco generico.
+   2. SIN claims inventados de antiguedad/credencial (agencia NUEVA). Badges = hechos VERDADEROS
+      derivados de la data real (cancelacion 48h, guia en espanol incluido, reserva por WhatsApp).
+   3. Features existentes PRESERVADAS: modal "Ver detalle" (FAQs/horarios/itinerario/dificultad/
+      incluye), badge dificultad, banner horario, precio real + descuento tachado, galeria.
+      El rediseno SUMA filtro de categorias + CTA "Reservar" (flujo 5 pasos), sin sacar nada.
+   4. Fotos REALES de PV (Supabase public-tenant-media), no placeholders de stock.
+  Hakuna NO se toca: el cambio real ira por override sites.design_json del tenant PV (gateado).
+  Data de excursiones/fotos = leida read-only de prod content_json/media_json (s45).
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* Paleta de marca PV (real) rebalanceada hacia luminoso */
-    --bg:#F8F4EC;            /* crema, apenas mas claro que el live para airear */
-    --surface:#FFFFFF;       /* blanco: superficie de tarjetas, suma luz */
-    --surface-cool:#EAF2F3;  /* teal muy claro: seccion fresca */
-    --ink:#1E2B2C;           /* texto principal (contraste alto sobre crema/blanco) */
-    --ink-soft:#4C5C5D;      /* texto secundario, sigue >=4.5:1 */
-    --primary:#143038;       /* teal profundo: SOLO acentos/typo, no rellenos grandes */
-    --teal:#3E7C95;          /* teal-azul luminoso: links, filtro activo */
-    --teal-bright:#5AA0BC;   /* hover/realce */
-    --bronze:#B48448;        /* bronce: badges, detalles finos */
-    --cta:#25D366;           /* WhatsApp */
-    --line:rgba(20,48,56,.10);
-    --shadow-sm:0 1px 2px rgba(20,48,56,.06), 0 4px 12px rgba(20,48,56,.05);
-    --shadow-lg:0 8px 24px rgba(20,48,56,.10), 0 2px 6px rgba(20,48,56,.06);
-    --r-lg:22px; --r-xl:16px; --r-pill:999px;
-    --maxw:1140px;
-    --z-nav:100;
+    --bg:#F4EDDC;            /* crema calido de marca (el CEO lo quiere, NO blanco) */
+    --bg-warm:#EFE5D0;       /* arena un poco mas profunda: ritmo de seccion, sigue calido */
+    --card:#FBF6EA;          /* marfil calido para tarjetas: claras pero NO blanco generico */
+    --ink:#1E2B2C;
+    --ink-soft:#4F5E5C;
+    --primary:#143038;       /* teal profundo: typo y acentos, no rellenos grandes */
+    --teal:#3E7C95;
+    --teal-bright:#5AA0BC;
+    --bronze:#B48448;
+    --bronze-soft:#C9A063;
+    --cta:#25D366;
+    --line:rgba(20,48,56,.12);
+    --line-warm:rgba(180,132,72,.28);
+    --shadow-sm:0 1px 2px rgba(60,40,20,.06), 0 6px 16px rgba(60,40,20,.07);
+    --shadow-lg:0 10px 30px rgba(40,30,15,.13), 0 3px 8px rgba(40,30,15,.07);
+    --r-lg:20px; --r-xl:14px; --r-pill:999px;
+    --maxw:1160px; --z-nav:50; --z-modal:100;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:17px;line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-  }
-  h1,h2,h3{font-family:"Cinzel",serif;color:var(--primary);margin:0;line-height:1.12;letter-spacing:-.01em;text-wrap:balance}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:"Cinzel",serif;color:var(--primary);margin:0;line-height:1.14;letter-spacing:-.01em;text-wrap:balance}
   p{margin:0;max-width:68ch}
   a{color:var(--teal);text-decoration:none}
   img{display:block;max-width:100%}
   .wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:24px}
-
-  /* NAV */
-  .nav{position:sticky;top:0;z-index:var(--z-nav);background:color-mix(in srgb,var(--bg) 88%,transparent);
-    backdrop-filter:saturate(1.1) blur(8px);border-bottom:1px solid var(--line)}
-  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px}
-  .brand{font-family:"Cinzel",serif;font-weight:700;font-size:20px;color:var(--primary);letter-spacing:.02em}
-  .brand b{color:var(--bronze);font-weight:700}
-  .navlinks{display:flex;gap:28px;align-items:center}
-  .navlinks a{color:var(--ink);font-weight:500;font-size:15px}
-  .navlinks a:hover{color:var(--teal)}
-  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;border-radius:var(--r-pill);
-    padding:11px 20px;font-size:15px;border:0;cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+  .btn{display:inline-flex;align-items:center;gap:8px;font:inherit;font-weight:600;border-radius:var(--r-pill);
+    padding:11px 20px;font-size:15px;border:0;cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,background .18s,color .18s}
   .btn-cta{background:var(--cta);color:#073019}
   .btn-cta:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .btn-primary{background:var(--primary);color:#F4EDDC}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm);background:#1c4049}
   .btn-ghost{background:transparent;border:1.5px solid var(--teal);color:var(--teal)}
   .btn-ghost:hover{background:var(--teal);color:#fff}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:var(--z-nav);background:color-mix(in srgb,var(--bg) 86%,transparent);
+    backdrop-filter:saturate(1.1) blur(8px);border-bottom:1px solid var(--line-warm)}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{font-family:"Cinzel",serif;font-weight:700;font-size:20px;color:var(--primary);letter-spacing:.02em}
+  .brand b{color:var(--bronze)}
+  .navlinks{display:flex;gap:26px;align-items:center}
+  .navlinks a{color:var(--ink);font-weight:500;font-size:15px}
+  .navlinks a:hover{color:var(--teal)}
   @media(max-width:760px){.navlinks a:not(.btn){display:none}}
 
-  /* HERO — luminoso: crema + foto enmarcada, sin overlay oscuro full-bleed */
-  .hero{padding:72px 0 56px}
-  .hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
-  .eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--bronze);font-weight:600;
-    font-size:14px;letter-spacing:.02em;margin-bottom:18px}
+  /* HERO calido-claro: crema + foto real enmarcada, sin overlay oscuro full-bleed */
+  .hero{padding:64px 0 48px}
+  .hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--bronze);font-weight:600;font-size:14px;margin-bottom:16px}
   .eyebrow::before{content:"";width:26px;height:2px;background:var(--bronze);border-radius:2px}
-  .hero h1{font-size:clamp(2.4rem,5.2vw,4rem);font-weight:700}
+  .hero h1{font-size:clamp(2.3rem,5vw,3.7rem);font-weight:700}
   .hero h1 .hl{color:var(--teal)}
-  .hero p.lead{margin-top:20px;font-size:19px;color:var(--ink-soft)}
-  .hero .cta-row{margin-top:30px;display:flex;gap:14px;flex-wrap:wrap}
-  .hero-figure{position:relative;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-lg);
-    aspect-ratio:4/5;background:var(--surface-cool)}
-  .hero-figure img{width:100%;height:100%;object-fit:cover}
-  .hero-figure::after{content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg,transparent 55%,rgba(20,48,56,.18));}
-  .hero-badge{position:absolute;left:18px;bottom:18px;z-index:2;background:color-mix(in srgb,#fff 88%,transparent);
-    backdrop-filter:blur(6px);border-radius:var(--r-pill);padding:9px 16px;font-weight:600;font-size:14px;color:var(--primary);
-    box-shadow:var(--shadow-sm)}
-  .hero-stats{display:flex;gap:30px;margin-top:34px}
-  .hero-stats .s b{font-family:"Cinzel",serif;font-size:26px;color:var(--primary);display:block;line-height:1}
-  .hero-stats .s span{font-size:13.5px;color:var(--ink-soft)}
-  @media(max-width:820px){.hero .wrap{grid-template-columns:1fr;gap:34px}.hero-figure{aspect-ratio:16/11;order:-1}}
+  .hero p.lead{margin-top:18px;font-size:19px;color:var(--ink-soft)}
+  .cta-row{margin-top:26px;display:flex;gap:13px;flex-wrap:wrap}
+  /* badges hero = hechos VERDADEROS (no antiguedad/credencial inventada) */
+  .trust{margin-top:30px;display:flex;gap:20px;flex-wrap:wrap}
+  .trust .t{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);font-weight:500}
+  .trust .t svg{width:19px;height:19px;color:var(--bronze);flex:none}
+  .hero-figure{position:relative;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/5;background:var(--bg-warm)}
+  .hero-figure img{width:100%;height:100%;object-fit:cover;object-position:center 42%}
+  .hero-figure::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(20,48,56,.16))}
+  .hero-cap{position:absolute;left:16px;bottom:16px;z-index:2;background:color-mix(in srgb,var(--card) 90%,transparent);
+    backdrop-filter:blur(6px);border-radius:var(--r-pill);padding:8px 15px;font-weight:600;font-size:13.5px;color:var(--primary);box-shadow:var(--shadow-sm)}
+  @media(max-width:820px){.hero .wrap{grid-template-columns:1fr;gap:30px}.hero-figure{aspect-ratio:16/11;order:-1}}
 
-  /* SECCION EXCURSIONES — la estrella: filtro + grilla */
-  .section{padding:62px 0}
-  .section.cool{background:var(--surface-cool)}
-  .sec-head{display:flex;flex-direction:column;gap:12px;margin-bottom:30px;max-width:640px}
-  .sec-head h2{font-size:clamp(1.8rem,3.6vw,2.6rem)}
-  .sec-head p{color:var(--ink-soft)}
+  /* SECCION EXCURSIONES */
+  .section{padding:58px 0}
+  .section.warm{background:var(--bg-warm)}
+  .sec-head{margin-bottom:26px;max-width:660px}
+  .sec-head h2{font-size:clamp(1.8rem,3.6vw,2.5rem)}
+  .sec-head p{color:var(--ink-soft);margin-top:10px}
 
-  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px}
-  .chip{font:inherit;font-weight:600;font-size:14.5px;cursor:pointer;border-radius:var(--r-pill);
-    padding:9px 18px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
-    transition:all .18s cubic-bezier(.2,.8,.2,1)}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
+  .chip{font:inherit;font-weight:600;font-size:14.5px;cursor:pointer;border-radius:var(--r-pill);padding:9px 18px;
+    border:1.5px solid var(--line-warm);background:var(--card);color:var(--ink);transition:all .18s cubic-bezier(.2,.8,.2,1)}
   .chip:hover{border-color:var(--teal);color:var(--teal)}
   .chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:var(--shadow-sm)}
-  .chip .count{opacity:.7;font-weight:500;margin-left:5px;font-size:12.5px}
+  .chip .count{opacity:.72;font-weight:500;margin-left:5px;font-size:12.5px}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:24px}
-  .card{background:var(--surface);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);
-    display:flex;flex-direction:column;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+  .card{background:var(--card);border:1px solid var(--line-warm);border-radius:var(--r-lg);overflow:hidden;
+    box-shadow:var(--shadow-sm);display:flex;flex-direction:column;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
   .card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
-  .card .ph{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--surface-cool)}
+  .card .ph{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--bg-warm)}
   .card .ph img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
   .card:hover .ph img{transform:scale(1.04)}
-  .badge{position:absolute;top:12px;left:12px;background:color-mix(in srgb,#fff 90%,transparent);
-    backdrop-filter:blur(4px);color:var(--primary);font-weight:600;font-size:12.5px;
-    padding:5px 11px;border-radius:var(--r-pill);box-shadow:var(--shadow-sm)}
-  .badge.dur{left:auto;right:12px;background:color-mix(in srgb,var(--primary) 84%,transparent);color:#fff}
-  .card .body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .pills{position:absolute;inset:10px 10px auto 10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between}
+  .pill{background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(4px);color:var(--primary);
+    font-weight:600;font-size:12px;padding:5px 10px;border-radius:var(--r-pill);box-shadow:var(--shadow-sm)}
+  .pill.diff{background:color-mix(in srgb,var(--bronze) 90%,transparent);color:#fff}      /* badge dificultad */
+  .pill.dur{background:color-mix(in srgb,var(--primary) 86%,transparent);color:#fff}      /* banner duracion */
+  .card .body{padding:16px 17px 18px;display:flex;flex-direction:column;gap:9px;flex:1}
   .card h3{font-size:19px}
-  .card p{font-size:14.5px;color:var(--ink-soft);flex:1}
-  .card .foot{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
-  .price b{font-family:"Cinzel",serif;color:var(--primary);font-size:19px}
-  .price span{display:block;font-size:12px;color:var(--ink-soft)}
-  .card .go{font-weight:600;color:var(--teal);font-size:14.5px}
-  .card:hover .go{color:var(--teal-bright)}
+  .card .desc{font-size:14px;color:var(--ink-soft);flex:1}
+  .horario{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--teal);font-weight:600}
+  .horario svg{width:15px;height:15px;flex:none}
+  .price{display:flex;align-items:baseline;gap:9px}
+  .price .now{font-family:"Cinzel",serif;color:var(--primary);font-size:21px;font-weight:700}
+  .price .was{color:var(--ink-soft);text-decoration:line-through;font-size:14px}     /* descuento tachado */
+  .price .off{background:rgba(37,211,102,.16);color:#127a3c;font-weight:700;font-size:11.5px;padding:2px 7px;border-radius:6px}
+  .card .acts{display:flex;gap:9px;margin-top:6px}
+  .card .acts .btn{flex:1;justify-content:center;padding:10px 12px;font-size:14px}
 
-  .empty{grid-column:1/-1;text-align:center;padding:52px 20px;border:1.5px dashed var(--line);
-    border-radius:var(--r-lg);background:var(--surface);color:var(--ink-soft)}
+  .empty{grid-column:1/-1;text-align:center;padding:48px 20px;border:1.5px dashed var(--line-warm);border-radius:var(--r-lg);background:var(--card);color:var(--ink-soft)}
   .empty b{display:block;color:var(--primary);font-family:"Cinzel",serif;font-size:20px;margin-bottom:6px}
-  .empty .tag{display:inline-block;margin-top:12px;font-size:13px;color:var(--bronze);font-weight:600}
+  .empty .tag{display:inline-block;margin-top:10px;font-size:13px;color:var(--bronze);font-weight:600}
   [hidden]{display:none!important}
 
-  /* CIERRE */
-  .closing{padding:64px 0;text-align:center}
-  .closing h2{font-size:clamp(1.8rem,3.6vw,2.4rem);margin-bottom:14px}
-  .closing p{margin:0 auto 26px;color:var(--ink-soft)}
-  footer{background:var(--primary);color:#dfeaec;padding:40px 0;text-align:center;font-size:14px}
-  footer .brand{color:#fff}
+  /* MODAL detalle (native dialog) — preserva FAQs/horarios/itinerario/dificultad/incluye + galeria */
+  dialog{border:0;border-radius:var(--r-lg);padding:0;max-width:760px;width:calc(100% - 32px);background:var(--bg);
+    color:var(--ink);box-shadow:var(--shadow-lg)}
+  dialog::backdrop{background:rgba(20,30,30,.5);backdrop-filter:blur(2px)}
+  .m-hd{position:relative}
+  .m-hd img{width:100%;aspect-ratio:16/8;object-fit:cover}
+  .m-close{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;border:0;cursor:pointer;
+    background:color-mix(in srgb,var(--card) 92%,transparent);color:var(--primary);font-size:20px;box-shadow:var(--shadow-sm)}
+  .m-thumbs{display:flex;gap:8px;padding:12px 22px 0;overflow-x:auto}
+  .m-thumbs img{width:84px;height:58px;object-fit:cover;border-radius:9px;flex:none}
+  .m-body{padding:18px 22px 22px}
+  .m-body h3{font-size:24px;margin-bottom:4px}
+  .m-facts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}
+  .m-facts span{background:var(--card);border:1px solid var(--line-warm);border-radius:var(--r-pill);padding:6px 13px;font-size:13px;font-weight:600;color:var(--primary)}
+  .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 26px;margin-top:6px}
+  .m-grid h4{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--bronze);margin-bottom:7px}
+  .m-grid ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--ink-soft);display:flex;flex-direction:column;gap:4px}
+  .m-faq{margin-top:18px}
+  .m-faq details{border-top:1px solid var(--line-warm);padding:11px 0}
+  .m-faq summary{cursor:pointer;font-weight:600;color:var(--primary);font-size:15px}
+  .m-faq p{margin-top:7px;font-size:14.5px;color:var(--ink-soft)}
+  .m-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line-warm);flex-wrap:wrap}
+  .m-foot .cancel{font-size:13px;color:var(--ink-soft)}
+  @media(max-width:560px){.m-grid{grid-template-columns:1fr}}
+
+  /* Stub flujo de reserva (preview 5 pasos) — demuestra que reserva CONVIVE con el detalle */
+  .steps{display:flex;gap:6px;margin:14px 0 6px;flex-wrap:wrap}
+  .steps .st{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line-warm);border-radius:var(--r-pill);padding:6px 13px;font-size:13px;font-weight:600;color:var(--ink-soft)}
+  .steps .st b{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--teal);color:#fff;align-items:center;justify-content:center;font-size:12px}
+  .note{font-size:13px;color:var(--ink-soft);margin-top:8px}
+
+  footer{background:var(--primary);color:#dfeaec;padding:38px 0;text-align:center;font-size:14px;margin-top:8px}
+  footer .brand{color:#fff;margin-bottom:6px}
   footer a{color:#bcd6dd}
+  .legend{max-width:var(--maxw);margin:26px auto 0;padding:16px 24px;font-size:13px;color:var(--ink-soft)}
+  .legend code{background:var(--bg-warm);padding:2px 7px;border-radius:6px;color:var(--primary);font-size:12px}
 
-  .legend{max-width:var(--maxw);margin:30px auto 0;padding:16px 24px;font-size:13px;color:var(--ink-soft)}
-  .legend code{background:var(--surface-cool);padding:2px 7px;border-radius:6px;color:var(--primary);font-size:12px}
-
-  @media(prefers-reduced-motion:reduce){
-    *{transition:none!important;scroll-behavior:auto!important}
-    .card:hover{transform:none}.card:hover .ph img{transform:none}
-  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.card:hover{transform:none}.card:hover .ph img{transform:none}}
 </style>
 </head>
 <body>
 
-<header class="nav">
-  <div class="wrap">
-    <div class="brand">Patagonia <b>Viva</b></div>
-    <nav class="navlinks" aria-label="Principal">
-      <a href="#excursiones">Excursiones</a>
-      <a href="#nosotros">Nosotros</a>
-      <a href="#contacto">Contacto</a>
-      <a class="btn btn-cta" href="#contacto">WhatsApp</a>
-    </nav>
-  </div>
-</header>
+<header class="nav"><div class="wrap">
+  <div class="brand">Patagonia <b>Viva</b></div>
+  <nav class="navlinks" aria-label="Principal">
+    <a href="#excursiones">Excursiones</a><a href="#nosotros">Nosotros</a><a href="#contacto">Contacto</a>
+    <a class="btn btn-cta" href="#contacto">WhatsApp</a>
+  </nav>
+</div></header>
 
-<section class="hero">
-  <div class="wrap">
-    <div>
-      <span class="eyebrow">Bariloche · Patagonia Argentina</span>
-      <h1>Viví la montaña <span class="hl">a plena luz</span></h1>
-      <p class="lead">Excursiones terrestres con guías locales. Cerros, lagos y bosques de
-        la Patagonia, organizados para que solo te ocupes de disfrutar.</p>
-      <div class="cta-row">
-        <a class="btn btn-cta" href="#excursiones">Ver excursiones</a>
-        <a class="btn btn-ghost" href="#contacto">Consultar por WhatsApp</a>
-      </div>
-      <div class="hero-stats">
-        <div class="s"><b>+15</b><span>años en Bariloche</span></div>
-        <div class="s"><b>Guías</b><span>locales certificados</span></div>
-        <div class="s"><b>Salidas</b><span>todo el año</span></div>
-      </div>
+<section class="hero"><div class="wrap">
+  <div>
+    <span class="eyebrow">Bariloche · Patagonia argentina</span>
+    <h1>Viví la Patagonia <span class="hl">con quienes la conocen</span></h1>
+    <p class="lead">Excursiones guiadas por cerros, lagos y bosques de Bariloche. Reservás por WhatsApp y coordinamos cada detalle.</p>
+    <div class="cta-row">
+      <a class="btn btn-cta" href="#excursiones">Ver excursiones</a>
+      <a class="btn btn-ghost" href="#contacto">Consultar</a>
     </div>
-    <figure class="hero-figure">
-      <img src="https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&q=70" alt="Montañas y lago de la Patagonia">
-      <span class="hero-badge">Cerro Catedral · salida 09:00</span>
-    </figure>
-  </div>
-</section>
-
-<section class="section" id="excursiones">
-  <div class="wrap">
-    <div class="sec-head">
-      <h2>Nuestras excursiones</h2>
-      <p>Elegí por tipo de aventura. Hoy ofrecemos salidas terrestres; el resto queda
-        listo para sumar a medida que crece la agencia.</p>
-    </div>
-
-    <div class="filters" role="group" aria-label="Filtrar por categoría">
-      <button class="chip" data-cat="todos" aria-pressed="true">Todos <span class="count">6</span></button>
-      <button class="chip" data-cat="terrestre" aria-pressed="false">Terrestres <span class="count">6</span></button>
-      <button class="chip" data-cat="lacustre" aria-pressed="false">Lacustres <span class="count">0</span></button>
-      <button class="chip" data-cat="aventura" aria-pressed="false">Aventura <span class="count">0</span></button>
-      <button class="chip" data-cat="nieve" aria-pressed="false">Nieve <span class="count">0</span></button>
-    </div>
-
-    <div class="grid" id="grid">
-      <!-- 6 excursiones terrestres (nombres publicos genericos de Bariloche) -->
-      <article class="card" data-cat="terrestre">
-        <div class="ph"><img src="https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?w=600&q=70" alt="">
-          <span class="badge">Terrestre</span><span class="badge dur">Medio día</span></div>
-        <div class="body"><h3>Cerro Catedral</h3>
-          <p>Subida al cerro y miradores del Nahuel Huapi. Salida 09:00.</p>
-          <div class="foot"><div class="price"><b>$—</b><span>por persona</span></div><span class="go">Ver y reservar →</span></div></div>
-      </article>
-      <article class="card" data-cat="terrestre">
-        <div class="ph"><img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=600&q=70" alt="">
-          <span class="badge">Terrestre</span><span class="badge dur">Día completo</span></div>
-        <div class="body"><h3>Circuito Chico</h3>
-          <p>Clásico recorrido por Llao Llao, Bahía López y Punto Panorámico.</p>
-          <div class="foot"><div class="price"><b>$—</b><span>por persona</span></div><span class="go">Ver y reservar →</span></div></div>
-      </article>
-      <article class="card" data-cat="terrestre">
-        <div class="ph"><img src="https://images.unsplash.com/photo-1500534623283-312aade485b7?w=600&q=70" alt="">
-          <span class="badge">Terrestre</span><span class="badge dur">Medio día</span></div>
-        <div class="body"><h3>Cerro Campanario</h3>
-          <p>Una de las mejores vistas del mundo según National Geographic.</p>
-          <div class="foot"><div class="price"><b>$—</b><span>por persona</span></div><span class="go">Ver y reservar →</span></div></div>
-      </article>
-      <article class="card" data-cat="terrestre">
-        <div class="ph"><img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=70" alt="">
-          <span class="badge">Terrestre</span><span class="badge dur">Día completo</span></div>
-        <div class="body"><h3>Cerro Tronador</h3>
-          <p>Ventisquero Negro y el cerro más alto de la región, con paradas guiadas.</p>
-          <div class="foot"><div class="price"><b>$—</b><span>por persona</span></div><span class="go">Ver y reservar →</span></div></div>
-      </article>
-      <article class="card" data-cat="terrestre">
-        <div class="ph"><img src="https://images.unsplash.com/photo-1486911278844-a81c5267e227?w=600&q=70" alt="">
-          <span class="badge">Terrestre</span><span class="badge dur">Día completo</span></div>
-        <div class="body"><h3>Villa La Angostura</h3>
-          <p>Bosque de Arrayanes y el pueblo de montaña, bordeando el lago.</p>
-          <div class="foot"><div class="price"><b>$—</b><span>por persona</span></div><span class="go">Ver y reservar →</span></div></div>
-      </article>
-      <article class="card" data-cat="terrestre">
-        <div class="ph"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=70" alt="">
-          <span class="badge">Terrestre</span><span class="badge dur">Día completo</span></div>
-        <div class="body"><h3>Circuito Grande</h3>
-          <p>Valle Encantado, Confluencia y Villa Traful en un recorrido amplio.</p>
-          <div class="foot"><div class="price"><b>$—</b><span>por persona</span></div><span class="go">Ver y reservar →</span></div></div>
-      </article>
-
-      <!-- Empty-states para categorias listas pero todavia sin excursiones -->
-      <div class="empty" data-empty="lacustre" hidden>
-        <b>Excursiones lacustres</b>
-        Navegaciones por el Nahuel Huapi y Puerto Blest, próximamente.
-        <span class="tag">Categoría lista para cuando sumes salidas</span>
-      </div>
-      <div class="empty" data-empty="aventura" hidden>
-        <b>Aventura</b>
-        Trekking, rafting y cabalgatas, próximamente.
-        <span class="tag">Categoría lista para cuando sumes salidas</span>
-      </div>
-      <div class="empty" data-empty="nieve" hidden>
-        <b>Nieve</b>
-        Traslados a centros de ski y actividades de invierno, próximamente.
-        <span class="tag">Categoría lista para cuando sumes salidas</span>
-      </div>
+    <!-- badges = hechos VERDADEROS de la data real (NO antiguedad/credencial inventada) -->
+    <div class="trust">
+      <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Cancelación gratis hasta 48 h antes</div>
+      <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Guía en español incluido</div>
+      <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Reservá por WhatsApp</div>
     </div>
   </div>
-</section>
+  <figure class="hero-figure">
+    <img src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/hero-slideshow/pv-hero-01.webp" alt="Hotel Llao Llao frente al cerro nevado y el lago Nahuel Huapi">
+    <span class="hero-cap">Circuito Chico · Bariloche</span>
+  </figure>
+</div></section>
 
-<section class="section cool" id="nosotros">
-  <div class="wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center">
-    <figure class="hero-figure" style="aspect-ratio:5/4;box-shadow:var(--shadow-lg)">
-      <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=70" alt="Paisaje patagónico">
-    </figure>
-    <div>
-      <span class="eyebrow">Agencia local</span>
-      <h2 style="font-size:clamp(1.7rem,3.4vw,2.3rem)">Tu agencia de confianza en Bariloche</h2>
-      <p style="margin-top:16px;color:var(--ink-soft)">Trabajamos con guías y operadores locales para que cada
-        salida sea segura y memorable. Reservás rápido por WhatsApp y coordinamos todos los detalles.</p>
-      <div class="cta-row" style="margin-top:24px"><a class="btn btn-ghost" href="#contacto">Hablar con nosotros</a></div>
-    </div>
+<section class="section" id="excursiones"><div class="wrap">
+  <div class="sec-head">
+    <h2>Nuestras excursiones</h2>
+    <p>Elegí por tipo de aventura. Hoy ofrecemos salidas terrestres; las demás categorías quedan listas para sumar.</p>
   </div>
-</section>
+  <div class="filters" role="group" aria-label="Filtrar por categoría">
+    <button class="chip" data-cat="todos" aria-pressed="true">Todos <span class="count" data-c="todos"></span></button>
+    <button class="chip" data-cat="terrestre" aria-pressed="false">Terrestres <span class="count" data-c="terrestre"></span></button>
+    <button class="chip" data-cat="lacustre" aria-pressed="false">Lacustres <span class="count">0</span></button>
+    <button class="chip" data-cat="aventura" aria-pressed="false">Aventura <span class="count">0</span></button>
+    <button class="chip" data-cat="nieve" aria-pressed="false">Nieve <span class="count">0</span></button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div></section>
 
-<section class="closing" id="contacto">
-  <div class="wrap">
-    <h2>¿Listo para tu próxima aventura?</h2>
-    <p>Escribinos y armamos tu excursión ideal.</p>
-    <a class="btn btn-cta" href="#" style="padding:14px 26px;font-size:16px">Reservar por WhatsApp</a>
+<section class="section warm" id="nosotros"><div class="wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:42px;align-items:center">
+  <figure class="hero-figure" style="aspect-ratio:5/4">
+    <img src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/hero-slideshow/pv-hero-05.webp" alt="Paisaje de la Patagonia argentina">
+  </figure>
+  <div>
+    <span class="eyebrow">Agencia local</span>
+    <h2 style="font-size:clamp(1.7rem,3.4vw,2.3rem)">Conocé la Patagonia con quienes la viven</h2>
+    <p style="margin-top:14px;color:var(--ink-soft)">Organizamos cada salida de principio a fin: transporte, guía y los detalles para que disfrutes sin preocupaciones. Reservás rápido por WhatsApp.</p>
+    <div class="cta-row"><a class="btn btn-ghost" href="#contacto">Hablar con nosotros</a></div>
   </div>
-</section>
+</div></section>
 
-<footer>
-  <div class="wrap">
-    <div class="brand" style="margin-bottom:8px">Patagonia Viva</div>
-    Bariloche, Patagonia Argentina · <a href="#">Instagram</a>
-  </div>
-</footer>
+<section class="section" id="contacto" style="text-align:center"><div class="wrap">
+  <h2 style="font-size:clamp(1.8rem,3.6vw,2.3rem)">¿Listo para tu próxima salida?</h2>
+  <p style="margin:12px auto 22px;color:var(--ink-soft)">Escribinos y armamos tu excursión.</p>
+  <a class="btn btn-cta" href="#" style="padding:14px 26px;font-size:16px">Reservar por WhatsApp</a>
+</div></section>
+
+<footer><div class="wrap"><div class="brand">Patagonia Viva</div>Bariloche, Patagonia argentina · <a href="#">Instagram</a></div></footer>
 
 <div class="legend">
-  <strong>Maqueta F2 (mockup-first)</strong> — dirección visual para aprobación, no es el sitio live.
-  Conserva la paleta de marca real de PV (<code>#F7F2E8</code> crema · <code>#143038</code> teal ·
-  <code>#B48448</code> bronce · fonts <code>Cinzel</code> + <code>Hanken Grotesk</code>), rebalanceada hacia
-  superficies claras y aire. El filtro es funcional (probá Lacustres/Aventura/Nieve → empty-state listo).
-  Hakuna no se toca: el cambio real irá por <code>sites.design_json</code> del tenant PV. Fotos = placeholders.
+  <strong>Maqueta F2 v2 (mockup-first)</strong> — dirección visual, NO el sitio live. Fondo crema cálido de marca conservado
+  (<code>#F4EDDC</code>) + tarjetas marfil cálido (no blanco genérico). Fotos y data <strong>reales</strong> de PV.
+  Features preservadas: <strong>Ver detalle</strong> (FAQs/horarios/itinerario/dificultad/incluye + galería) + badge dificultad +
+  banner horario + precio real con descuento tachado; el rediseño <strong>suma</strong> el filtro de categorías y el CTA
+  <strong>Reservar</strong> (flujo 5 pasos, preview). Sin claims de antigüedad inventados (agencia nueva). Hakuna sin tocar.
 </div>
 
+<dialog id="modal"></dialog>
+
 <script>
-  const grid=document.getElementById('grid');
-  const cards=[...grid.querySelectorAll('.card')];
-  const empties=[...grid.querySelectorAll('.empty')];
-  const chips=[...document.querySelectorAll('.chip')];
-  function apply(cat){
-    cards.forEach(c=>c.hidden = !(cat==='todos' || c.dataset.cat===cat));
-    empties.forEach(e=>e.hidden = !(e.dataset.empty===cat));
-    chips.forEach(ch=>ch.setAttribute('aria-pressed', String(ch.dataset.cat===cat)));
-  }
-  chips.forEach(ch=>ch.addEventListener('click',()=>apply(ch.dataset.cat)));
-  apply('todos');
+// Data REAL leida de prod (content_json->servicios + media_json), s45 read-only.
+const BASE="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/excursions/";
+const EX=[
+ {key:"cerro-catedral",cat:"terrestre",title:"Cerro Catedral",dur:"Media jornada",diff:"Baja-media",price:38000,was:50000,
+  desc:"Salida para visitar la base del centro de ski más grande de Sudamérica.",horario:"Media jornada (sin horario fijo)",
+  salida:"Centro de Bariloche",incl:["Transporte ida y vuelta","Guía en español"],noincl:["Uso de aerosillas y teleféricos","Almuerzo y bebidas"],
+  itin:["Salida desde el centro de Bariloche","Llegada a la base del Cerro Catedral","Tiempo para recorrer la zona del centro de ski","Vistas hacia los lagos Nahuel Huapi, Moreno y Gutiérrez","Observación de la cordillera de los Andes","Regreso a Bariloche"],
+  faqs:[["¿Qué pasa si llueve?","La excursión se realiza igual, ya que la mayor parte del tiempo se pasa en la base del cerro. En caso de condiciones climáticas muy fuertes, evaluamos reprogramar."],["¿Puedo ir con niños?","Sí, es una salida tranquila y apta para niños. Avisanos si viajan menores para organizar todo."],["¿Qué tengo que llevar?","Ropa cómoda, calzado de trekking o deportivo, una campera y protector solar."],["¿Puedo subir en aerosilla?","Sí, de forma opcional. El ascenso no está incluido en el precio."]],
+  g:7},
+ {key:"circuito-chico",cat:"terrestre",title:"Circuito Chico",dur:"Media jornada · 4 h",diff:"Baja",price:36000,was:50000,
+  desc:"Recorrido clásico por los paisajes más representativos de Bariloche, ideal para conocer la zona en poco tiempo.",horario:"08:30–12:30 o 13:30–17:30 (diarias)",
+  salida:"Centro de Bariloche / hoteles hasta km 8 de Av. Bustillo",incl:["Transporte ida y vuelta","Guía en español"],noincl:["Ascenso al Cerro Campanario","Almuerzo y bebidas"],
+  itin:["Salida bordeando el Lago Nahuel Huapi","Parada en el Cerro Campanario (opción de subir)","Capilla San Eduardo","Hotel Llao Llao y Puerto Pañuelo","Península Llao Llao y Bahía López","Punto Panorámico","Mirador del Lago Moreno","Laguna El Trébol","Regreso a Bariloche"],
+  faqs:[["¿Qué pasa si llueve?","Se realiza con normalidad; caminamos por caminos pavimentados. Si las condiciones fueran muy adversas, se reprograma sin costo."],["¿Puedo ir con niños?","Sí, apta para toda la familia. Los niños de 0 a 3 años viajan sin ocupar asiento."],["¿Dónde nos encontramos?","Te pasamos a buscar por el hotel en el centro o hasta el km 8 de Av. Bustillo."]],
+  g:5},
+ {key:"cerro-tronador",cat:"terrestre",title:"Cerro Tronador",dur:"Día completo · 9 h",diff:"Baja-media",price:72000,was:100000,
+  desc:"Jornada completa para visitar el Cerro Tronador y el Ventisquero Negro.",horario:"09:00–18:00 (diarias)",
+  salida:"Centro de Bariloche / hoteles hasta km 8",incl:["Transporte ida y vuelta","Guía en español"],noincl:["Almuerzo","Ingreso al Parque Nacional"],
+  itin:["Salida por la Ruta 40 Sur","Lagos Gutiérrez y Mascardi","Valle de los Vuriloches","Parada en Pampa Linda (almuerzo libre)","Ventisquero Negro y Laguna de los Témpanos","Mirador del Cerro Tronador","Regreso a Bariloche"],
+  faqs:[["¿Qué pasa si llueve?","Se realiza salvo que el clima represente un riesgo. En ese caso se reprograma sin costo."],["¿Hay tiempo para almorzar?","Sí, parada en Pampa Linda con tiempo libre."]],
+  g:3},
+ {key:"el-bolson",cat:"terrestre",title:"El Bolsón",dur:"Día completo",diff:"Baja",price:72000,was:93000,
+  desc:"Un día para conocer el pueblo de El Bolsón y su feria artesanal.",horario:"08:30–18:30 (jueves y sábados)",
+  salida:"Centro de Bariloche",incl:["Transporte ida y vuelta","Guía en español"],noincl:["Almuerzo y bebidas","Compras personales"],
+  itin:["Salida hacia el sur","Recorrido por el valle hasta El Bolsón","Feria artesanal del pueblo","Tiempo libre en el centro","Vistas del Cerro Piltriquitrón","Regreso a Bariloche"],
+  faqs:[["¿Qué pasa si llueve?","Se realiza con normalidad; el paisaje del valle se ve muy lindo con lluvia."],["¿Hay tiempo libre?","Sí, para la feria artesanal y caminar por el centro de El Bolsón."]],
+  g:5},
+ {key:"villa-la-angostura",cat:"terrestre",title:"Villa La Angostura",dur:"Día completo",diff:"Baja",price:80000,was:null,
+  desc:"Un día para visitar Villa La Angostura y su zona costera.",horario:"08:00–18:00",
+  salida:"Centro de Bariloche",incl:["Transporte ida y vuelta","Guía en español"],noincl:["Almuerzo y bebidas"],
+  itin:["Salida desde Bariloche","Llegada a Villa La Angostura","Recorrido por el centro del pueblo","Costanera del Lago Nahuel Huapi","Tiempo libre para almorzar","Regreso a Bariloche"],
+  faqs:[["¿Puedo ir con niños?","Sí, una salida muy tranquila y recomendada para familias."],["¿Hay tiempo libre?","Sí, para recorrer el centro y la costanera."]],
+  g:4},
+ {key:"circuito-grande",cat:"terrestre",title:"Circuito Grande",dur:"Día completo · 9 h",diff:"Baja-media",price:72000,was:100000,
+  desc:"Recorrido completo por la Ruta de los 7 Lagos y Villa La Angostura.",horario:"08:30–18:00 (Lun/Mié/Vie, Nov–Abr)",
+  salida:"Centro de Bariloche / hoteles hasta km 8",incl:["Transporte ida y vuelta","Guía en español"],noincl:["Almuerzo y bebidas"],
+  itin:["Salida por la Ruta 40","Primera parada en Villa La Angostura","Ruta de los 7 Lagos con miradores","Tiempo libre en San Martín de los Andes","Regreso por el Brazo Huemul","Llegada a Bariloche"],
+  faqs:[["¿Qué pasa si llueve?","Se realiza salvo clima muy adverso; en ese caso se reprograma sin costo."],["¿Puedo ir con niños?","Sí, dificultad baja-media, apta para toda la familia."]],
+  g:6},
+];
+const money=n=>"$"+n.toLocaleString("es-AR");
+const cover=k=>BASE+k+"/2560/cover.webp";
+const gal=(k,n)=>Array.from({length:n},(_,i)=>BASE+k+"/2560/g"+(i+1)+".webp");
+
+const grid=document.getElementById('grid');
+function cardHTML(e){
+  const off=e.was?` <span class="was">${money(e.was)}</span> <span class="off">-${Math.round((1-e.price/e.was)*100)}%</span>`:"";
+  return `<article class="card" data-cat="${e.cat}">
+    <div class="ph"><img loading="lazy" src="${cover(e.key)}" alt="${e.title}">
+      <div class="pills"><span class="pill dur">${e.dur}</span><span class="pill diff">Dificultad ${e.diff}</span></div></div>
+    <div class="body">
+      <h3>${e.title}</h3>
+      <div class="horario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${e.horario}</div>
+      <p class="desc">${e.desc}</p>
+      <div class="price"><span class="now">${money(e.price)}</span>${off}</div>
+      <div class="acts">
+        <button class="btn btn-ghost" data-detail="${e.key}">Ver detalle</button>
+        <button class="btn btn-primary" data-book="${e.key}">Reservar</button>
+      </div>
+    </div></article>`;
+}
+const empties={lacustre:["Excursiones lacustres","Navegaciones por el Nahuel Huapi y Puerto Blest, próximamente."],
+  aventura:["Aventura","Trekking, rafting y cabalgatas, próximamente."],
+  nieve:["Nieve","Traslados a centros de ski y actividades de invierno, próximamente."]};
+function render(){
+  grid.innerHTML=EX.map(cardHTML).join("")
+   +Object.entries(empties).map(([k,v])=>`<div class="empty" data-empty="${k}" hidden><b>${v[0]}</b>${v[1]}<span class="tag">Categoría lista para cuando sumes salidas</span></div>`).join("");
+  document.querySelector('[data-c="todos"]').textContent=EX.length;
+  document.querySelector('[data-c="terrestre"]').textContent=EX.filter(e=>e.cat==="terrestre").length;
+  bind();
+}
+const chips=[...document.querySelectorAll('.chip')];
+function apply(cat){
+  [...grid.querySelectorAll('.card')].forEach(c=>c.hidden=!(cat==='todos'||c.dataset.cat===cat));
+  [...grid.querySelectorAll('.empty')].forEach(el=>el.hidden=!(el.dataset.empty===cat));
+  chips.forEach(ch=>ch.setAttribute('aria-pressed',String(ch.dataset.cat===cat)));
+}
+chips.forEach(ch=>ch.addEventListener('click',()=>apply(ch.dataset.cat)));
+
+const modal=document.getElementById('modal');
+function openDetail(key,book){
+  const e=EX.find(x=>x.key===key);const G=gal(e.key,e.g);
+  const off=e.was?` <span class="was">${money(e.was)}</span> <span class="off">-${Math.round((1-e.price/e.was)*100)}%</span>`:"";
+  modal.innerHTML=`<div class="m-hd"><img src="${cover(e.key)}" alt="${e.title}"><button class="m-close" aria-label="Cerrar">×</button></div>
+   <div class="m-thumbs">${G.map(u=>`<img loading="lazy" src="${u}" alt="">`).join("")}</div>
+   <div class="m-body">
+     <h3>${e.title}</h3>
+     <div class="price"><span class="now">${money(e.price)}</span>${off} <span style="color:var(--ink-soft);font-size:13px">por persona</span></div>
+     <div class="m-facts"><span>⏱ ${e.dur}</span><span>📊 Dificultad ${e.diff}</span><span>🕒 ${e.horario}</span><span>📍 ${e.salida}</span></div>
+     <div class="m-grid">
+       <div><h4>Incluye</h4><ul>${e.incl.map(i=>`<li>${i}</li>`).join("")}</ul></div>
+       <div><h4>No incluye</h4><ul>${e.noincl.map(i=>`<li>${i}</li>`).join("")}</ul></div>
+       <div style="grid-column:1/-1"><h4>Itinerario</h4><ul>${e.itin.map(i=>`<li>${i}</li>`).join("")}</ul></div>
+     </div>
+     <div class="m-faq"><h4 style="font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--bronze);margin:18px 0 4px">Preguntas frecuentes</h4>
+       ${e.faqs.map(f=>`<details><summary>${f[0]}</summary><p>${f[1]}</p></details>`).join("")}</div>
+     <!-- RESERVA convive con el detalle: el flujo 5 pasos abre desde aca -->
+     <div class="steps">${["Fecha","Pasajeros","Datos","Pago","Voucher"].map((s,i)=>`<span class="st"><b>${i+1}</b>${s}</span>`).join("")}</div>
+     <div class="m-foot">
+       <span class="cancel">✓ Anulación gratuita hasta 48 h antes</span>
+       <button class="btn btn-cta" data-book="${e.key}" style="padding:12px 22px">Reservar esta salida</button>
+     </div>
+   </div>`;
+  modal.querySelector('.m-close').onclick=()=>modal.close();
+  modal.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>{alert("Demo: abriría el flujo de reserva en 5 pasos (Fecha → Pasajeros → Datos → Pago → Voucher) para "+e.title+". Se construye en F6–F8.");});
+  if(book) modal.querySelector('.steps').scrollIntoView({block:'center'});
+  modal.showModal();
+}
+function bind(){
+  grid.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail,false));
+  grid.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>openDetail(b.dataset.book,true));
+}
+modal.addEventListener('click',e=>{if(e.target===modal)modal.close();});
+render();apply('todos');
 </script>
 </body>
 </html>
