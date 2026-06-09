@@ -3,20 +3,20 @@
 @import "../styles/tokens.css";
 
 @theme {
-  --color-onyx: rgb(var(--color-onyx));
-  --color-marble: rgb(var(--color-marble));
-  --color-stone: rgb(var(--color-stone));
-  --color-bone: rgb(var(--color-bone));
-  --color-cream: rgb(var(--color-cream));
-  --color-ash: rgb(var(--color-ash));
+  --color-onyx: rgb(var(--rgb-onyx));
+  --color-marble: rgb(var(--rgb-marble));
+  --color-stone: rgb(var(--rgb-stone));
+  --color-bone: rgb(var(--rgb-bone));
+  --color-cream: rgb(var(--rgb-cream));
+  --color-ash: rgb(var(--rgb-ash));
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 }
 
 @layer base {
   html {
-    background: rgb(var(--color-onyx));
-    color: rgb(var(--color-bone));
+    background: rgb(var(--rgb-onyx));
+    color: rgb(var(--rgb-bone));
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
@@ -24,8 +24,8 @@
     min-height: 100dvh;
   }
   ::selection {
-    background: rgb(var(--color-bone));
-    color: rgb(var(--color-onyx));
+    background: rgb(var(--rgb-bone));
+    color: rgb(var(--rgb-onyx));
   }
 }
 
