@@ -1,5 +1,5 @@
 import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
-import { getCurrentTenant } from "@/lib/tenants/membership";
+import { getActiveTenant } from "@/lib/tenants/membership";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExcursionsManager } from "./ExcursionsManager";
@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 
 export default async function ExcursionsPage() {
   const { user, tenantId } = await requireActiveTenantOrRedirect();
-  const tenant = await getCurrentTenant(user.id);
-  if (!tenant) redirect("/login?error=no_tenant");
-  if (tenant.id !== tenantId) {
+  // Membership-aware (fix s46): ver layout.tsx. null = drift → fail-closed. Multi-tenant safe.
+  const tenant = await getActiveTenant(user.id, tenantId);
+  if (!tenant) {
     console.error(
       JSON.stringify({
         level: "error",
@@ -20,7 +20,6 @@ export default async function ExcursionsPage() {
         scope: "agency_excursions_page",
         user_id: user.id,
         claim_tenant_id: tenantId,
-        membership_tenant_id: tenant.id,
       }),
     );
     redirect("/login?e=e08_drift");
