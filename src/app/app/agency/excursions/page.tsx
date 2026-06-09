@@ -35,11 +35,13 @@ export default async function ExcursionsPage() {
       .select(
         "id,tenant_id,provider_id,name,description,category,active,default_currency,created_at",
       )
+      .eq("tenant_id", tenant.id) // redundante a RLS, consistencia con handlers
       .order("created_at", { ascending: false }),
+    // Todos los providers (incl. archivados) para el name-map; el dropdown filtra activos.
     sb
       .from("providers")
       .select("id,tenant_id,name,contact_json,payout_terms,active,created_at")
-      .eq("active", true)
+      .eq("tenant_id", tenant.id)
       .order("name", { ascending: true }),
   ]);
 

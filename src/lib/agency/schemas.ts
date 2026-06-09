@@ -27,14 +27,14 @@ export type Currency = (typeof CURRENCIES)[number];
 export const ProviderCreateSchema = z.object({
   name: z.string().trim().min(1).max(160),
   payout_terms: z.string().trim().max(80).optional(),
-  contact_json: z.record(z.string(), z.string()).optional(),
+  contact_json: z.record(z.string().max(60), z.string().max(200)).optional(),
 });
 
 export const ProviderUpdateSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(160).optional(),
   payout_terms: z.string().trim().max(80).optional(),
-  contact_json: z.record(z.string(), z.string()).optional(),
+  contact_json: z.record(z.string().max(60), z.string().max(200)).optional(),
   active: z.boolean().optional(),
 });
 

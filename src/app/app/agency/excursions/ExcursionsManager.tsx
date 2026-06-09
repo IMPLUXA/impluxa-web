@@ -160,7 +160,9 @@ export function ExcursionsManager({
         </label>
       </div>
 
-      {status && <div className="text-sm text-amber-400">{status}</div>}
+      {!open && status && (
+        <div className="text-sm text-amber-400">{status}</div>
+      )}
 
       {/* Grilla */}
       {visible.length === 0 ? (
@@ -280,11 +282,14 @@ export function ExcursionsManager({
                 className="border-stone mt-1 w-full rounded border px-3 py-2"
               >
                 <option value="">— Sin proveedor —</option>
-                {providers.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
+                {providers
+                  .filter((p) => p.active || p.id === form.provider_id)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                      {p.active ? "" : " (archivado)"}
+                    </option>
+                  ))}
               </select>
             </label>
             {status && <div className="text-sm text-red-600">{status}</div>}

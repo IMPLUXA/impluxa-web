@@ -121,7 +121,9 @@ export function ProvidersManager({
         Ver archivados
       </label>
 
-      {status && <div className="text-sm text-amber-400">{status}</div>}
+      {!open && status && (
+        <div className="text-sm text-amber-400">{status}</div>
+      )}
 
       {visible.length === 0 ? (
         <p className="text-ash text-sm">

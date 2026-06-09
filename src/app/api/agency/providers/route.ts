@@ -71,12 +71,24 @@ export async function PATCH(req: NextRequest) {
     .eq("id", id)
     .eq("tenant_id", guard.tenantId) // defensa redundante a RLS
     .select("id,tenant_id,name,contact_json,payout_terms,active,created_at")
-    .single();
+    .maybeSingle();
   if (error) return pgErrorResponse(error);
-  if (!data)
-    return NextResponse.json(
-      { ok: false, error: "not_found" },
-      { status: 404 },
-    );
+  if (!data) {
+    // 0 filas: la fila no existe en el tenant, o la RLS denegó el write (vendedor).
+    // Un UPDATE denegado por RLS USING NO tira 42501: matchea 0 filas. Distinguimos
+    // 403 (fila visible vía SELECT pero no escribible) de 404 (no existe / cross-tenant).
+    const { data: visible } = await sb
+      .from("providers")
+      .select("id")
+      .eq("id", id)
+      .eq("tenant_id", guard.tenantId)
+      .maybeSingle();
+    return visible
+      ? NextResponse.json(
+          { ok: false, error: "forbidden", code: "E_RLS" },
+          { status: 403 },
+        )
+      : NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+  }
   return NextResponse.json({ ok: true, data });
 }
