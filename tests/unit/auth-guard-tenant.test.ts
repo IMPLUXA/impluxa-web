@@ -65,26 +65,37 @@ const TEST_JTI = "jti-abc-123";
 const TOKEN_WITH_JTI = makeJwt({ jti: TEST_JTI, sub: "user-uuid" });
 const TOKEN_NO_JTI = makeJwt({ sub: "user-uuid" });
 const MALFORMED_TOKEN = "not.a.jwt";
+// Fix s46: el claim `active_tenant_id` se lee del JWT (top-level), NO de
+// user.app_metadata (el hook lo inyecta al top-level del token).
+const TOKEN_WITH_TENANT = makeJwt({
+  jti: TEST_JTI,
+  sub: "user-uuid",
+  active_tenant_id: TENANT_ID,
+});
+const TOKEN_TENANT_NULL = makeJwt({
+  jti: TEST_JTI,
+  sub: "user-uuid",
+  active_tenant_id: null,
+});
+const TOKEN_TENANT_EMPTY = makeJwt({
+  jti: TEST_JTI,
+  sub: "user-uuid",
+  active_tenant_id: "",
+});
+const TOKEN_TENANT_NONSTRING = makeJwt({
+  jti: TEST_JTI,
+  sub: "user-uuid",
+  active_tenant_id: 42,
+});
 
 // ── User fixtures ─────────────────────────────────────────────────────────────
+// El claim ya NO vive en app_metadata; estos fixtures solo definen el objeto user
+// que el guard devuelve. REGULAR_USER tiene app_metadata: { role: "editor" }.
 const USER_WITH_TENANT = {
   ...REGULAR_USER,
-  app_metadata: { role: "editor", active_tenant_id: TENANT_ID },
+  app_metadata: { role: "editor" },
 };
-// REGULAR_USER has app_metadata: { role: "editor" } — no active_tenant_id key
 const USER_CLAIM_MISSING = REGULAR_USER;
-const USER_TENANT_NULL = {
-  ...REGULAR_USER,
-  app_metadata: { role: "editor", active_tenant_id: null },
-};
-const USER_TENANT_EMPTY = {
-  ...REGULAR_USER,
-  app_metadata: { role: "editor", active_tenant_id: "" },
-};
-const USER_TENANT_NONSTRING = {
-  ...REGULAR_USER,
-  app_metadata: { role: "editor", active_tenant_id: 42 },
-};
 
 function resetAllMocks() {
   redirectMock.mockClear();
@@ -108,13 +119,15 @@ describe("requireActiveTenantOrRedirect (W1.T1 paso 5)", () => {
   // A1 — happy path
   it("A1: returns {user,tenantId} when active_tenant_id is valid", async () => {
     getUserMock.mockResolvedValueOnce({ data: { user: USER_WITH_TENANT } });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { access_token: TOKEN_WITH_TENANT } },
+    });
 
     const result = await requireActiveTenantOrRedirect();
 
     expect(result).toEqual({ user: USER_WITH_TENANT, tenantId: TENANT_ID });
     expect(redirectMock).not.toHaveBeenCalled();
     expect(rpcMock).not.toHaveBeenCalled();
-    expect(getSessionMock).not.toHaveBeenCalled();
   });
 
   // A2 — claim_missing + INVARIANTE orden rpc-pre-redirect
@@ -145,15 +158,15 @@ describe("requireActiveTenantOrRedirect (W1.T1 paso 5)", () => {
 
   // A3 — active_tenant_null (3 sub-cases) + INVARIANTE
   it.each([
-    ["null", USER_TENANT_NULL],
-    ["empty string", USER_TENANT_EMPTY],
-    ["non-string (number)", USER_TENANT_NONSTRING],
+    ["null", TOKEN_TENANT_NULL],
+    ["empty string", TOKEN_TENANT_EMPTY],
+    ["non-string (number)", TOKEN_TENANT_NONSTRING],
   ])(
     "A3: active_tenant_null (%s) → emits audit then redirects (rpc BEFORE redirect)",
-    async (_label, user) => {
-      getUserMock.mockResolvedValueOnce({ data: { user } });
+    async (_label, token) => {
+      getUserMock.mockResolvedValueOnce({ data: { user: USER_CLAIM_MISSING } });
       getSessionMock.mockResolvedValueOnce({
-        data: { session: { access_token: TOKEN_WITH_JTI } },
+        data: { session: { access_token: token } },
       });
       rpcMock.mockResolvedValueOnce({ data: null, error: null });
 
@@ -165,7 +178,7 @@ describe("requireActiveTenantOrRedirect (W1.T1 paso 5)", () => {
         p_event: {
           action: "active_tenant_null",
           jwt_jti: TEST_JTI,
-          actor_user_id: user.id,
+          actor_user_id: USER_CLAIM_MISSING.id,
         },
       });
       expect(redirectMock).toHaveBeenCalledWith("/login?e=e07");
@@ -259,6 +272,9 @@ describe("requireActiveTenantOrResponse (W1.T1 paso 5)", () => {
   // B1 — happy
   it("B1: returns {ok:true,user,tenantId} when active_tenant_id is valid", async () => {
     getUserMock.mockResolvedValueOnce({ data: { user: USER_WITH_TENANT } });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { access_token: TOKEN_WITH_TENANT } },
+    });
 
     const result = await requireActiveTenantOrResponse();
 
@@ -318,9 +334,9 @@ describe("requireActiveTenantOrResponse (W1.T1 paso 5)", () => {
 
   // B4 — 403 active_tenant_null
   it("B4: active_tenant_null → 403 {error:'forbidden',code:'E_TENANT_CLAIM'}", async () => {
-    getUserMock.mockResolvedValueOnce({ data: { user: USER_TENANT_NULL } });
+    getUserMock.mockResolvedValueOnce({ data: { user: USER_CLAIM_MISSING } });
     getSessionMock.mockResolvedValueOnce({
-      data: { session: { access_token: TOKEN_WITH_JTI } },
+      data: { session: { access_token: TOKEN_TENANT_NULL } },
     });
     rpcMock.mockResolvedValueOnce({ data: null, error: null });
 
@@ -336,7 +352,7 @@ describe("requireActiveTenantOrResponse (W1.T1 paso 5)", () => {
       p_event: {
         action: "active_tenant_null",
         jwt_jti: TEST_JTI,
-        actor_user_id: USER_TENANT_NULL.id,
+        actor_user_id: USER_CLAIM_MISSING.id,
       },
     });
   });
