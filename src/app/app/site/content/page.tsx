@@ -1,16 +1,15 @@
 import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
-import { getCurrentTenant } from "@/lib/tenants/membership";
+import { getActiveTenant } from "@/lib/tenants/membership";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { ContentEditor } from "./ContentEditor";
 
 export default async function ContentPage() {
   const { user, tenantId } = await requireActiveTenantOrRedirect();
-  const tenant = await getCurrentTenant(user.id);
-  // W1.T2 nit-MED fix: see layout.tsx for rationale. Drift = burn-gate
-  // corruption invisible. Defense-in-depth redirect fail-closed.
-  if (!tenant) redirect("/login?error=no_tenant");
-  if (tenant.id !== tenantId) {
+  // Membership-aware (fix s46): ver layout.tsx. Resuelve el tenant activo del
+  // claim confirmando membership real; null = drift → fail-closed. Multi-tenant safe.
+  const tenant = await getActiveTenant(user.id, tenantId);
+  if (!tenant) {
     console.error(
       JSON.stringify({
         level: "error",
@@ -18,7 +17,6 @@ export default async function ContentPage() {
         scope: "content_page",
         user_id: user.id,
         claim_tenant_id: tenantId,
-        membership_tenant_id: tenant.id,
       }),
     );
     redirect("/login?e=e08_drift");

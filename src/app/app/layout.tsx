@@ -1,5 +1,5 @@
 import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
-import { getCurrentTenant } from "@/lib/tenants/membership";
+import { getActiveTenant } from "@/lib/tenants/membership";
 import { Sidebar } from "@/components/app/Sidebar";
 import { redirect } from "next/navigation";
 
@@ -13,16 +13,17 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const { user, tenantId } = await requireActiveTenantOrRedirect();
-  const tenant = await getCurrentTenant(user.id);
-  if (!tenant) redirect("/login?error=no_tenant");
-  // W1.T2 nit-MED fix: defense-in-depth against silent drift between the
-  // JWT `active_tenant_id` claim (authoritative per hook) and the tenant
-  // resolved by `getCurrentTenant(user.id)` (resolves via membership). A
-  // divergence here means burn-readiness gate corruption — the user would
-  // see one tenant while audit/RLS scope to another. Fail-closed redirect
-  // with structured log for ops triage. Error code `e08_drift` is opaque
-  // to the user to avoid leaking the discriminator.
-  if (tenant.id !== tenantId) {
+  // Membership-aware (fix s46): resuelve el tenant ACTIVO (claim `active_tenant_id`,
+  // autoritativo per hook) confirmando que es una membership REAL del user.
+  // `null` = el claim no matchea ninguna membership (drift / claim corrupto /
+  // tamper) → fail-closed redirect con `e08_drift` opaco. Soporta usuarios
+  // multi-tenant: usa el tenant activo válido, NO `tenants[0]` (que rompía el
+  // caso multi-tenant cuando el active != primer membership). NOTA: upstream
+  // `requireActiveTenantOrRedirect` solo valida la FORMA del claim (e07: claim
+  // ausente/null/no-string), NO que exista la membership; la pertenencia REAL
+  // se confirma acá (null = no-member o claim tampered → fail-closed).
+  const tenant = await getActiveTenant(user.id, tenantId);
+  if (!tenant) {
     console.error(
       JSON.stringify({
         level: "error",
@@ -30,7 +31,6 @@ export default async function AppLayout({
         scope: "app_layout",
         user_id: user.id,
         claim_tenant_id: tenantId,
-        membership_tenant_id: tenant.id,
       }),
     );
     redirect("/login?e=e08_drift");

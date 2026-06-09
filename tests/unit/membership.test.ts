@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/service", () => ({
   getSupabaseServiceClient: () => ({ from: fromMock }),
 }));
 
-const { getUserTenants, getCurrentTenant } =
+const { getUserTenants, getCurrentTenant, getActiveTenant } =
   await import("@/lib/tenants/membership");
 
 const TENANT_A = {
@@ -107,5 +107,51 @@ describe("getCurrentTenant", () => {
     fromMock.mockReturnValue({ select: selectMock });
     const result = await getCurrentTenant("u2");
     expect(result).toBeNull();
+  });
+});
+
+describe("getActiveTenant", () => {
+  // Mock del chain: from -> select -> eq(user_id) -> eq(tenant_id) -> maybeSingle()
+  const maybeSingleMock = vi.fn();
+  const eq2Mock = vi.fn();
+  const eq1Mock = vi.fn();
+
+  function setupActiveMock(row: { tenant: unknown } | null) {
+    maybeSingleMock.mockResolvedValue({ data: row, error: null });
+    eq2Mock.mockReturnValue({ maybeSingle: maybeSingleMock });
+    eq1Mock.mockReturnValue({ eq: eq2Mock });
+    selectMock.mockReturnValue({ eq: eq1Mock });
+    fromMock.mockReturnValue({ select: selectMock });
+  }
+
+  beforeEach(() => {
+    fromMock.mockReset();
+    selectMock.mockReset();
+    eq1Mock.mockReset();
+    eq2Mock.mockReset();
+    maybeSingleMock.mockReset();
+  });
+
+  it("returns the tenant when the active claim matches a membership", async () => {
+    setupActiveMock({ tenant: TENANT_A });
+    const result = await getActiveTenant("u1", "aaa");
+    expect(result?.slug).toBe("tenant-a");
+    expect(fromMock).toHaveBeenCalledWith("tenant_members");
+    expect(eq1Mock).toHaveBeenCalledWith("user_id", "u1");
+    expect(eq2Mock).toHaveBeenCalledWith("tenant_id", "aaa");
+  });
+
+  it("returns null when the active claim is NOT a membership (drift / tamper, fail-closed)", async () => {
+    setupActiveMock(null);
+    const result = await getActiveTenant("u1", "tampered-tenant-id");
+    expect(result).toBeNull();
+  });
+
+  it("multi-tenant: returns the ACTIVE tenant, not tenants[0]", async () => {
+    // user es member de A y B; active = B (no el primero). Debe devolver B.
+    setupActiveMock({ tenant: TENANT_B });
+    const result = await getActiveTenant("u1", "bbb");
+    expect(result?.slug).toBe("tenant-b");
+    expect(eq2Mock).toHaveBeenCalledWith("tenant_id", "bbb");
   });
 });
