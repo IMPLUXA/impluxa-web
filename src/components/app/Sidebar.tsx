@@ -3,6 +3,8 @@ import type { Tenant } from "@/lib/tenants/types";
 
 const NAV = [
   { href: "/dashboard", label: "Inicio", icon: "🏠" },
+  { href: "/agency/excursions", label: "Excursiones", icon: "🏔️" },
+  { href: "/agency/providers", label: "Proveedores", icon: "🤝" },
   { href: "/site/content", label: "Contenido", icon: "✏️" },
   { href: "/site/design", label: "Diseño", icon: "🎨" },
   { href: "/site/media", label: "Imágenes", icon: "🖼️" },
