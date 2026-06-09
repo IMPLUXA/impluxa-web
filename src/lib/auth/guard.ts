@@ -75,25 +75,42 @@ type ActiveTenantClaimResult =
   | { ok: false; reason: TenantClaimAction };
 
 /**
- * Reads `active_tenant_id` from `user.app_metadata`. The hook
- * `custom_access_token_hook` (migration 20260514_v025_003) injects this
- * claim from `user_session_state` or first-membership fallback. Returns a
- * discriminated result describing which dedup-tracked condition fired
- * when the claim is unusable.
+ * Reads the `active_tenant_id` claim from the DECODED access token (JWT
+ * top-level). The hook `custom_access_token_hook` (migration
+ * 20260514_v025_003) injects this claim at the JWT TOP LEVEL — NOT into
+ * `app_metadata` (which maps to the `auth.users.app_metadata` DB column and
+ * never carries hook-injected claims; `getUser().app_metadata` exposes that
+ * column, not the JWT payload). This matches `current_active_tenant()`
+ * (helper v025_002) which also reads `auth.jwt() ->> 'active_tenant_id'`,
+ * so guard and RLS read the SAME source.
  *
- * W1.T2 B3 semantics (resolved 2026-05-22): `claim_missing` is emitted on
- * the sad-path AFTER a successful JWT mint — the access token is
- * cryptographically valid but the hook's claim assembly produced an
- * undefined `active_tenant_id`. It does NOT cover the mint-crash case
- * (hook PL/pgSQL exception → no JWT issued → no Next.js call-site
- * reached). Mint-crash detection is out-of-scope for this guard and
- * lives in Supabase Auth logs / Sentry.
+ * Fix s46: the previous read of `user.app_metadata.active_tenant_id` was
+ * always `undefined` → `claim_missing` → e07 for EVERY user; the claim never
+ * lived in `app_metadata`. Latent because the back-office `/app` (behind this
+ * guard) had no real OTP→dashboard login until s46 (LIVE tenants are public,
+ * loginless).
  *
- * `active_tenant_null` is emitted when the claim is present but unusable
- * (literal null, empty string, or non-string type).
+ * `decodeJwt` parses the payload WITHOUT re-verifying the signature — safe
+ * because the caller established authenticity via `supabase.auth.getUser()`
+ * (validated server-side against gotrue) before passing this token; same
+ * pattern as `extractJti`. A missing or malformed token → `claim_missing`
+ * (fail-closed), never an unhandled throw.
+ *
+ * Returns a discriminated result. `claim_missing`: token absent/malformed or
+ * claim undefined. `active_tenant_null`: claim present but unusable (literal
+ * null, empty string, or non-string type).
  */
-function readActiveTenantClaim(user: AuthUser): ActiveTenantClaimResult {
-  const claim = user.app_metadata?.active_tenant_id;
+function readActiveTenantClaim(
+  accessToken: string | undefined,
+): ActiveTenantClaimResult {
+  if (!accessToken) return { ok: false, reason: "claim_missing" };
+  let claim: unknown;
+  try {
+    claim = decodeJwt(accessToken)["active_tenant_id"];
+  } catch {
+    // Malformed token — fail-closed, never throw out of the guard.
+    return { ok: false, reason: "claim_missing" };
+  }
   if (claim === undefined) return { ok: false, reason: "claim_missing" };
   if (claim === null || claim === "")
     return { ok: false, reason: "active_tenant_null" };
@@ -181,20 +198,17 @@ export type RequireActiveTenantPageResult = {
  */
 export async function requireActiveTenantOrRedirect(): Promise<RequireActiveTenantPageResult> {
   const user = await requireUser();
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (isApprovalGateBypassed()) {
-    const supabase = await getSupabaseServerClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
     await emitApprovalGateBypassAudit(user, "page", session?.access_token);
     return { user, tenantId: APPROVAL_GATE_BYPASS_TENANT_ID };
   }
-  const result = readActiveTenantClaim(user);
+  // Lee el claim del JWT decodificado (top-level), donde el hook lo inyecta.
+  const result = readActiveTenantClaim(session?.access_token);
   if (!result.ok) {
-    const supabase = await getSupabaseServerClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
     await emitTenantClaimAudit(user, result.reason, session?.access_token);
     redirect("/login?e=e07");
   }
@@ -227,18 +241,16 @@ export async function requireActiveTenantOrResponse(): Promise<RequireActiveTena
       ),
     };
   }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (isApprovalGateBypassed()) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
     await emitApprovalGateBypassAudit(user, "api", session?.access_token);
     return { ok: true, user, tenantId: APPROVAL_GATE_BYPASS_TENANT_ID };
   }
-  const result = readActiveTenantClaim(user);
+  // Lee el claim del JWT decodificado (top-level), donde el hook lo inyecta.
+  const result = readActiveTenantClaim(session?.access_token);
   if (!result.ok) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
     await emitTenantClaimAudit(user, result.reason, session?.access_token);
     return {
       ok: false,
