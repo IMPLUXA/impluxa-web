@@ -79,3 +79,31 @@ export type ExcursionRow = {
   default_currency: Currency;
   created_at: string;
 };
+
+// ---- F3b rates (lectura C3) ----
+// excursion_rates es VERSIONADA: valid_to IS NULL = tarifa vigente (única por
+// excursión, garantizado por el índice parcial excursion_rates_one_current_idx
+// de la migración #23). Los montos viajan como string (numeric de Postgres via
+// PostgREST) y se convierten solo para mostrar — nunca aritmética float de plata.
+
+export type RateRow = {
+  id: string;
+  tenant_id: string;
+  excursion_id: string;
+  base_price: string;
+  provider_cost: string;
+  currency: Currency;
+  valid_from: string;
+  valid_to: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type PassengerCategoryRow = {
+  id: string;
+  tenant_id: string;
+  code: string;
+  label: string;
+  price_factor: string | null;
+  created_at: string;
+};
