@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import type { EventosContent, EventosDesign, EventosMedia } from "../schema";
 import { HeroSlideshow } from "./HeroSlideshow";
+import { HeroShowpiece } from "./HeroShowpiece";
 
 // Trust-badge icons (handoff: Lucide geometry, stroke = Copper 400 #C79A63).
 // Turismo-only — rendered solely inside the content.trust_badges block.
@@ -55,6 +56,11 @@ export function Hero({
     media.hero_slideshow && media.hero_slideshow.length > 0
   );
   const onPhoto = hasPhoto || hasSlideshow;
+  // s48 F2 showpiece opt-in: a slideshow whose slides carry per-slide `headline`
+  // -> rotating-copy showpiece path (HeroShowpiece). Absent -> existing
+  // HeroSlideshow path (fixed slogan). Hakuna: no slideshow -> hasCaptions=false.
+  const hasCaptions =
+    hasSlideshow && media.hero_slideshow!.some((s) => !!s.headline);
 
   // s41: badges extraídos a const para reubicarlos (L2: arriba del CTA en
   // turismo). onPhoto -> inline-dotted (.pv-hero-badges, turismo-only); sin
@@ -267,6 +273,132 @@ export function Hero({
       {!onPhoto && badgesJsx}
     </>
   );
+
+  // Showpiece variant (turismo opt-in, s48 F2): slideshow WITH per-slide rotating
+  // copy. HeroShowpiece (client) owns bg + multi-effect transitions + rotating
+  // headline/subtitle + GOLD keyword + dots. The gold span lives ONLY inside
+  // HeroShowpiece, never in the shared heroBody, so non-showpiece paths (incl.
+  // Hakuna) stay byte-identical. Static chrome (eyebrow/logo, badges, CTAs) is
+  // server-rendered here and handed to the client island via slots; only the
+  // h1/subtitle rotate. CTAs use mockup over-photo styling (light, high-contrast
+  // over the dark scrim) — showpiece-only, no schema home (same convention as the
+  // turismo-only .pv-hero-* palette). Falls through to HeroSlideshow when a
+  // slideshow has no captions.
+  if (hasCaptions) {
+    const showpieceTop = (
+      <>
+        {content.eyebrow && (
+          <p
+            className="pv-anim-in mb-3 text-sm font-semibold uppercase"
+            style={{
+              color: "#E7C99B",
+              letterSpacing: "0.22em",
+              textShadow: "0 1px 12px rgba(10,26,31,0.7)",
+              animationDelay: "0.05s",
+            }}
+          >
+            {content.eyebrow}
+          </p>
+        )}
+        {media.logo_url && (
+          <Image
+            src={media.logo_url}
+            alt={tenantName ? `Logo de ${tenantName}` : "Logo"}
+            width={320}
+            height={160}
+            priority
+            className="mb-8 h-32 w-auto md:h-40"
+            sizes="(max-width: 768px) 200px, 320px"
+          />
+        )}
+      </>
+    );
+    const showpieceBottom = (
+      <>
+        {badgesJsx}
+        <div
+          className="pv-anim-in flex flex-col items-center justify-start gap-4 sm:flex-row"
+          style={{ animationDelay: "0.32s" }}
+        >
+          <a
+            href={content.cta_primary_href}
+            {...(isExternalPrimary && {
+              target: "_blank",
+              rel: "noopener noreferrer",
+            })}
+            aria-label={
+              isExternalPrimary
+                ? `${content.cta_primary_label} (se abre en una nueva pestaña)`
+                : content.cta_primary_label
+            }
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-8 py-3 font-semibold transition hover:scale-105 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:scale-100"
+            style={{
+              background: "rgba(251,246,234,0.92)",
+              color: "#10242a",
+              outlineColor: design.colors.accent,
+              boxShadow: "0 12px 30px -12px rgba(0,0,0,0.6)",
+            }}
+          >
+            {content.cta_primary_label}
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ marginLeft: "8px" }}
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </a>
+          {content.cta_secondary_href && (
+            <a
+              href={content.cta_secondary_href}
+              {...(isExternalSecondary && {
+                target: "_blank",
+                rel: "noopener noreferrer",
+              })}
+              aria-label={
+                isExternalSecondary
+                  ? `${content.cta_secondary_label} (se abre en una nueva pestaña)`
+                  : content.cta_secondary_label
+              }
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border-2 px-8 py-3 font-semibold transition hover:bg-white/15 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{
+                borderColor: "rgba(255,255,255,0.85)",
+                color: "#FFFFFF",
+                outlineColor: design.colors.accent,
+              }}
+            >
+              {content.cta_secondary_label}
+            </a>
+          )}
+        </div>
+      </>
+    );
+    return (
+      <section
+        aria-labelledby="hero-heading"
+        className="pv-hero-shell relative isolate overflow-hidden"
+        style={{ background: design.colors.background, color: "#F7F2E8" }}
+      >
+        <HeroShowpiece
+          slides={media.hero_slideshow!}
+          headingFont={design.fonts.heading}
+          scrim={HERO_SCRIM}
+          fallbackSlogan={content.slogan}
+          fallbackSubtitle={content.subtitle}
+          topSlot={showpieceTop}
+          bottomSlot={showpieceBottom}
+        />
+      </section>
+    );
+  }
 
   // Slideshow variant (turismo opt-in): cinematic shell (manifest 92vh/74vh,
   // flex-end), rotating background island + scrim, fixed text in a z-2 content
