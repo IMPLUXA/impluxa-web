@@ -337,6 +337,7 @@ export function Servicios({
                           detalle={s.detalle!}
                           title={s.title}
                           cover={s.image_url ?? s.gallery?.[0]}
+                          gallery={s.gallery}
                           design={design}
                         />
                       )}

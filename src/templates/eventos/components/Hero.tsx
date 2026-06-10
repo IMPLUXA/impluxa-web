@@ -307,8 +307,10 @@ export function Hero({
             width={320}
             height={160}
             priority
-            className="mb-8 h-32 w-auto md:h-40"
-            sizes="(max-width: 768px) 200px, 320px"
+            // s48c — marca visible sobre las fotos (pedido CEO) sin competir
+            // con el headline rotativo: 80/96px (antes 128/160 del photo-variant)
+            className="mb-5 h-20 w-auto md:h-24"
+            sizes="(max-width: 768px) 160px, 200px"
           />
         )}
       </>
