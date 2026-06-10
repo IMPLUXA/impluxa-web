@@ -8,16 +8,14 @@ export function Footer({
   whatsapp,
   whatsappCta,
   instagram,
-  tagline,
 }: {
   design: EventosDesign;
   tenantName: string;
   // OPT-IN WhatsApp CTA. Absent (Hakuna) -> no button -> byte-identical.
   whatsapp?: string;
   whatsappCta?: boolean;
-  // s48 F2b — brand variant extras (solo se leen en variant="brand").
+  // s48 F2b — brand variant extra (solo se lee en variant="brand").
   instagram?: string;
-  tagline?: string;
 }) {
   const waDigits =
     whatsappCta === true && whatsapp ? whatsapp.replace(/[^0-9]/g, "") : null;
@@ -40,7 +38,10 @@ export function Footer({
           {tenantName}
         </p>
         <p>
-          {tagline ?? "Bariloche, Patagonia argentina"}
+          {/* Copy turismo-only por convención del branch opt-in (igual que el
+              kicker/EMPTIES del overlay); pendiente schema-home si el overlay
+              deja de ser single-tenant. */}
+          {"Bariloche, Patagonia argentina"}
           {instagram && (
             <>
               {" · "}
