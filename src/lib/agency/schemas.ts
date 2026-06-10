@@ -107,3 +107,27 @@ export type PassengerCategoryRow = {
   price_factor: string | null;
   created_at: string;
 };
+
+// ---- F3b rates (escritura UI, corte CRUD) ----
+// La plata viaja como STRING (decimal exacto) hasta Postgres numeric — nunca
+// float. Espeja la cota del motor (RPC agency_set_rate): > 0 y < 1e9 con
+// hasta 2 decimales. La DB rechaza igual; esto es feedback temprano en UI.
+
+const MONEY_RE = /^\d{1,9}(\.\d{1,2})?$/;
+
+export const RateSetInputSchema = z.object({
+  base_price: z
+    .string()
+    .regex(MONEY_RE, "Hasta 9 dígitos y 2 decimales")
+    .refine((v) => Number(v) > 0, "Debe ser mayor a 0"),
+  provider_cost: z.string().regex(MONEY_RE, "Hasta 9 dígitos y 2 decimales"),
+  currency: z.enum(CURRENCIES),
+});
+
+// Factor de categoría editable (3ra edad): la UI captura PORCENTAJE 0–100
+// (hasta 2 decimales) y lo convierte a factor 0–1 con 4 decimales
+// (numeric(7,4) en DB). Rango UI acotado a 0–100% a propósito.
+export const FactorPercentSchema = z
+  .string()
+  .regex(/^\d{1,3}(\.\d{1,2})?$/, "Porcentaje con hasta 2 decimales")
+  .refine((v) => Number(v) >= 0 && Number(v) <= 100, "Entre 0 y 100");
