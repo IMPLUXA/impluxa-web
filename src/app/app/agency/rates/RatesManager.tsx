@@ -35,9 +35,12 @@ const EMPTY_RATE_FORM: RateFormState = {
   currency: "ARS",
 };
 
-function fmtMoney(value: string, currency: string): string {
+// BUG P0 s49: numeric de PostgREST llega como NÚMERO JSON — todo el boundary
+// de plata acepta number | string y normaliza con String() (nunca .trim()
+// directo sobre un campo de DB: eso fue el crash del walk CEO).
+function fmtMoney(value: number | string, currency: string): string {
   const n = Number(value);
-  if (!Number.isFinite(n)) return value;
+  if (!Number.isFinite(n)) return String(value);
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency,
@@ -53,7 +56,7 @@ function fmtDate(iso: string): string {
   });
 }
 
-function factorToPercent(factor: string | null): string {
+function factorToPercent(factor: number | string | null): string {
   if (factor === null) return "—";
   const n = Number(factor);
   if (!Number.isFinite(n)) return "—";
@@ -120,9 +123,11 @@ export function RatesManager({
     if (!form.excursionId || busy) return;
     setStatus(null);
 
+    // String() cinturón: el state es string por construcción, pero un campo
+    // de DB colado jamás debe volver a tirar number.trim (bug P0 s49).
     const parsed = RateSetInputSchema.safeParse({
-      base_price: form.base_price.trim(),
-      provider_cost: form.provider_cost.trim(),
+      base_price: String(form.base_price).trim(),
+      provider_cost: String(form.provider_cost).trim(),
       currency: form.currency,
     });
     if (!parsed.success) {
@@ -289,10 +294,14 @@ export function RatesManager({
                       <button
                         onClick={() => {
                           setStatus(null);
+                          // String(): base_price/provider_cost llegan como
+                          // NÚMERO de PostgREST — el form state es string
+                          // (crash del walk: number.trim en el render del
+                          // modal vía el disabled del submit).
                           setForm({
                             excursionId: x.id,
-                            base_price: r ? r.base_price : "",
-                            provider_cost: r ? r.provider_cost : "",
+                            base_price: r ? String(r.base_price) : "",
+                            provider_cost: r ? String(r.provider_cost) : "",
                             currency: (r?.currency ??
                               x.default_currency) as Currency,
                           });
@@ -455,7 +464,7 @@ export function RatesManager({
                 </button>
                 <button
                   type="submit"
-                  disabled={busy || !form.base_price.trim()}
+                  disabled={busy || !String(form.base_price).trim()}
                   className="bg-onyx text-bone rounded px-4 py-2 text-sm disabled:opacity-50"
                 >
                   {busy ? "Guardando…" : "Guardar tarifa"}

@@ -53,19 +53,23 @@ export async function getPassengerCategories(
 
 /**
  * Precio por categoría de pasajero, para DISPLAY del dashboard.
- * numeric llega como string; la cuenta se hace en centavos enteros para no
- * meter float en plata. factor NULL (categoría sin definir) → null.
+ * BUG P0 s49: PostgREST entrega `numeric` como NÚMERO JSON (verificado en
+ * runtime: `.trim is not a function` en prod) — el boundary acepta
+ * number | string y normaliza con String(). La cuenta va en centavos
+ * enteros (nunca float de plata). factor NULL → null.
  * Redondeo: half-up al centavo (display; el reparto real es F9, otro gate).
  */
 export function priceForFactor(
-  basePrice: string,
-  priceFactor: string | null,
+  basePrice: number | string,
+  priceFactor: number | string | null,
 ): string | null {
   if (priceFactor === null) return null;
+  const baseStr = String(basePrice);
+  const factorStr = String(priceFactor);
   // Number("") === 0 (no NaN): string vacío/whitespace debe dar null, no "0.00".
-  if (basePrice.trim() === "" || priceFactor.trim() === "") return null;
-  const cents = Math.round(Number(basePrice) * 100);
-  const factorBp = Math.round(Number(priceFactor) * 10000);
+  if (baseStr.trim() === "" || factorStr.trim() === "") return null;
+  const cents = Math.round(Number(baseStr) * 100);
+  const factorBp = Math.round(Number(factorStr) * 10000);
   if (!Number.isFinite(cents) || !Number.isFinite(factorBp)) return null;
   const resultCents = Math.round((cents * factorBp) / 10000);
   return (resultCents / 100).toFixed(2);
