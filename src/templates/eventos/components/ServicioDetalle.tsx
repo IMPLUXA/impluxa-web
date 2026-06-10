@@ -334,7 +334,10 @@ export function ServicioDetalle({
         ? [cover]
         : [];
   const multi = slides.length > 1;
-  const [idx, setIdx] = useState(0);
+  const [rawIdx, setIdx] = useState(0);
+  // clamp (Pass-1): si slides se achica en runtime (HMR/revalidate), nunca
+  // indexar fuera de rango
+  const idx = Math.min(rawIdx, Math.max(0, slides.length - 1));
   const touchRef = useRef<{ x: number; y: number } | null>(null);
   const prev = useCallback(
     () => setIdx((i) => (i - 1 + slides.length) % slides.length),
@@ -529,7 +532,7 @@ export function ServicioDetalle({
             >
               {slides.map((s, i) => (
                 <button
-                  key={s}
+                  key={i}
                   type="button"
                   onClick={() => setIdx(i)}
                   aria-label={`Ver foto ${i + 1}`}
