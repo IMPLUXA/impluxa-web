@@ -396,15 +396,12 @@
  * is hardcoded (Pine/Copper/Sand/Bone) following the same convention as the
  * .pv-hero-* block above (turismo-only handoff palette, no schema home).
  * -------------------------------------------------------------------------- */
+/* s48 F2b — palette swap a tema claro cálido (mockup v13). El bloque sigue
+   siendo turismo-only por construcción (emit-when-overlay); solo cambian los
+   VALORES de color/sombra, no los selectores. */
 .exc-sec {
-  padding: 104px 24px 110px;
-  background:
-    radial-gradient(
-      120% 80% at 80% -10%,
-      rgba(62, 124, 149, 0.16) 0%,
-      transparent 50%
-    ),
-    linear-gradient(180deg, #143038 0%, #0e2329 100%);
+  padding: 88px 24px 96px;
+  background: #f7f2e8;
 }
 .exc-wrap {
   max-width: 1240px;
@@ -423,7 +420,7 @@
   font-size: 12.5px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #f7f2e8;
+  color: #b48448;
 }
 .exc-kicker::before {
   content: "";
@@ -433,11 +430,13 @@
   border-radius: 999px;
 }
 .exc-title {
-  font-weight: 800;
-  color: #f6f1e8;
-  font-size: clamp(2.6rem, 6.5vw, 4.5rem);
-  line-height: 1.04;
+  font-weight: 700;
+  color: #143038;
+  font-size: clamp(1.9rem, 3.8vw, 2.6rem);
+  line-height: 1.12;
   margin: 0;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 .exc-title em {
   font-style: italic;
@@ -445,10 +444,10 @@
   color: #b48448;
 }
 .exc-lead {
-  font-size: 1.12rem;
-  color: rgba(247, 242, 232, 0.74);
+  font-size: 1.05rem;
+  color: #4f5e5c;
   max-width: 52ch;
-  margin: 22px 0 0;
+  margin: 12px 0 0;
 }
 /* s41 — cartel "Mes de lanzamiento" P1 SÓLIDO (gradiente cobre, texto oscuro).
    turismo-only (solo el branch overlay de Servicios renderiza .exc-launch-pill). */
@@ -517,8 +516,8 @@
 }
 .exc-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -527,22 +526,24 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  height: 100%;
   border-radius: 20px;
   overflow: hidden;
   isolation: isolate;
-  background: #16363f;
+  background: #fbf6ea;
+  border: 1px solid rgba(180, 132, 72, 0.3);
   box-shadow:
-    0 1px 0 rgba(247, 242, 232, 0.05) inset,
-    0 22px 50px -18px rgba(0, 0, 0, 0.7);
+    0 1px 2px rgba(60, 40, 20, 0.06),
+    0 6px 16px rgba(60, 40, 20, 0.07);
   transition:
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s ease;
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease;
 }
 .exc-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   box-shadow:
-    0 1px 0 rgba(247, 242, 232, 0.09) inset,
-    0 32px 64px -16px rgba(0, 0, 0, 0.78);
+    0 10px 30px rgba(40, 30, 15, 0.13),
+    0 3px 8px rgba(40, 30, 15, 0.07);
 }
 .exc-photo {
   position: relative;
@@ -556,21 +557,22 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.03);
-  transition: transform 1.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scale(1.01);
+  transition: transform 0.4s ease;
 }
 .exc-card:hover .exc-photo img {
-  transform: scale(1.09);
+  transform: scale(1.04);
 }
+/* s48 F2b: scrim suave bottom-only — el título salió de la foto (vive en el
+   body de la card); queda solo para legibilidad del badge N-fotos. */
 .exc-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(14, 35, 41, 0) 40%,
-    rgba(14, 35, 41, 0.55) 72%,
-    rgba(14, 35, 41, 0.95) 100%
+    rgba(14, 35, 41, 0) 62%,
+    rgba(14, 35, 41, 0.38) 100%
   );
 }
 .exc-ovl {
@@ -619,9 +621,10 @@
   padding: 18px 18px 20px;
 }
 .exc-desc {
-  font-size: 0.92rem;
-  color: rgba(247, 242, 232, 0.78);
+  font-size: 0.9rem;
+  color: #4f5e5c;
   margin: 0;
+  flex: 1;
 }
 .exc-chips {
   display: flex;
@@ -671,100 +674,228 @@
 .exc-reg {
   font-size: 0.85rem;
   font-weight: 500;
-  color: rgba(247, 242, 232, 0.58);
+  color: #4f5e5c;
   text-decoration: line-through;
 }
 .exc-amt {
   font-weight: 700;
-  font-size: 1.65rem;
-  color: #b48448;
+  font-size: 1.35rem;
+  color: #143038;
   letter-spacing: 0.01em;
 }
 .exc-off {
   font-size: 11px;
   font-weight: 700;
-  color: #f6f1e8;
-  background: rgba(180, 132, 72, 0.16);
-  border: 1px solid rgba(180, 132, 72, 0.6);
-  border-radius: 999px;
-  padding: 2px 8px;
+  color: #127a3c;
+  background: rgba(37, 211, 102, 0.16);
+  border: 0;
+  border-radius: 6px;
+  padding: 2px 7px;
   letter-spacing: 0.02em;
   transform: translateY(-2px);
 }
 .exc-per {
   font-size: 11.5px;
-  color: rgba(247, 242, 232, 0.6);
+  color: #4f5e5c;
 }
-/* s41 V3 — banner de horario de salida (turismo-only, overlay) */
+/* s41 V3 — línea de horario de salida (turismo-only, overlay). s48 F2b: estilo
+   mockup (teal, sin caja). */
 .exc-horario {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-size: 13px;
   font-weight: 600;
-  color: #e9e2d4;
-  background: rgba(180, 132, 72, 0.12);
-  border: 1px solid rgba(180, 132, 72, 0.3);
-  border-radius: 10px;
-  padding: 8px 11px;
+  color: #3e7c95;
 }
 .exc-horario svg {
   width: 15px;
   height: 15px;
-  color: #b48448;
+  color: #3e7c95;
   flex: none;
 }
 .exc-horario-dias {
   font-weight: 500;
-  color: rgba(247, 242, 232, 0.62);
+  color: #4f5e5c;
   font-size: 12px;
 }
-/* s41 V3 — badge -% sobre la foto (movido del foot) */
+/* s41 V3 — badge -% sobre la foto. s48 F2b: top-DERECHA rojo (mockup pill.off);
+   la esquina izquierda pasa a ser de la pill de categoría. */
 .exc-off-photo {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 10px;
+  right: 10px;
   z-index: 3;
   font-size: 12px;
   font-weight: 700;
-  color: #10242a;
-  background: #b48448;
-  border-radius: 8px;
-  padding: 4px 9px;
-  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  background: #e23b3b;
+  border-radius: 999px;
+  padding: 5px 11px;
+  box-shadow: 0 2px 8px rgba(226, 59, 59, 0.35);
 }
+/* s48 F2b — pills de card estilo siturismo (mockup v13). Turismo-only por
+   construcción (solo el branch overlay las emite). */
+.exc-cat-pill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 3;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #143038;
+  background: rgba(251, 246, 234, 0.92);
+  backdrop-filter: blur(4px);
+  border-radius: 999px;
+  padding: 5px 11px;
+  box-shadow:
+    0 1px 2px rgba(60, 40, 20, 0.06),
+    0 6px 16px rgba(60, 40, 20, 0.07);
+}
+.exc-dur-pill {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 3;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(20, 48, 56, 0.86);
+  backdrop-filter: blur(4px);
+  border-radius: 999px;
+  padding: 5px 11px;
+  white-space: nowrap;
+}
+.exc-card-title {
+  font-weight: 700;
+  color: #143038;
+  font-size: 1.18rem;
+  line-height: 1.18;
+  margin: 0;
+}
+/* fila de acciones de la card: Ver detalle (liviano) + Reservar (marcado) */
+.exc-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 4px;
+}
+.exc-actions > * {
+  flex: 1;
+}
+/* s48 F2b — filtro de categorías (mockup chips) + empty-states. El island
+   ExcFilterChips setea data-cat en #exc-grid; CSS oculta las cards no-match.
+   Server-rendered cards = SEO intacto, cero re-render. */
+.exc-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 26px 0 4px;
+}
+.exc-filter-chip {
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 8px 17px;
+  border: 1.5px solid rgba(180, 132, 72, 0.3);
+  background: #fbf6ea;
+  color: #1e2b2c;
+  transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.exc-filter-chip:hover {
+  border-color: #3e7c95;
+  color: #3e7c95;
+}
+.exc-filter-chip[aria-pressed="true"] {
+  background: #3e7c95;
+  border-color: #3e7c95;
+  color: #ffffff;
+  box-shadow:
+    0 1px 2px rgba(60, 40, 20, 0.06),
+    0 6px 16px rgba(60, 40, 20, 0.07);
+}
+.exc-filter-chip .exc-count {
+  opacity: 0.72;
+  font-weight: 500;
+  margin-left: 5px;
+  font-size: 12px;
+}
+.exc-empty {
+  display: none;
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 20px;
+  border: 1.5px dashed rgba(180, 132, 72, 0.3);
+  border-radius: 20px;
+  background: #fbf6ea;
+  color: #4f5e5c;
+}
+.exc-empty b {
+  display: block;
+  color: #143038;
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+}
+.exc-empty .exc-empty-tag {
+  display: block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #b48448;
+  font-weight: 600;
+}
+/* reglas de filtrado por atributo (sin JS por card) */
+#exc-grid[data-cat="terrestre"] > li:not([data-category="terrestre"]),
+#exc-grid[data-cat="lacustre"] > li:not([data-category="lacustre"]),
+#exc-grid[data-cat="aventura"] > li:not([data-category="aventura"]),
+#exc-grid[data-cat="nieve"] > li:not([data-category="nieve"]) {
+  display: none;
+}
+#exc-grid[data-cat="lacustre"] > li.exc-empty[data-empty="lacustre"],
+#exc-grid[data-cat="aventura"] > li.exc-empty[data-empty="aventura"],
+#exc-grid[data-cat="nieve"] > li.exc-empty[data-empty="nieve"],
+#exc-grid[data-cat="terrestre"] > li.exc-empty[data-empty="terrestre"] {
+  display: block;
+}
+/* s48 F2b — "Reservar" botón marcado (mockup .btn-act.strong): outline bronce
+   que se llena al hover. */
 .exc-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  font-weight: 600;
-  font-size: 0.92rem;
-  color: #f6f1e8;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #143038;
   text-decoration: none;
-  padding-bottom: 3px;
-  border-bottom: 1.5px solid rgba(180, 132, 72, 0.55);
-  transition:
-    gap 0.25s ease,
-    border-color 0.25s ease;
+  border: 1.5px solid #b48448;
+  border-radius: 999px;
+  padding: 9px 12px;
   white-space: nowrap;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .exc-cta svg {
   width: 16px;
   height: 16px;
   color: #b48448;
-  transition: transform 0.25s ease;
+  transition: color 0.18s ease;
 }
 .exc-cta:hover {
-  gap: 11px;
-  border-color: #b48448;
+  background: #b48448;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 .exc-cta:hover svg {
-  transform: translateX(3px);
+  color: #ffffff;
 }
 .exc-cta:focus-visible {
   outline: 2px solid #b48448;
   outline-offset: 3px;
-  border-radius: 4px;
 }
 /* the gallery cover button fills the photo area and is the click target */
 .exc-photo .exc-cover-btn {
@@ -836,7 +967,7 @@
 }
 .exc-paseos-head h3 {
   font-weight: 600;
-  color: #f6f1e8;
+  color: #143038;
   font-size: 1.6rem;
   margin: 0;
 }
@@ -868,7 +999,7 @@
 }
 .exc-pn {
   font-weight: 500;
-  color: #f7f2e8;
+  color: #1e2b2c;
   font-size: 1.01rem;
 }
 .exc-poffer {
@@ -881,12 +1012,86 @@
 .exc-preg {
   font-size: 0.85rem;
   font-weight: 500;
-  color: rgba(247, 242, 232, 0.58);
+  color: #4f5e5c;
   text-decoration: line-through;
 }
 .exc-pp {
   font-weight: 700;
   font-size: 1.2rem;
-  color: #b48448;
+  color: #143038;
   white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+ * s48 F2b — NOSOTROS 2-col (mockup v13 "Conocé la Patagonia..."). Emitted ONLY
+ * when content_json.nosotros is present (PV opt-in); Hakuna never renders it
+ * -> byte-identical. Warm section (#EFE5D0) sobre página #F7F2E8.
+ * -------------------------------------------------------------------------- */
+.pv-nos-sec {
+  padding: 64px 24px;
+  background: #efe5d0;
+}
+.pv-nos-grid {
+  max-width: 1160px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 42px;
+  align-items: center;
+}
+.pv-nos-figure {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 5 / 4;
+  box-shadow:
+    0 10px 30px rgba(40, 30, 15, 0.13),
+    0 3px 8px rgba(40, 30, 15, 0.07);
+  margin: 0;
+}
+.pv-nos-title {
+  font-weight: 700;
+  color: #143038;
+  font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+  line-height: 1.14;
+  margin: 0;
+  text-wrap: balance;
+}
+.pv-nos-body {
+  margin: 14px 0 0;
+  color: #4f5e5c;
+  font-size: 1.02rem;
+  max-width: 56ch;
+}
+.pv-nos-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #143038;
+  text-decoration: none;
+  border: 1.5px solid #b48448;
+  border-radius: 999px;
+  padding: 11px 20px;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pv-nos-cta:hover {
+  background: #b48448;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.pv-nos-cta:focus-visible {
+  outline: 2px solid #b48448;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .pv-nos-grid {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
 }

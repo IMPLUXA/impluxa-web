@@ -1,6 +1,5 @@
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import type { ReactNode } from "react";
 import type { EventosContent, EventosDesign } from "../schema";
 import { resolveStructure } from "../structure";
 
@@ -27,22 +26,14 @@ const ServicioDetalle = dynamic(
   { ssr: true },
 );
 
-type Servicio = EventosContent["servicios"][number];
+// s48 F2b — Filtro de categorías (client island, overlay-only). Lazy dynamic:
+// un tenant sin categorías (Hakuna / stack) nunca baja este chunk.
+const ExcFilterChips = dynamic(
+  () => import("./ExcFilterChips").then((m) => ({ default: m.ExcFilterChips })),
+  { ssr: true },
+);
 
-// v3 overlay chip icons, mapped by tags index: 0 = duración (clock),
-// 1 = ubicación (pin), 2 = dificultad (signal). Data order is controlled in
-// content_json (turismo). Out-of-range falls back to the signal icon.
-const CHIP_ICONS: ReactNode[] = [
-  <>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v5l3 2" />
-  </>,
-  <>
-    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-    <circle cx="12" cy="10" r="3" />
-  </>,
-  <path d="M3 20h18M7 20V10M12 20V4M17 20v-7" />,
-];
+type Servicio = EventosContent["servicios"][number];
 
 // "Mes de lanzamiento" offer: launch (price_ars = charged) vs regular display
 // (price_regular_ars). Show strike+badge ONLY when a real offer exists AND the
@@ -127,26 +118,6 @@ export function Servicios({
         )
       );
 
-    const chips = (s: Servicio) =>
-      s.tags && s.tags.length > 0 ? (
-        <ul className="exc-chips" role="list">
-          {s.tags.map((t, i) => (
-            <li key={`${s.key}-${i}`} className="exc-chip">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                {CHIP_ICONS[i] ?? CHIP_ICONS[2]}
-              </svg>
-              {t}
-            </li>
-          ))}
-        </ul>
-      ) : null;
-
     // s41 V3: banner de horario (lee detalle.horarios[0]). Parsea "main (dias)".
     const horario = (s: Servicio) => {
       const raw = s.detalle?.horarios?.[0];
@@ -203,10 +174,12 @@ export function Servicios({
       );
     };
 
+    // s48 F2b — "Reservar" (mockup botones unificados: conversión marcada).
+    // Mientras no exista flujo de reserva (F7), reserva = WhatsApp.
     const ctaLink = (s: Servicio) => {
       const href = waCta
         ? `https://wa.me/${waCta}?text=${encodeURIComponent(
-            `Hola! Quiero consultar por ${s.title}.`,
+            `Hola! Quiero reservar ${s.title}.`,
           )}`
         : "#contacto";
       return (
@@ -214,23 +187,66 @@ export function Servicios({
           className="exc-cta"
           href={href}
           {...(waCta && { target: "_blank", rel: "noopener noreferrer" })}
-          aria-label={`Consultar por ${s.title}${waCta ? " por WhatsApp (se abre en una nueva pestaña)" : ""}`}
+          aria-label={`Reservar ${s.title}${waCta ? " por WhatsApp (se abre en una nueva pestaña)" : ""}`}
         >
-          Consultar
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.2"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
           </svg>
+          Reservar
         </a>
       );
+    };
+
+    // s48 F2b — pills de foto (mockup): categoría arriba-izq + duración abajo-der.
+    const CATLABEL: Record<string, string> = {
+      terrestre: "Terrestre",
+      lacustre: "Lacustre",
+      aventura: "Aventura",
+      nieve: "Nieve",
+    };
+    const catPill = (s: Servicio) =>
+      s.category ? (
+        <span className="exc-cat-pill">{CATLABEL[s.category]}</span>
+      ) : null;
+    const durPill = (s: Servicio) => {
+      const dur = s.detalle?.duracion ?? s.tags?.[0];
+      return dur ? <span className="exc-dur-pill">{dur}</span> : null;
+    };
+
+    // s48 F2b — filtro de categorías (solo si algún servicio trae category;
+    // sin data -> sin chips -> render previo intacto).
+    const hasCategories = items.some((s) => !!s.category);
+    const counts: Record<string, number> = {
+      todos: items.length,
+      terrestre: 0,
+      lacustre: 0,
+      aventura: 0,
+      nieve: 0,
+    };
+    for (const s of items) {
+      if (s.category) counts[s.category] += 1;
+    }
+    // Empty-states del mockup v13 para categorías sin salidas aún.
+    const EMPTIES: Record<string, [string, string]> = {
+      lacustre: [
+        "Excursiones lacustres",
+        "Navegaciones por el Nahuel Huapi y Puerto Blest, próximamente.",
+      ],
+      aventura: ["Aventura", "Trekking, rafting y cabalgatas, próximamente."],
+      nieve: [
+        "Nieve",
+        "Traslados a centros de ski y actividades de invierno, próximamente.",
+      ],
+      terrestre: ["Terrestres", "Salidas terrestres, próximamente."],
     };
 
     return (
@@ -247,15 +263,11 @@ export function Servicios({
               className="exc-title"
               style={{ fontFamily: heading }}
             >
-              <span style={{ display: "block" }}>EXCURSIONES EN</span>
-              <span style={{ display: "block", color: "#b48448" }}>
-                PATAGONIA VIVA
-              </span>
+              Nuestras excursiones
             </h2>
             <p className="exc-lead">
-              Salidas en grupos reducidos por los clásicos de la región, con
-              guías que nacieron y viven acá. Montaña, lago y bosque, contados
-              por dentro.
+              Elegí por tipo de aventura. Salidas con guías que nacieron y viven
+              acá: montaña, lago y bosque, contados por dentro.
             </p>
             {anyOffer && (
               <span className="exc-launch-pill">
@@ -270,28 +282,26 @@ export function Servicios({
                 Mes de lanzamiento
               </span>
             )}
+            {hasCategories && <ExcFilterChips counts={counts} />}
           </header>
 
-          {/* s40 — uniform 2-col grid: every service is the SAME photo-forward
-              overlay card (no hero/featured). 2-col desktop -> 1-col mobile. */}
-          <ul className="exc-grid" role="list">
+          {/* s48 F2b — grid 3-col estilo siturismo (mockup v13): título en el
+              body, pills cat/dur/OFF sobre la foto, acciones Ver detalle +
+              Reservar. data-cat la setea el island ExcFilterChips. */}
+          <ul className="exc-grid" id="exc-grid" role="list" data-cat="todos">
             {items.map((s) => (
-              <li key={s.key}>
+              <li key={s.key} data-category={s.category ?? "otros"}>
                 <article
                   className="exc-card"
                   aria-labelledby={`servicio-${s.key}-title`}
                 >
                   <div className="exc-photo">
                     {cover(s)}
+                    {catPill(s)}
                     {offerBadge(s)}
+                    {durPill(s)}
                     <span className="exc-scrim" aria-hidden="true" />
                     <div className="exc-ovl">
-                      <h3
-                        id={`servicio-${s.key}-title`}
-                        style={{ fontFamily: heading }}
-                      >
-                        {s.title}
-                      </h3>
                       {s.gallery && s.gallery.length > 0 && (
                         <span className="exc-fotos">
                           <svg
@@ -311,25 +321,43 @@ export function Servicios({
                     </div>
                   </div>
                   <div className="exc-body">
+                    <h3
+                      id={`servicio-${s.key}-title`}
+                      className="exc-card-title"
+                      style={{ fontFamily: heading }}
+                    >
+                      {s.title}
+                    </h3>
                     {horario(s)}
                     <p className="exc-desc">{s.description}</p>
-                    {chips(s)}
-                    <div className="exc-foot">
-                      {priceBlock(s)}
+                    <div className="exc-foot">{priceBlock(s)}</div>
+                    <div className="exc-actions">
+                      {hasDetalle(s) && (
+                        <ServicioDetalle
+                          detalle={s.detalle!}
+                          title={s.title}
+                          cover={s.image_url ?? s.gallery?.[0]}
+                          design={design}
+                        />
+                      )}
                       {ctaLink(s)}
                     </div>
-                    {hasDetalle(s) && (
-                      <ServicioDetalle
-                        detalle={s.detalle!}
-                        title={s.title}
-                        cover={s.image_url ?? s.gallery?.[0]}
-                        design={design}
-                      />
-                    )}
                   </div>
                 </article>
               </li>
             ))}
+            {hasCategories &&
+              (Object.keys(EMPTIES) as Array<keyof typeof EMPTIES>)
+                .filter((k) => counts[k] === 0)
+                .map((k) => (
+                  <li key={`empty-${k}`} className="exc-empty" data-empty={k}>
+                    <b style={{ fontFamily: heading }}>{EMPTIES[k][0]}</b>
+                    {EMPTIES[k][1]}
+                    <span className="exc-empty-tag">
+                      Categoría lista para cuando sumes salidas
+                    </span>
+                  </li>
+                ))}
           </ul>
         </div>
       </section>
