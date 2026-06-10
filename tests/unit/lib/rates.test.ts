@@ -41,6 +41,14 @@ describe("priceForFactor", () => {
     expect(priceForFactor("100", "  ")).toBeNull();
   });
 
+  it("NÚMEROS JSON de PostgREST (bug P0 s49: numeric llega number, no string)", () => {
+    expect(priceForFactor(38000, 0.9)).toBe("34200.00");
+    expect(priceForFactor(38000, "0.5000")).toBe("19000.00");
+    expect(priceForFactor("38000.00", 1)).toBe("38000.00");
+    expect(priceForFactor(80000, 0)).toBe("0.00");
+    expect(priceForFactor(38000, null)).toBeNull();
+  });
+
   it("boundary half-up exacto: 12.5 centavos → 0.13", () => {
     expect(priceForFactor("0.25", "0.5000")).toBe("0.13");
   });
