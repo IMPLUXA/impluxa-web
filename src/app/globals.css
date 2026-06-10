@@ -85,18 +85,13 @@
 .pv-hero-shell {
   position: relative;
   overflow: hidden;
-  /* Desktop full-bleed hero (CEO preference, departs from handoff 92vh — see
-     autonomous_decisions_log s36 override-CEO). 100svh = small viewport height
-     (no mobile URL-bar jump); 100vh fallback for browsers without svh. Mobile
-     stays 74vh via the @media (max-width:760px) override below. */
-  min-height: calc(100vh + 72px);
-  min-height: calc(100svh + 72px);
+  /* s48c — mockup v13 parity: hero compacto min(86vh,660px) DEBAJO de la nav
+     sticky crema (ya no full-bleed ni tuck-under; supersede el override-CEO
+     s36 full-bleed por instrucción CEO s48c "100% como el mockup", flag
+     explícito en el ASK). Mobile sigue 74vh via @media abajo. */
+  min-height: min(86vh, 660px);
   display: flex;
   align-items: flex-end;
-  /* Tuck under the fixed TenantNav (manifest: 72px). Live-visual calibration
-     item — our nav height may differ slightly from the prototype's 72px. */
-  margin-top: -72px;
-  padding-top: 72px;
 }
 .pv-hero-content {
   position: relative;
@@ -106,10 +101,12 @@
   margin: 0 auto;
   padding: 32px 20px 48px;
 }
-/* s41 — badges del hero turismo inline con separadores · arriba del CTA (L2).
+/* s41 — badges del hero turismo inline con separadores ·. s48c: van DEBAJO de
+   los CTAs (mockup .trust; el wrapper aporta el margin-top 24) -> margin 0
+   (el mb 18px previo era para la posición vieja arriba del CTA).
    turismo-only (.pv-hero-content nunca se monta en Hakuna). */
 .pv-hero-badges {
-  margin: 0 0 18px;
+  margin: 0;
   column-gap: 14px;
   row-gap: 8px;
 }
@@ -251,11 +248,11 @@
      Hakuna never mounts these (no slideshow / no content.nav) and desktop >=768
      is outside this media query, so both stay byte-identical. The shared heroBody
      classes are NOT modified — only selected within the turismo-only wrapper. */
-  /* Logo prominente: agrandar + centrar el logo del nav en movil (desktop 38px
-     intacto via inline style fuera de este media query). */
+  /* s48c: con la barra crema sticky en flujo, el logo 52px centrado inflaba la
+     nav (~76px) y empujaba los CTAs del hero bajo el fold en mobile. 40px
+     alineado a la izquierda mantiene la barra compacta (desktop 38px inline). */
   .pv-nav-logo {
-    height: 52px !important;
-    margin: 0 auto;
+    height: 40px !important;
   }
   /* Scrim reposicionado: fuerte solo abajo (detras del texto) + velo suave
      arriba (legibilidad del logo) + transparente en el medio (la foto respira).
@@ -323,6 +320,36 @@
  * -------------------------------------------------------------------------- */
 .pv-sp-gold {
   color: #ebc87e;
+}
+/* s48c — botón WhatsApp pill de la nav (mockup .btn-act.strong): outline bronce
+   que se llena al hover. Turismo-only (TenantNav gated por content.nav). */
+.pv-nav-wa {
+  font-size: 15px;
+  color: #143038;
+  text-decoration: none;
+  border: 1.5px solid #b48448;
+  border-radius: 999px;
+  padding: 9px 18px;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pv-nav-wa:hover {
+  background: #b48448;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.pv-nav-wa:focus-visible {
+  outline: 2px solid #b48448;
+  outline-offset: 3px;
+}
+/* s48c — backdrop del modal detalle (mockup dialog::backdrop). El reset global
+   pisa el margin:auto del UA en <dialog>; el centrado se restaura inline en
+   ServicioDetalle (margin auto). Clase turismo-only (solo ese dialog la lleva). */
+.pv-det-dialog::backdrop {
+  background: rgba(20, 30, 30, 0.5);
+  backdrop-filter: blur(2px);
 }
 /* outgoing slide blurs out (blur effect) */
 .pv-hero-slide.pv-sp-blurout {
@@ -401,7 +428,7 @@
    VALORES de color/sombra, no los selectores. */
 .exc-sec {
   padding: 88px 24px 96px;
-  background: #f7f2e8;
+  background: #f4eddc;
 }
 .exc-wrap {
   max-width: 1240px;

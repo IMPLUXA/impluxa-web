@@ -306,18 +306,52 @@ export function ServicioDetalle({
   detalle,
   title,
   cover,
+  gallery,
   design,
 }: {
   detalle: Detalle;
   title: string;
   cover?: string;
+  // s48c — galería navegable DENTRO del modal (pedido CEO: deslizar/mover las
+  // fotos desde el detalle, como el visor de la card). Opcional: ausente ->
+  // header con cover fija exacta de antes (back-compat).
+  gallery?: string[];
   design: EventosDesign;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const labelId = useId();
   const heading = design.fonts.heading;
 
-  const open = useCallback(() => dialogRef.current?.showModal(), []);
+  // s48c — visor del header: slides = [cover + gallery] con el MISMO dedup que
+  // ServicioGallery (si cover deriva de gallery[0], no duplicar). Flechas
+  // (.pv-vis-arrow, desktop) + swipe táctil (móvil) + thumbs clickeables.
+  const slides =
+    gallery && gallery.length > 0
+      ? cover && cover !== gallery[0]
+        ? [cover, ...gallery]
+        : gallery
+      : cover
+        ? [cover]
+        : [];
+  const multi = slides.length > 1;
+  const [rawIdx, setIdx] = useState(0);
+  // clamp (Pass-1): si slides se achica en runtime (HMR/revalidate), nunca
+  // indexar fuera de rango
+  const idx = Math.min(rawIdx, Math.max(0, slides.length - 1));
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
+  const prev = useCallback(
+    () => setIdx((i) => (i - 1 + slides.length) % slides.length),
+    [slides.length],
+  );
+  const next = useCallback(
+    () => setIdx((i) => (i + 1) % slides.length),
+    [slides.length],
+  );
+
+  const open = useCallback(() => {
+    setIdx(0); // siempre arranca en la portada
+    dialogRef.current?.showModal();
+  }, []);
   const close = useCallback(() => dialogRef.current?.close(), []);
 
   const d = detalle;
@@ -366,6 +400,7 @@ export function ServicioDetalle({
       <dialog
         ref={dialogRef}
         aria-labelledby={labelId}
+        className="pv-det-dialog"
         onClick={(e) => {
           // Backdrop-click-to-close: el hijo scroll es full-bleed (dialog padding 0),
           // así que `e.target === dialog` casi no dispara. Calculamos por el rect del
@@ -381,7 +416,13 @@ export function ServicioDetalle({
           if (!inside) close();
         }}
         style={{
-          width: "min(92vw, 600px)",
+          // s48c — mockup v13: modal CENTRADO y ancho (max 760px). El reset CSS
+          // global pisa el margin:auto del UA en <dialog> top-layer (sin esto
+          // queda anclado arriba-izquierda); margin:auto lo restaura. El
+          // ::backdrop oscurecido vive en .pv-det-dialog::backdrop (globals).
+          margin: "auto",
+          width: "calc(100% - 32px)",
+          maxWidth: 760,
           maxHeight: "90vh",
           padding: 0,
           border: 0,
@@ -389,23 +430,44 @@ export function ServicioDetalle({
           overflow: "hidden",
           color: C.ink,
           background: `linear-gradient(180deg, ${C.card} 0%, ${C.bg} 100%)`,
+          boxShadow:
+            "0 10px 30px rgba(40,30,15,0.13), 0 3px 8px rgba(40,30,15,0.07)",
         }}
       >
         <div style={{ maxHeight: "90vh", overflowY: "auto" }}>
-          {cover && (
+          {slides.length > 0 && (
             <div
               style={{
                 position: "relative",
                 aspectRatio: "16 / 7",
                 overflow: "hidden",
+                touchAction: "pan-y",
+              }}
+              onTouchStart={(e) => {
+                const t = e.changedTouches[0];
+                touchRef.current = { x: t.clientX, y: t.clientY };
+              }}
+              onTouchEnd={(e) => {
+                const start = touchRef.current;
+                touchRef.current = null;
+                if (!start || !multi) return;
+                const t = e.changedTouches[0];
+                const dx = t.clientX - start.x;
+                const dy = t.clientY - start.y;
+                // solo gesto dominante-horizontal navega (umbral 40px, igual
+                // que el visor de la card); vertical sigue scrolleando el modal
+                if (Math.abs(dx) <= Math.abs(dy) || Math.abs(dx) < 40) return;
+                if (dx > 0) prev();
+                else next();
               }}
             >
               <Image
-                src={cover}
-                alt={title}
+                key={slides[idx]}
+                src={slides[idx]}
+                alt={idx === 0 ? title : `${title} — foto ${idx + 1}`}
                 fill
                 className="object-cover"
-                sizes="(min-width: 600px) 600px, 92vw"
+                sizes="(min-width: 760px) 760px, 92vw"
               />
               <span
                 aria-hidden="true"
@@ -415,6 +477,93 @@ export function ServicioDetalle({
                   background: `linear-gradient(180deg, rgba(251,246,234,0) 60%, ${C.card} 100%)`,
                 }}
               />
+              {multi && (
+                <>
+                  <button
+                    type="button"
+                    className="pv-vis-arrow pv-vis-arrow--prev"
+                    onClick={prev}
+                    aria-label="Foto anterior"
+                  >
+                    <Svg size={22} color="currentColor" width={2.2}>
+                      <polyline points="15 18 9 12 15 6" />
+                    </Svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="pv-vis-arrow pv-vis-arrow--next"
+                    onClick={next}
+                    aria-label="Foto siguiente"
+                  >
+                    <Svg size={22} color="currentColor" width={2.2}>
+                      <polyline points="9 18 15 12 9 6" />
+                    </Svg>
+                  </button>
+                  <span
+                    aria-live="polite"
+                    style={{
+                      position: "absolute",
+                      bottom: 10,
+                      right: 12,
+                      zIndex: 2,
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: C.bone,
+                      background: "rgba(14,35,41,0.6)",
+                      borderRadius: 999,
+                      padding: "3px 9px",
+                    }}
+                  >
+                    {idx + 1} / {slides.length}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+          {/* s48c — thumbs clickeables (mockup m-thumbs): navegan el visor */}
+          {multi && (
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                padding: "12px 22px 0",
+                overflowX: "auto",
+              }}
+            >
+              {slides.map((s, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  aria-label={`Ver foto ${i + 1}`}
+                  aria-current={i === idx}
+                  className="focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
+                  style={{
+                    flex: "none",
+                    width: 84,
+                    height: 58,
+                    padding: 0,
+                    border:
+                      i === idx
+                        ? `2px solid ${C.copper}`
+                        : "2px solid transparent",
+                    borderRadius: 9,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    background: "none",
+                    outlineColor: C.copper,
+                    position: "relative",
+                  }}
+                >
+                  <Image
+                    src={s}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="84px"
+                  />
+                </button>
+              ))}
             </div>
           )}
 

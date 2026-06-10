@@ -58,6 +58,8 @@ export function EventosSite({
           logoLight={media.logo_url_light}
           logoDark={media.logo_url_dark}
           tenantName={tenantName}
+          whatsapp={content.contacto.whatsapp}
+          whatsappCta={content.contacto.whatsapp_cta}
         />
       )}
       <main id="main-content" tabIndex={-1}>

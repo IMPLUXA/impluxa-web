@@ -281,39 +281,41 @@ export function HeroShowpiece({
             region — suppress auto re-announcement of the remounting h1 by screen
             readers (the heading is still read on navigation). */}
         <div key={active} className="pv-sp-textblock" aria-live="off">
+          {/* s48c — escala/estilo exactos del mockup v13: h1 clamp(2.3,5.2vw,3.9)
+              lh 1.06 ls -0.015em max 15ch; lead 20px #ECE4D2 limpio (solo
+              text-shadow, SIN caja/backdrop — feedback CEO s48c). */}
           <h1
             id="hero-heading"
-            className="pv-anim-in mb-4 text-4xl font-bold md:text-6xl"
+            className="pv-anim-in mb-0 font-bold"
             style={{
               fontFamily: headingFont,
-              color: "#F6F1E8",
-              letterSpacing: "0.015em",
-              maxWidth: "18ch",
+              color: "#FFFFFF",
+              fontSize: "clamp(2.3rem, 5.2vw, 3.9rem)",
+              lineHeight: 1.06,
+              letterSpacing: "-0.015em",
+              maxWidth: "15ch",
               textWrap: "balance",
-              textShadow: "0 2px 24px rgba(10,26,31,0.55)",
+              textShadow: "0 2px 22px rgba(0,0,0,0.42)",
             }}
           >
             {renderHeadline(headline, cur.highlight)}
           </h1>
           <p
-            className="pv-anim-in mb-10 max-w-2xl text-lg font-semibold md:text-2xl"
-            style={{ maxWidth: "46ch", marginLeft: 0, animationDelay: "0.14s" }}
+            className="pv-anim-in mb-7"
+            style={{
+              maxWidth: "46ch",
+              marginLeft: 0,
+              marginTop: "20px",
+              fontSize: "20px",
+              lineHeight: 1.5,
+              fontWeight: 500,
+              color: "#ECE4D2",
+              letterSpacing: "0.005em",
+              textShadow: "0 1px 10px rgba(0,0,0,0.55)",
+              animationDelay: "0.14s",
+            }}
           >
-            <span
-              style={{
-                color: "#FFFFFF",
-                background: "rgba(8,20,24,0.46)",
-                backdropFilter: "blur(7px)",
-                WebkitBackdropFilter: "blur(7px)",
-                WebkitBoxDecorationBreak: "clone",
-                boxDecorationBreak: "clone",
-                padding: "0.3em 0.55em",
-                borderRadius: "10px",
-                textShadow: "0 2px 20px rgba(8,20,24,0.85)",
-              }}
-            >
-              {subtitle}
-            </span>
+            {subtitle}
           </p>
         </div>
         {bottomSlot}

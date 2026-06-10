@@ -307,15 +307,16 @@ export function Hero({
             width={320}
             height={160}
             priority
-            className="mb-8 h-32 w-auto md:h-40"
-            sizes="(max-width: 768px) 200px, 320px"
+            // s48c — marca visible sobre las fotos (pedido CEO) sin competir
+            // con el headline rotativo: 80/96px (antes 128/160 del photo-variant)
+            className="mb-5 h-20 w-auto md:h-24"
+            sizes="(max-width: 768px) 160px, 200px"
           />
         )}
       </>
     );
     const showpieceBottom = (
       <>
-        {badgesJsx}
         <div
           className="pv-anim-in flex flex-col items-center justify-start gap-4 sm:flex-row"
           style={{ animationDelay: "0.32s" }}
@@ -339,7 +340,7 @@ export function Hero({
               boxShadow: "0 12px 30px -12px rgba(0,0,0,0.6)",
             }}
           >
-            {content.cta_primary_label}
+            {/* mockup v13: ícono lista ANTES del label */}
             <svg
               aria-hidden="true"
               width="18"
@@ -350,11 +351,11 @@ export function Hero({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ marginLeft: "8px" }}
+              style={{ marginRight: "8px" }}
             >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
+              <path d="M3 7h18M3 12h18M3 17h18" />
             </svg>
+            {content.cta_primary_label}
           </a>
           {content.cta_secondary_href && (
             <a
@@ -375,10 +376,25 @@ export function Hero({
                 outlineColor: design.colors.accent,
               }}
             >
+              {/* mockup v13: ícono burbuja WhatsApp antes del label */}
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{ marginRight: "8px" }}
+              >
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
               {content.cta_secondary_label}
             </a>
           )}
         </div>
+        {/* s48c mockup parity: trust badges DEBAJO de los CTAs (.trust margin-top) */}
+        {badgesJsx && <div style={{ marginTop: "24px" }}>{badgesJsx}</div>}
       </>
     );
     return (
