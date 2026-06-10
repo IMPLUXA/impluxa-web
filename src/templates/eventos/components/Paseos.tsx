@@ -45,7 +45,7 @@ export function Paseos({
         id="paseos"
         aria-labelledby="paseos-heading"
         className="px-6 pt-4 pb-24"
-        style={{ background: "#f7f2e8" }}
+        style={{ background: "#f4eddc" }}
       >
         <div className="mx-auto max-w-[1240px]">
           <div className="exc-paseos-head">

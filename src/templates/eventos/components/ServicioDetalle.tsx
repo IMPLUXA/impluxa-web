@@ -366,6 +366,7 @@ export function ServicioDetalle({
       <dialog
         ref={dialogRef}
         aria-labelledby={labelId}
+        className="pv-det-dialog"
         onClick={(e) => {
           // Backdrop-click-to-close: el hijo scroll es full-bleed (dialog padding 0),
           // así que `e.target === dialog` casi no dispara. Calculamos por el rect del
@@ -381,7 +382,13 @@ export function ServicioDetalle({
           if (!inside) close();
         }}
         style={{
-          width: "min(92vw, 600px)",
+          // s48c — mockup v13: modal CENTRADO y ancho (max 760px). El reset CSS
+          // global pisa el margin:auto del UA en <dialog> top-layer (sin esto
+          // queda anclado arriba-izquierda); margin:auto lo restaura. El
+          // ::backdrop oscurecido vive en .pv-det-dialog::backdrop (globals).
+          margin: "auto",
+          width: "calc(100% - 32px)",
+          maxWidth: 760,
           maxHeight: "90vh",
           padding: 0,
           border: 0,
@@ -389,6 +396,8 @@ export function ServicioDetalle({
           overflow: "hidden",
           color: C.ink,
           background: `linear-gradient(180deg, ${C.card} 0%, ${C.bg} 100%)`,
+          boxShadow:
+            "0 10px 30px rgba(40,30,15,0.13), 0 3px 8px rgba(40,30,15,0.07)",
         }}
       >
         <div style={{ maxHeight: "90vh", overflowY: "auto" }}>
@@ -405,7 +414,7 @@ export function ServicioDetalle({
                 alt={title}
                 fill
                 className="object-cover"
-                sizes="(min-width: 600px) 600px, 92vw"
+                sizes="(min-width: 760px) 760px, 92vw"
               />
               <span
                 aria-hidden="true"

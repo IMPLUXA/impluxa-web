@@ -1,7 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
 interface NavItem {
   label: string;
   href: string;
@@ -13,48 +9,48 @@ interface NavItem {
  * DOM/classes -> byte-identical. Self-contained (no design_json fields needed;
  * uses the handoff "extended" palette inline, which has no schema home).
  *
- * Behavior (handoff README "NAV"): fixed over the hero, transparent when at top,
- * translucent on scroll (`is-scrolled`): bg + blur + shadow + dark logo + dark
- * links. Links hidden < 760px (NO hamburger). Logo height 38px.
+ * s48c — mockup v13 parity: barra crema STICKY siempre visible (antes:
+ * fixed transparente sobre la foto con swap al scroll). El hero arranca DEBAJO
+ * de la barra (en flujo), como el mockup. Wordmark oscuro constante + links
+ * oscuros (hover teal) + botón WhatsApp pill (conversión, mockup .btn-act
+ * strong). Sin estado de scroll -> ya no es client component.
+ * Links ocultos < 760px (sin hamburguesa, igual que el mockup).
  */
 export function TenantNav({
   items,
   logoLight,
   logoDark,
   tenantName,
+  whatsapp,
+  whatsappCta,
 }: {
   items: NavItem[];
   logoLight?: string;
   logoDark?: string;
   tenantName: string;
+  // OPT-IN WhatsApp pill (mockup nav). Solo con whatsapp_cta === true.
+  whatsapp?: string;
+  whatsappCta?: boolean;
 }) {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const logoSrc = scrolled ? logoDark : logoLight;
+  // Barra clara constante -> wordmark oscuro; fallback al claro si no hay dark.
+  const logoSrc = logoDark ?? logoLight;
+  const waDigits =
+    whatsappCta === true && whatsapp ? whatsapp.replace(/[^0-9]/g, "") : null;
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-40"
+      className="sticky top-0 z-40"
       style={{
-        background: scrolled ? "rgba(251,248,242,0.86)" : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : undefined,
-        WebkitBackdropFilter: scrolled ? "blur(12px)" : undefined,
-        boxShadow: scrolled ? "0 2px 8px rgba(20,48,56,0.07)" : undefined,
-        transition:
-          "background 240ms cubic-bezier(0.22,1,0.36,1), box-shadow 240ms cubic-bezier(0.22,1,0.36,1), backdrop-filter 240ms cubic-bezier(0.22,1,0.36,1)",
+        background: "rgba(244, 237, 220, 0.86)",
+        backdropFilter: "saturate(1.1) blur(8px)",
+        WebkitBackdropFilter: "saturate(1.1) blur(8px)",
+        borderBottom: "1px solid rgba(180, 132, 72, 0.3)",
       }}
     >
       <nav
         aria-label={`Navegación ${tenantName}`}
         className="mx-auto flex items-center gap-5"
-        style={{ maxWidth: "1120px", padding: "14px 24px" }}
+        style={{ maxWidth: "1160px", padding: "12px 24px" }}
       >
         {logoSrc && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -70,20 +66,26 @@ export function TenantNav({
             <li key={it.href}>
               <a
                 href={it.href}
-                className={`font-semibold transition-colors hover:text-[#B48448] ${
-                  scrolled ? "text-[#36474A]" : "text-white"
-                }`}
-                style={{
-                  fontSize: "15px",
-                  textShadow: scrolled
-                    ? undefined
-                    : "0 1px 8px rgba(10,26,31,0.5)",
-                }}
+                className="font-medium text-[#1E2B2C] transition-colors hover:text-[#3E7C95]"
+                style={{ fontSize: "15px" }}
               >
                 {it.label}
               </a>
             </li>
           ))}
+          {waDigits && (
+            <li>
+              <a
+                href={`https://wa.me/${waDigits}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp (se abre en una nueva pestaña)"
+                className="pv-nav-wa inline-flex items-center justify-center font-bold"
+              >
+                WhatsApp
+              </a>
+            </li>
+          )}
         </ul>
       </nav>
     </header>
