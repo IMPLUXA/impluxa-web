@@ -2,20 +2,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-const { routerPushMock, routerRefreshMock, refreshSessionMock } = vi.hoisted(
-  () => ({
-    routerPushMock: vi.fn(),
-    routerRefreshMock: vi.fn(),
-    refreshSessionMock: vi.fn(),
-  }),
-);
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: routerPushMock,
-    refresh: routerRefreshMock,
-  }),
+const { refreshSessionMock } = vi.hoisted(() => ({
+  refreshSessionMock: vi.fn(),
 }));
+
+// B-Fase2: el componente ya no usa useRouter — navega con
+// window.location.assign (cross-host). jsdom no implementa navegación real:
+// se stubbea assign y se asserta el destino.
+const locationAssignMock = vi.fn();
 
 vi.mock("@/lib/supabase/client", () => ({
   getSupabaseBrowserClient: () => ({
@@ -44,9 +38,13 @@ const TENANT_B: TenantOption = {
 };
 
 beforeEach(() => {
-  routerPushMock.mockReset();
-  routerRefreshMock.mockReset();
   refreshSessionMock.mockReset().mockResolvedValue({});
+  locationAssignMock.mockReset();
+  Object.defineProperty(window, "location", {
+    value: { ...window.location, assign: locationAssignMock },
+    writable: true,
+    configurable: true,
+  });
   global.fetch = vi.fn();
 });
 
@@ -91,11 +89,14 @@ describe("TenantSwitcherClient (W3.G5.T1 part 2)", () => {
     });
   });
 
-  it("clicking a different tenant POSTs /api/tenant/switch + refreshSession + router.push", async () => {
+  it("clicking a different tenant POSTs /api/tenant/switch + refreshSession + location.assign cross-host", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ ok: true, redirectTo: "/t/rls-claim-b/dashboard" }),
+      json: async () => ({
+        ok: true,
+        redirectTo: "https://rls-claim-b.impluxa.com/admin/dashboard",
+      }),
     });
 
     render(
@@ -119,8 +120,10 @@ describe("TenantSwitcherClient (W3.G5.T1 part 2)", () => {
     await waitFor(() => {
       expect(refreshSessionMock).toHaveBeenCalledOnce();
     });
-    expect(routerPushMock).toHaveBeenCalledWith("/t/rls-claim-b/dashboard");
-    expect(routerRefreshMock).toHaveBeenCalledOnce();
+    // B-Fase2: navegación full cross-host al admin branded del tenant.
+    expect(locationAssignMock).toHaveBeenCalledWith(
+      "https://rls-claim-b.impluxa.com/admin/dashboard",
+    );
   });
 
   it("displays inline error when /api/tenant/switch returns non-OK", async () => {
@@ -146,7 +149,7 @@ describe("TenantSwitcherClient (W3.G5.T1 part 2)", () => {
       "forbidden",
     );
     expect(refreshSessionMock).not.toHaveBeenCalled();
-    expect(routerPushMock).not.toHaveBeenCalled();
+    expect(locationAssignMock).not.toHaveBeenCalled();
   });
 
   it("displays inline error when fetch throws (network failure)", async () => {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Tenant } from "@/lib/tenants/types";
+import { siteUrl, siteHostLabel } from "@/lib/urls";
 
 // B-Fase1 (plan-fases-arquitectura-2capas-s46, adelantada por decisión CEO
 // s49): el nav se parte en DOS CAPAS conceptuales sin mover nada de host
@@ -24,6 +25,9 @@ const NAV_OPERATIVO: NavItem[] = [
 ];
 
 // Capa 2 — SaaS Impluxa. Queda en app.impluxa.com también post-Fase-2.
+// TODO(billing-live): cuando /billing pierda `soon`, bajo el árbol admin el
+// href debe ser URL ABSOLUTA al app host (https://app.impluxa.com/billing) —
+// con basePath relativo daría /admin/billing → 404 (Pass-2 B-Fase2).
 const NAV_SAAS: NavItem[] = [
   { href: "/billing", label: "Plan y facturación", icon: "💳", soon: true },
 ];
@@ -33,7 +37,10 @@ const NAV_SAAS: NavItem[] = [
 // a 5 y grid-cols-5 queda corto — revisar selección mobile al sumar páginas.
 const NAV_MOBILE = NAV_OPERATIVO.filter((n) => !n.soon).slice(0, 5);
 
-function NavEntry({ item }: { item: NavItem }) {
+// basePath (B-Fase2): "" en app.impluxa.com (árbol /app) | "/admin" en el
+// dominio del cliente (árbol /tenant/[slug]/admin). Los hrefs son EXTERNOS
+// relativos al host — el middleware los rewritea; NUNCA /tenant/slug/... acá.
+function NavEntry({ item, basePath }: { item: NavItem; basePath: string }) {
   if (item.soon) {
     return (
       <span
@@ -51,7 +58,7 @@ function NavEntry({ item }: { item: NavItem }) {
   }
   return (
     <Link
-      href={item.href}
+      href={`${basePath}${item.href}`}
       className="hover:bg-stone/40 flex items-center gap-3 rounded px-3 py-2"
     >
       <span>{item.icon}</span>
@@ -62,10 +69,12 @@ function NavEntry({ item }: { item: NavItem }) {
 
 export function Sidebar({
   tenant,
+  basePath = "",
 }: {
   tenant: Tenant;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any;
+  basePath?: "" | "/admin";
 }) {
   return (
     <>
@@ -73,14 +82,16 @@ export function Sidebar({
       <aside className="bg-marble border-stone fixed top-0 left-0 z-30 hidden h-screen w-64 flex-col border-r p-6 md:flex">
         <div className="mb-8 font-serif text-2xl">IMPLUXA</div>
         <div className="text-ash mb-1 text-sm">{tenant.name}</div>
-        <div className="text-ash mb-6 text-xs">{tenant.slug}.impluxa.com</div>
+        <div className="text-ash mb-6 text-xs">
+          {siteHostLabel(tenant.slug)}
+        </div>
         <nav className="flex-1">
           <div className="text-ash mb-2 px-3 text-[10px] tracking-widest uppercase">
             Tu agencia
           </div>
           <div className="space-y-1">
             {NAV_OPERATIVO.map((n) => (
-              <NavEntry key={n.href} item={n} />
+              <NavEntry key={n.href} item={n} basePath={basePath} />
             ))}
           </div>
           <div className="border-stone/50 mt-6 border-t pt-4">
@@ -89,13 +100,13 @@ export function Sidebar({
             </div>
             <div className="space-y-1">
               {NAV_SAAS.map((n) => (
-                <NavEntry key={n.href} item={n} />
+                <NavEntry key={n.href} item={n} basePath={basePath} />
               ))}
             </div>
           </div>
         </nav>
         <a
-          href={`https://${tenant.slug}.impluxa.com`}
+          href={siteUrl(tenant.slug)}
           target="_blank"
           rel="noreferrer"
           className="text-bone mt-4 text-xs underline"
@@ -110,7 +121,7 @@ export function Sidebar({
           {NAV_MOBILE.map((n) => (
             <Link
               key={n.href}
-              href={n.href}
+              href={`${basePath}${n.href}`}
               className="flex flex-col items-center py-1"
             >
               <span className="text-lg">{n.icon}</span>

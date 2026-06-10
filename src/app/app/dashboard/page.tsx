@@ -3,6 +3,7 @@ import { getActiveTenant } from "@/lib/tenants/membership";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getAdminBasePath, siteUrl, siteHostLabel } from "@/lib/urls";
 
 export default async function Dashboard() {
   const { user, tenantId } = await requireActiveTenantOrRedirect();
@@ -45,6 +46,9 @@ export default async function Dashboard() {
     ]);
 
   const isDraft = tenant.status !== "published";
+  // basePath display/nav-only (B-Fase2): "" en /app, "/admin" bajo el dominio
+  // del cliente — esta page es compartida por ambos árboles.
+  const basePath = await getAdminBasePath();
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -54,11 +58,11 @@ export default async function Dashboard() {
           Tu sitio:{" "}
           <a
             className="underline"
-            href={`https://${tenant.slug}.impluxa.com`}
+            href={siteUrl(tenant.slug)}
             target="_blank"
             rel="noreferrer"
           >
-            {tenant.slug}.impluxa.com ↗
+            {siteHostLabel(tenant.slug)} ↗
           </a>
         </p>
       </header>
@@ -66,7 +70,7 @@ export default async function Dashboard() {
       {isDraft && (
         <div className="flex items-center justify-between rounded-lg border border-yellow-600 bg-yellow-900/20 p-4">
           <span>⚠️ Tu sitio está en borrador.</span>
-          <Link href="/site/content" className="underline">
+          <Link href={`${basePath}/site/content`} className="underline">
             Editar y publicar →
           </Link>
         </div>
