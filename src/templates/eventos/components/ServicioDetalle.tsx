@@ -16,9 +16,10 @@ import type { EventosContent, EventosDesign } from "../schema";
  * referencia -> el chunk JS no entra a su bundle -> byte-idéntico (espejo del
  * patrón de ServicioGallery).
  *
- * Paleta hardcodeada (Pine/Copper/Lake/Bone): misma convención que el bloque
- * .exc-* / .pv-hero-* (handoff turismo, "no schema home"). Solo la tipografía de
- * títulos usa design.fonts.heading (Cinzel en PV), igual que el branch overlay.
+ * Paleta hardcodeada warm-light (mockup v13 "siturismo": card crema / texto pine /
+ * acentos copper+lake): misma convención que el bloque .exc-* / .pv-hero-*
+ * (handoff turismo, "no schema home"). Solo la tipografía de títulos usa
+ * design.fonts.heading (Cinzel en PV), igual que el branch overlay.
  *
  * Las listas itinerario/incluye/no_incluye renderizan SOLO si están pobladas
  * (length-guard). Ausentes -> no se renderiza nada (NO hay caja "próximamente").
@@ -27,14 +28,16 @@ import type { EventosContent, EventosDesign } from "../schema";
 type Detalle = NonNullable<EventosContent["servicios"][number]["detalle"]>;
 
 const C = {
-  pine: "#143038",
-  pineDeep: "#0E2329",
-  panel: "#16363f",
-  panel2: "#122d35",
+  pine: "#143038", // headings / texto primario
+  ink: "#1E2B2C", // texto cuerpo
+  soft: "#4F5E5C", // texto secundario
+  card: "#FBF6EA", // surface card
+  bg: "#F7F2E8", // surface bg
   copper: "#B48448",
   lake: "#3E7C95",
-  bone: "#F6F1E8",
-  sand: "#F7F2E8",
+  bone: "#F6F1E8", // solo elementos sobre foto (overlay legibilidad)
+  warmAlt: "#EFE5D0", // surface alterna cálida
+  border: "rgba(180,132,72,0.30)",
 };
 
 // stroke icons (currentColor) — viewBox 0 0 24 24
@@ -106,7 +109,7 @@ function Fact({
           alignItems: "center",
           justifyContent: "center",
           background: "rgba(180,132,72,0.13)",
-          border: "1px solid rgba(180,132,72,0.34)",
+          border: `1px solid ${C.border}`,
         }}
       >
         <Svg>{icon}</Svg>
@@ -119,13 +122,13 @@ function Fact({
             fontWeight: 600,
             letterSpacing: "0.13em",
             textTransform: "uppercase",
-            color: "rgba(247,242,232,0.55)",
+            color: C.soft,
             marginBottom: 2,
           }}
         >
           {k}
         </span>
-        <span style={{ fontSize: "0.95rem", fontWeight: 500, color: C.bone }}>
+        <span style={{ fontSize: "0.95rem", fontWeight: 500, color: C.ink }}>
           {children}
         </span>
       </span>
@@ -146,11 +149,11 @@ function ListBlock({
 }) {
   const mark =
     variant === "check" ? (
-      <Svg size={15} color="#7FB48A">
+      <Svg size={15} color="#127a3c">
         <path d="M20 6 9 17l-5-5" />
       </Svg>
     ) : variant === "cross" ? (
-      <Svg size={15} color="rgba(247,242,232,0.45)">
+      <Svg size={15} color="rgba(79,94,92,0.55)">
         <path d="M18 6 6 18M6 6l12 12" />
       </Svg>
     ) : null;
@@ -161,7 +164,7 @@ function ListBlock({
           fontFamily: heading,
           fontWeight: 600,
           fontSize: "1rem",
-          color: C.bone,
+          color: C.pine,
           margin: "0 0 10px",
         }}
       >
@@ -186,7 +189,7 @@ function ListBlock({
               gap: 10,
               alignItems: "flex-start",
               fontSize: "0.92rem",
-              color: "rgba(247,242,232,0.85)",
+              color: C.ink,
             }}
           >
             {variant === "step" ? (
@@ -202,7 +205,7 @@ function ListBlock({
                   justifyContent: "center",
                   fontSize: 11,
                   fontWeight: 700,
-                  color: C.pineDeep,
+                  color: C.card,
                   background: C.copper,
                 }}
               >
@@ -232,11 +235,11 @@ function Faq({ q, a }: { q: string; a: string }) {
   return (
     <div
       style={{
-        border: "1px solid rgba(247,242,232,0.12)",
+        border: `1px solid ${C.border}`,
         borderRadius: 12,
         overflow: "hidden",
         marginBottom: 8,
-        background: "rgba(20,48,56,0.32)",
+        background: C.warmAlt,
       }}
     >
       <h5 style={{ margin: 0 }}>
@@ -258,7 +261,7 @@ function Faq({ q, a }: { q: string; a: string }) {
             fontFamily: "inherit",
             fontSize: "0.92rem",
             fontWeight: 600,
-            color: C.bone,
+            color: C.pine,
             background: "none",
             border: 0,
             cursor: "pointer",
@@ -290,7 +293,7 @@ function Faq({ q, a }: { q: string; a: string }) {
         style={{
           padding: "0 15px 14px",
           fontSize: "0.9rem",
-          color: "rgba(247,242,232,0.8)",
+          color: C.soft,
         }}
       >
         {a}
@@ -340,15 +343,16 @@ export function ServicioDetalle({
           justifyContent: "center",
           gap: 8,
           width: "100%",
+          minHeight: 44,
           marginTop: 2,
           padding: "9px 14px",
           fontWeight: 600,
           fontSize: "0.86rem",
-          color: C.bone,
+          color: C.soft,
           cursor: "pointer",
-          background: "rgba(20,48,56,0.45)",
-          border: "1px solid rgba(247,242,232,0.18)",
-          borderRadius: 11,
+          background: "transparent",
+          border: `1.5px solid ${C.border}`,
+          borderRadius: 999,
           outlineColor: C.copper,
         }}
       >
@@ -356,7 +360,7 @@ export function ServicioDetalle({
           <circle cx="12" cy="12" r="9" />
           <path d="M12 16v-4M12 8h.01" />
         </Svg>
-        Ver detalle de la salida
+        Ver detalle
       </button>
 
       <dialog
@@ -383,8 +387,8 @@ export function ServicioDetalle({
           border: 0,
           borderRadius: 20,
           overflow: "hidden",
-          color: C.sand,
-          background: `linear-gradient(180deg, ${C.panel} 0%, ${C.panel2} 100%)`,
+          color: C.ink,
+          background: `linear-gradient(180deg, ${C.card} 0%, ${C.bg} 100%)`,
         }}
       >
         <div style={{ maxHeight: "90vh", overflowY: "auto" }}>
@@ -408,7 +412,7 @@ export function ServicioDetalle({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: `linear-gradient(180deg, rgba(14,35,41,0) 30%, rgba(14,35,41,0.55) 70%, ${C.panel2} 100%)`,
+                  background: `linear-gradient(180deg, rgba(251,246,234,0) 60%, ${C.card} 100%)`,
                 }}
               />
             </div>
@@ -463,7 +467,7 @@ export function ServicioDetalle({
                 fontWeight: 700,
                 fontSize: "1.7rem",
                 lineHeight: 1.1,
-                color: C.bone,
+                color: C.pine,
                 margin: "0 0 20px",
               }}
             >
@@ -558,13 +562,13 @@ export function ServicioDetalle({
                       fontWeight: 600,
                       letterSpacing: "0.13em",
                       textTransform: "uppercase",
-                      color: "rgba(247,242,232,0.6)",
+                      color: C.soft,
                       marginBottom: 2,
                     }}
                   >
                     Cancelación
                   </span>
-                  <span style={{ fontSize: "0.92rem", color: C.bone }}>
+                  <span style={{ fontSize: "0.92rem", color: C.ink }}>
                     {d.cancelacion}
                   </span>
                 </span>
@@ -578,7 +582,7 @@ export function ServicioDetalle({
                     fontFamily: heading,
                     fontWeight: 600,
                     fontSize: "1rem",
-                    color: C.bone,
+                    color: C.pine,
                     margin: "0 0 12px",
                   }}
                 >

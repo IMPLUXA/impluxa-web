@@ -24,6 +24,12 @@ export const ServicioSchema = z.object({
   // Optional difficulty/category chips. Absent -> no chips. (No turismo data in
   // PR #1; deferred to follow-up — the schema slot exists, render is conditional.)
   tags: z.array(z.string()).optional(),
+  // s48 F2b — categoría para el filtro de excursiones (mockup v13). Enum espejo
+  // de las 4 categorías DB (agency excursions.category) pero vive en content_json
+  // (cero DDL, el template NO lee la DB de agencia). OPT-IN: absent -> sin pill
+  // de categoría en la card y sin chips de filtro (el filtro solo se monta si
+  // algún servicio trae category). .optional() NUNCA .default().
+  category: z.enum(["terrestre", "lacustre", "aventura", "nieve"]).optional(),
   // s39 P1 — Detalle de excursión (modal sobre la card). OPT-IN, render SOLO en
   // el branch overlay (design_json.structure.servicios.layout="overlay"). Absent
   // (Hakuna / stack) -> no modal, no chunk JS del modal (dynamic import +
@@ -153,6 +159,19 @@ export const EventosContentSchema = z.object({
   nav: z
     .object({
       items: z.array(z.object({ label: z.string(), href: z.string() })).min(1),
+    })
+    .optional(),
+  // s48 F2b — bloque "Nosotros" 2-col (foto + copy + CTA WhatsApp) del mockup
+  // v13. OPT-IN: absent (Hakuna) -> componente no se monta -> byte-identical.
+  // .optional() NUNCA .default({}) (nested-default trap). El CTA usa el opt-in
+  // contacto.whatsapp_cta existente (NO derivar de whatsapp presence).
+  nosotros: z
+    .object({
+      title: z.string(),
+      body: z.string(),
+      image_url: z.string(),
+      image_alt: z.string().optional(),
+      cta_label: z.string().optional(),
     })
     .optional(),
 });

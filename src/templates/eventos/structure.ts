@@ -162,6 +162,15 @@ export const StructureSchema = z
         layout: z.enum(["stack", "overlay"]).default("stack"),
       })
       .optional(),
+    // s48 F2b — Footer variant. "default" = EXACT current Footer render ->
+    // Hakuna byte-identical by construction. "brand" = mockup v13 footer
+    // (bg primary, brand en fonts.heading, tagline + Instagram). OPT-IN
+    // via design_json (patagoniaviva only).
+    footer: z
+      .object({
+        variant: z.enum(["default", "brand"]).default("default"),
+      })
+      .optional(),
   })
   .optional();
 
@@ -200,6 +209,7 @@ export function resolveStructure(s?: unknown) {
   const paseosShadow = t.paseos?.shadow ?? "none";
   const paseosPadding = t.paseos?.padding ?? "4";
   const serviciosLayout = t.servicios?.layout ?? "stack";
+  const footerVariant = t.footer?.variant ?? "default";
   const join = (...parts: string[]) =>
     parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
   return {
@@ -253,5 +263,7 @@ export function resolveStructure(s?: unknown) {
     paseosCardPadding: PADDING[paseosPadding],
     // s38 — Servicios layout variant ("stack" default = current render).
     serviciosLayout,
+    // s48 F2b — Footer variant ("default" = current render, byte-id).
+    footerVariant,
   };
 }

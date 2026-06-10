@@ -185,10 +185,15 @@ describe("PIECE 1 — turismo photo variant emits the mockup hero", () => {
     expect(sectionStyle).toContain("text-align: left");
     expect(sectionStyle).toContain("rgb(247, 242, 232)"); // #F7F2E8 light
   });
-  it("single outline-light CTA (border added, no secondary)", () => {
+  // s48 F2b — assert actualizado al diseño VIGENTE del photo-variant: s41 cambió
+  // el CTA a "cobre filled prominente, border removido" (Hero.tsx L2 comment) y
+  // este assert quedó stale esperando el outline-light pre-s41. Falla pre-existía
+  // en main (verificado con stash sobre b27ae17, independiente de F2b).
+  it("single solid-copper CTA (s41 filled, no secondary)", () => {
     expect(ctaCount).toBe(1);
-    expect(ctaStyle).toContain("border");
-    expect(ctaStyle).toContain("rgba(255, 255, 255");
+    expect(ctaStyle).toContain("background: rgb(180, 132, 72)"); // accent filled
+    expect(ctaStyle).toContain("color: rgb(16, 36, 42)"); // #10242a
+    expect(ctaStyle).not.toContain("border");
   });
   it("renders the 3 trust badges", () => {
     expect(badgeCount).toBe(3);

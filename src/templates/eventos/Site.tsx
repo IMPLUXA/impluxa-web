@@ -9,6 +9,7 @@ import { Testimonios } from "./components/Testimonios";
 import { Contacto } from "./components/Contacto";
 import { Footer } from "./components/Footer";
 import { TenantNav } from "./components/TenantNav";
+import { Nosotros } from "./components/Nosotros";
 import type { EventosContent, EventosDesign, EventosMedia } from "./schema";
 
 // Dynamic import — Pautas is a "use client" accordion below the fold.
@@ -74,6 +75,14 @@ export function EventosSite({
         />
         <Combos items={content.combos} design={design} />
         <Paseos items={content.paseos} design={design} />
+        {/* s48 F2b — opt-in: ausente (Hakuna) no monta nada -> byte-identical */}
+        {content.nosotros && (
+          <Nosotros
+            content={content.nosotros}
+            design={design}
+            contacto={content.contacto}
+          />
+        )}
         <Calendar design={design} />
         <Testimonios items={content.testimonios} design={design} />
         <Pautas items={content.pautas} design={design} />
@@ -88,6 +97,7 @@ export function EventosSite({
         tenantName={tenantName}
         whatsapp={content.contacto.whatsapp}
         whatsappCta={content.contacto.whatsapp_cta}
+        instagram={content.contacto.instagram}
       />
       {content.contacto.whatsapp_cta === true && content.contacto.whatsapp && (
         <a
