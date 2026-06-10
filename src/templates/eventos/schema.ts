@@ -199,6 +199,17 @@ export const EventosMediaSchema = z.object({
         posD: z.string(),
         posM: z.string(),
         alt: z.string().optional(),
+        // s48 F2 showpiece (turismo opt-in). Per-slide rotating hero copy synced
+        // to this slide. Present on a slide -> Hero mounts the HeroShowpiece path
+        // (rotating headline/subtitle + gold keyword + multi-effect transitions).
+        // Absent on ALL slides -> the existing HeroSlideshow path renders the
+        // fixed content.slogan exactly as before (back-compat). Hakuna has no
+        // hero_slideshow at all -> neither path -> byte-identical.
+        // `highlight` = substring of `headline` painted gold (#EBC87E); the gold
+        // span lives ONLY inside HeroShowpiece, never in the shared heroBody.
+        headline: z.string().optional(),
+        highlight: z.string().optional(),
+        subtitle: z.string().optional(),
       }),
     )
     .optional(),

@@ -155,12 +155,14 @@
     transform: scale(1) translate(0, 0);
   }
   to {
-    transform: scale(1.06) translate(-0.9%, -0.7%);
+    /* s48 F2: 1.06 -> 1.08 (mockup v13 Ken Burns). turismo-only keyframes
+       (only a tenant with hero_slideshow uses them) -> PV-scoped in practice. */
+    transform: scale(1.08) translate(-0.9%, -0.7%);
   }
 }
 @keyframes pvKenB {
   from {
-    transform: scale(1.06) translate(0.9%, 0.7%);
+    transform: scale(1.08) translate(0.9%, 0.7%);
   }
   to {
     transform: scale(1) translate(0, 0);
@@ -308,6 +310,81 @@
   .pv-hero-slide.is-active .pv-hero-slide-img {
     animation: none;
     transform: scale(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * s48 F2 HERO SHOWPIECE (turismo opt-in, rotating copy). Classes emitted ONLY
+ * by HeroShowpiece, which mounts ONLY when media.hero_slideshow slides carry a
+ * `headline`. Hakuna has no hero_slideshow -> never emits these -> byte-identical.
+ * Multi-effect transitions: crossfade (reuses .pv-hero-slide opacity) + blur +
+ * desintegrar (confetti shatter) + rejilla (grid reveal center-out). The grid
+ * (DC=22 x DR=12) mounts transiently per grid-transition only.
+ * -------------------------------------------------------------------------- */
+.pv-sp-gold {
+  color: #ebc87e;
+}
+/* outgoing slide blurs out (blur effect) */
+.pv-hero-slide.pv-sp-blurout {
+  filter: blur(18px) brightness(1.08);
+  transition:
+    opacity 1200ms var(--pv-ease-quint),
+    filter 1200ms ease;
+}
+/* transient dissolve grid overlay (sits over the bg slides, under the scrim) */
+.pv-sp-dissolve {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(22, 1fr);
+  grid-template-rows: repeat(12, 1fr);
+  pointer-events: none;
+}
+.pv-sp-cell {
+  background-repeat: no-repeat;
+  /* DC=22 -> 2200%, DR=12 -> 1200%: each cell shows its slice of the full image */
+  background-size: 2200% 1200%;
+  will-change: opacity, transform;
+}
+/* desintegrar: confetti shatter (fly + rotate + shrink + fade) */
+.pv-sp-shatter {
+  animation: pvShatter 0.8s cubic-bezier(0.3, 0.4, 0.2, 1) forwards;
+}
+@keyframes pvShatter {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0deg))
+      scale(0.12);
+  }
+}
+/* rejilla: cells shrink+fade from center outward, revealing the incoming slide */
+.pv-sp-open {
+  animation: pvOpenCell 0.55s cubic-bezier(0.3, 0.1, 0.3, 1) forwards;
+}
+@keyframes pvOpenCell {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pv-hero-slide.pv-sp-blurout {
+    filter: none;
+    transition: none;
+  }
+  .pv-sp-shatter,
+  .pv-sp-open {
+    animation: none;
+    opacity: 0;
   }
 }
 
