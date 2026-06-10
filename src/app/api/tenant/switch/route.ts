@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { writeAuditEvent } from "@/lib/auth/audit";
+import { siteUrl, TENANT_SLUG_RE } from "@/lib/urls";
 
 /**
  * POST /api/tenant/switch
@@ -96,9 +97,16 @@ export async function POST(req: NextRequest) {
     .eq("id", body.tenant_id)
     .maybeSingle();
 
-  const redirectTo = tenant?.slug
-    ? `/t/${tenant.slug}/dashboard`
-    : "/app/dashboard";
+  // B-Fase2 (fix vestigio /t/): el destino canónico es el admin branded bajo
+  // el dominio del cliente. C3 del review: el slug viene de DB validada por
+  // membership, pero se RE-VALIDA contra el charset canónico antes de
+  // construir una URL absoluta (un slug fuera de charset no puede denotar
+  // otro origin); fallback fail-safe a /app/dashboard. redirectTo es SIEMPRE
+  // server-constructed — nunca eco de input del cliente.
+  const redirectTo =
+    tenant?.slug && TENANT_SLUG_RE.test(tenant.slug)
+      ? `${siteUrl(tenant.slug)}/admin/dashboard`
+      : "/app/dashboard";
 
   // Best-effort audit (NEVER block the switch if audit fails).
   try {

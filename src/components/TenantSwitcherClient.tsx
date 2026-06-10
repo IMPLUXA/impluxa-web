@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export interface TenantOption {
@@ -23,7 +22,9 @@ export interface TenantSwitcherClientProps {
  *   2. On 200: call supabase.auth.refreshSession() so the next JWT carries
  *      the new active_tenant_id claim (Custom Access Token Hook reads
  *      user_session_state at token-issue time)
- *   3. router.push(result.redirectTo) — usually /t/<slug>/dashboard
+ *   3. window.location.assign(result.redirectTo) — el admin branded del
+ *      tenant (https://<slug>.impluxa.com/admin/dashboard); navegación full
+ *      porque puede ser cross-host (B-Fase2)
  *
  * Per ADR-0005 §3 the refreshSession() step is non-negotiable: without it,
  * the user keeps their old JWT and RLS v2 would still filter by the old
@@ -36,7 +37,6 @@ export function TenantSwitcherClient({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const router = useRouter();
 
   const active = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
 
@@ -70,8 +70,11 @@ export function TenantSwitcherClient({
         const supabase = getSupabaseBrowserClient();
         await supabase.auth.refreshSession();
 
-        router.push(redirectTo);
-        router.refresh();
+        // B-Fase2: redirectTo puede ser URL absoluta cross-host (el admin
+        // branded del tenant). router.push NO navega cross-origin —
+        // navegación full. redirectTo es server-constructed (nunca input
+        // del cliente), ver switch/route.ts.
+        window.location.assign(redirectTo);
       } catch (e) {
         setError(e instanceof Error ? e.message : "unknown error");
       }

@@ -124,7 +124,11 @@ describe("POST /api/tenant/switch (W3.G5.T1, FR-AUTH-5)", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(body.redirectTo).toBe("/t/rls-claim-a/dashboard");
+    // B-Fase2: destino canónico = admin branded bajo el dominio del cliente
+    // (URL absoluta server-constructed; slug re-validado contra TENANT_SLUG_RE).
+    expect(body.redirectTo).toBe(
+      "https://rls-claim-a.impluxa.com/admin/dashboard",
+    );
 
     // upsert was called with the right shape
     expect(upsertQ.upsert).toHaveBeenCalledWith(
