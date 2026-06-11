@@ -37,3 +37,38 @@ export async function getAdminBasePath(): Promise<"" | "/admin"> {
   if (host !== APP_HOST && host.endsWith(TENANT_SUFFIX)) return "/admin";
   return "";
 }
+
+// Subdominios que jamás denotan un tenant aunque terminen en TENANT_SUFFIX
+// (hosts de plataforma + www). Evita una query a DB por slugs imposibles.
+export const RESERVED_TENANT_SUBDOMAINS = new Set([
+  "www",
+  "app",
+  "admin",
+  "auth",
+]);
+
+/**
+ * Deriva el slug de tenant de un VALOR de Host header. Función pura (testeable
+ * sin mocks); parity exacta con middleware.ts:53+81-83: lowercase + sufijo,
+ * SIN strip de puerto (un host con puerto no matchea el sufijo → null →
+ * superficie genérica, mismo resultado que el middleware que tampoco lo
+ * strippea). Charset re-validado con TENANT_SLUG_RE (C3 B-Fase2). DISPLAY/
+ * BRANDING-ONLY: la autoridad de datos sigue siendo claim JWT + RLS.
+ */
+export function tenantSlugFromHostValue(rawHost: string | null): string | null {
+  const host = (rawHost ?? "").toLowerCase();
+  if (!host || host === APP_HOST || !host.endsWith(TENANT_SUFFIX)) return null;
+  const slug = host.slice(0, -TENANT_SUFFIX.length);
+  if (!slug || RESERVED_TENANT_SUBDOMAINS.has(slug)) return null;
+  if (!TENANT_SLUG_RE.test(slug)) return null;
+  return slug;
+}
+
+/**
+ * Slug de tenant del request actual (o null en hosts de plataforma).
+ * `headers().get("host")` es el header correcto en este stack: getAdminBasePath
+ * lo usa igual y está validado LIVE en prod (B-Fase2).
+ */
+export async function tenantSlugFromHost(): Promise<string | null> {
+  return tenantSlugFromHostValue((await headers()).get("host"));
+}
