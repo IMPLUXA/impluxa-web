@@ -95,12 +95,23 @@ export default async function TenantAdminLayout({
       : {}),
     ...(bodyFont ? { fontFamily: bodyFont } : {}),
   };
+  // FONDO DEL DOCUMENTO (fix walk CEO corte 2): globals.css:18 pinta
+  // `html{background:rgb(var(--rgb-onyx))}` = NEGRO, y el override de tokens
+  // (--color-*) NO alcanza al <html> (ancestro del wrapper + lee --rgb-*).
+  // El wrapper crema cubre el viewport, pero si una página interna desborda
+  // horizontalmente (p.ej. la tabla de Tarifas) el <html> negro asoma a la
+  // derecha. Este <style> scoped pinta el <html> con el background del tenant
+  // (hex ya validado por hexOrNull → seguro interpolar) SOLO bajo el subtree
+  // admin branded; /app y el sitio público no lo renderizan (otro layout).
+  // tokenStyle != null garantiza background presente, pero guardamos igual.
+  const pageBg = branding.colors.background;
 
   return (
     <div
       className="bg-onyx text-bone flex min-h-screen"
       style={wrapperStyle as React.CSSProperties}
     >
+      {pageBg && <style>{`html{background:${pageBg}}`}</style>}
       <Sidebar
         tenant={tenant}
         user={user}
