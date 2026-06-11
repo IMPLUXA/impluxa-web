@@ -1,6 +1,17 @@
 import Link from "next/link";
 import type { Tenant } from "@/lib/tenants/types";
+import type { TenantBranding } from "@/lib/tenants/login-branding";
+import { sidebarGradient } from "@/lib/tenants/admin-tokens";
 import { siteUrl, siteHostLabel } from "@/lib/urls";
+import {
+  House,
+  Mountains,
+  CurrencyCircleDollar,
+  Handshake,
+  PencilSimpleLine,
+  ChatCircleText,
+  ArrowSquareOut,
+} from "@phosphor-icons/react/dist/ssr";
 
 // B-Fase1 (plan-fases-arquitectura-2capas-s46, adelantada por decisión CEO
 // s49): el nav se parte en DOS CAPAS conceptuales sin mover nada de host
@@ -8,6 +19,13 @@ import { siteUrl, siteHostLabel } from "@/lib/urls";
 // SaaS Impluxa (la relación cliente↔plataforma: plan, facturación).
 // Los stubs sin página (`soon`) dejan de ser links 404eables (punch-list B6)
 // y se muestran deshabilitados con badge "pronto".
+//
+// F-UI-BRANDED corte 2: prop `branding` opcional. CON branding renderiza el
+// shell del mockup congelado v2.1 (sidebar con paleta/logo del tenant, nav
+// v2.1-lite: los stubs sueltos Diseño/Imágenes y la sección "Tu cuenta
+// Impluxa" NO aparecen — vuelven en corte 3/4 como Módulos + sección
+// dueño-only; Leads pasa a llamarse Consultas). SIN branding renderiza
+// EXACTAMENTE el markup previo — /app no cambia un byte de render.
 
 type NavItem = { href: string; label: string; icon: string; soon?: boolean };
 
@@ -36,6 +54,28 @@ const NAV_SAAS: NavItem[] = [
 // TODO(B-Fase2+): cuando un stub pierda `soon`, este slice trunca SILENCIOSO
 // a 5 y grid-cols-5 queda corto — revisar selección mobile al sumar páginas.
 const NAV_MOBILE = NAV_OPERATIVO.filter((n) => !n.soon).slice(0, 5);
+
+// Nav del shell BRANDED (mockup v2.1, alcance corte 2): operativo vivo +
+// Consultas como stub. Finanzas/Módulos (dueño-only) llegan en corte 3/4 con
+// la matriz de roles; hasta entonces el panel no muestra lo que no puede
+// gatear (panel honesto). Ícono = componente Phosphor (spec visual mockup).
+type BrandedNavItem = {
+  href: string;
+  label: string;
+  Icon: React.ComponentType<{ size?: number }>;
+  soon?: boolean;
+};
+
+const NAV_BRANDED: BrandedNavItem[] = [
+  { href: "/dashboard", label: "Inicio", Icon: House },
+  { href: "/agency/excursions", label: "Excursiones", Icon: Mountains },
+  { href: "/agency/rates", label: "Tarifas", Icon: CurrencyCircleDollar },
+  { href: "/agency/providers", label: "Proveedores", Icon: Handshake },
+  { href: "/site/content", label: "Contenido", Icon: PencilSimpleLine },
+  { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
+];
+
+const NAV_BRANDED_MOBILE = NAV_BRANDED.filter((n) => !n.soon).slice(0, 5);
 
 // basePath (B-Fase2): "" en app.impluxa.com (árbol /app) | "/admin" en el
 // dominio del cliente (árbol /tenant/[slug]/admin). Los hrefs son EXTERNOS
@@ -67,15 +107,170 @@ function NavEntry({ item, basePath }: { item: NavItem; basePath: string }) {
   );
 }
 
+function BrandedNavEntry({
+  item,
+  basePath,
+  mutedColor,
+  badgeStyle,
+}: {
+  item: BrandedNavItem;
+  basePath: string;
+  mutedColor: string;
+  badgeStyle: React.CSSProperties;
+}) {
+  const { Icon } = item;
+  if (item.soon) {
+    return (
+      <span
+        aria-disabled="true"
+        title="Próximamente"
+        className="flex cursor-default items-center gap-3 rounded-[9px] px-3 py-2 text-sm font-medium"
+        style={{ color: mutedColor }}
+      >
+        <Icon size={18} />
+        <span>{item.label}</span>
+        <span
+          className="ml-auto rounded-full px-2 py-0.5 text-[9.5px] font-semibold"
+          style={badgeStyle}
+        >
+          pronto
+        </span>
+      </span>
+    );
+  }
+  return (
+    <Link
+      href={`${basePath}${item.href}`}
+      className="flex items-center gap-3 rounded-[9px] px-3 py-2 text-sm font-medium hover:bg-white/5"
+    >
+      <Icon size={18} />
+      <span>{item.label}</span>
+    </Link>
+  );
+}
+
 export function Sidebar({
   tenant,
   basePath = "",
+  branding = null,
 }: {
   tenant: Tenant;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any;
   basePath?: "" | "/admin";
+  branding?: TenantBranding | null;
 }) {
+  if (branding) {
+    const primary = branding.colors.primary ?? "#1f2937";
+    const background = branding.colors.background ?? "#f5f5f4";
+    const accent = branding.colors.accent ?? background;
+    const gradient = sidebarGradient(primary) ?? primary;
+    // texto del sidebar: el cream del tenant, apenas apagado (mockup #E7DEC9)
+    const sideText = `color-mix(in srgb, ${background} 88%, ${primary})`;
+    // alphas del mockup v2.1 (Pass-2 UI): host .65 / labels .58 / wordmark .35
+    const hostColor = `color-mix(in srgb, ${background} 65%, transparent)`;
+    const sideMuted = `color-mix(in srgb, ${background} 58%, transparent)`;
+    const accentSoft = `color-mix(in srgb, ${accent} 55%, white)`;
+    const badgeStyle: React.CSSProperties = {
+      background: `color-mix(in srgb, ${accent} 24%, transparent)`,
+      color: accentSoft,
+      letterSpacing: "0.04em",
+    };
+
+    return (
+      <>
+        {/* Desktop sidebar branded */}
+        <aside
+          className="fixed top-0 left-0 z-30 hidden h-screen w-64 flex-col p-[18px] pt-[26px] md:flex"
+          style={{ background: gradient, color: sideText }}
+        >
+          <div className="px-2">
+            {branding.logoDarkUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={branding.logoDarkUrl}
+                alt={branding.tenantName}
+                className="h-[52px] w-auto"
+              />
+            ) : (
+              <div className="text-xl font-semibold">{branding.tenantName}</div>
+            )}
+          </div>
+          <div
+            className="px-2 pt-2.5 text-[11.5px]"
+            style={{ color: hostColor }}
+          >
+            {branding.hostLabel}
+          </div>
+
+          <div
+            className="mt-6 mb-2 px-3 text-[10px] font-semibold tracking-[0.14em] uppercase"
+            style={{ color: sideMuted }}
+          >
+            Tu agencia
+          </div>
+          <nav className="flex-1 space-y-0.5">
+            {NAV_BRANDED.map((n) => (
+              <BrandedNavEntry
+                key={n.href}
+                item={n}
+                basePath={basePath}
+                mutedColor={sideMuted}
+                badgeStyle={badgeStyle}
+              />
+            ))}
+          </nav>
+
+          <a
+            href={siteUrl(tenant.slug)}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-semibold hover:bg-white/5"
+            style={{ color: accentSoft }}
+          >
+            <ArrowSquareOut size={18} />
+            Ver sitio
+          </a>
+          <div
+            className="mt-2.5 border-t px-3 pt-3 text-[11px] font-semibold tracking-[0.06em]"
+            style={{
+              color: `color-mix(in srgb, ${background} 35%, transparent)`,
+              borderColor: `color-mix(in srgb, ${background} 12%, transparent)`,
+            }}
+          >
+            IMPLUXA
+          </div>
+        </aside>
+
+        {/* Mobile bottom-nav branded (espejo de la regla: 5 operativas vivas) */}
+        <nav
+          className="fixed right-0 bottom-0 left-0 z-30 grid grid-cols-5 gap-1 px-1 pt-2 pb-2.5 md:hidden"
+          style={{
+            background: primary,
+            borderTop: `1px solid color-mix(in srgb, ${background} 14%, transparent)`,
+          }}
+        >
+          {NAV_BRANDED_MOBILE.map((n) => {
+            const { Icon } = n;
+            return (
+              <Link
+                key={n.href}
+                href={`${basePath}${n.href}`}
+                className="flex flex-col items-center gap-0.5 py-0.5 text-[10.5px]"
+                style={{
+                  color: `color-mix(in srgb, ${background} 75%, transparent)`,
+                }}
+              >
+                <Icon size={20} />
+                <span>{n.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </>
+    );
+  }
+
   return (
     <>
       {/* Desktop sidebar */}

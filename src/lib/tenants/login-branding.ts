@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { resolveTenantBySlug } from "@/lib/tenants/resolve";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { siteHostLabel } from "@/lib/urls";
@@ -72,9 +73,37 @@ export async function getLoginBranding(
   const tenant = await resolveTenantBySlug(slug);
   if (!tenant || tenant.status !== "published") return null;
 
-  // Mínimo privilegio: SOLO columnas de branding; raw read + guards de tipo
-  // (sin schema.parse: un throw acá rompería el login de TODOS los hosts —
-  // mismo criterio que generateMetadata del sitio público).
+  return getTenantBranding(tenant);
+}
+
+// ---------------------------------------------------------------------------
+// F-UI-BRANDED corte 2 — branding completo para el shell admin branded.
+// Superset del LoginBranding: suma logo para fondos claros (topbar móvil) y
+// favicon del panel. El admin NO exige published (el dueño autenticado de un
+// tenant draft ve SU marca en SU panel — la autorización la dan e07-e09 +
+// RLS, no este helper); el login público sí lo exige (gate de arriba).
+// ---------------------------------------------------------------------------
+
+export type TenantBranding = LoginBranding & {
+  logoLightUrl: string | null;
+  faviconUrl: string | null;
+};
+
+type TenantLike = { id: string; name: string; slug: string };
+
+/**
+ * Branding del tenant YA RESUELTO (el caller trae el tenant de su propio
+ * guard — assertHostMatchesClaim en el admin, resolve+published en el login —
+ * acá no se re-resuelve nada). Mínimo privilegio: SOLO columnas de branding;
+ * raw read + guards de tipo (sin schema.parse: un throw acá rompería el
+ * login/admin — mismo criterio que generateMetadata del sitio público).
+ */
+export const getTenantBranding = cache(async function getTenantBranding(
+  tenant: TenantLike,
+): Promise<TenantBranding | null> {
+  // React.cache: en el subtree admin esto corre en generateMetadata Y en el
+  // layout del mismo request — dedup per-request (Pass-2 CR corte 2). La
+  // identidad del arg se sostiene porque resolveTenantBySlug cachea el objeto.
   const supabase = getSupabaseServiceClient();
   const { data: site } = await supabase
     .from("sites")
@@ -90,7 +119,7 @@ export async function getLoginBranding(
 
   return {
     tenantName: tenant.name,
-    hostLabel: siteHostLabel(slug),
+    hostLabel: siteHostLabel(tenant.slug),
     colors: {
       primary: hexOrNull(colors["primary"]),
       secondary: hexOrNull(colors["secondary"]),
@@ -99,9 +128,11 @@ export async function getLoginBranding(
       text: hexOrNull(colors["text"]),
     },
     logoDarkUrl: storageUrlOrNull(media["logo_url_dark"]),
+    logoLightUrl: storageUrlOrNull(media["logo_url"]),
+    faviconUrl: storageUrlOrNull(media["favicon_url"]),
     fonts: {
       heading: strOrNull(fonts["heading"]),
       body: strOrNull(fonts["body"]),
     },
   };
-}
+});
