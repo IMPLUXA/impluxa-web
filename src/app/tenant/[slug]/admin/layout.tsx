@@ -4,6 +4,7 @@ import { assertHostMatchesClaim } from "@/lib/auth/host-claim";
 import { resolveTenantBySlug } from "@/lib/tenants/resolve";
 import { getTenantBranding } from "@/lib/tenants/login-branding";
 import { buildAdminTokenStyle } from "@/lib/tenants/admin-tokens";
+import { getAgencyRole } from "@/lib/agency/role";
 import { UserCircle } from "@phosphor-icons/react/dist/ssr";
 
 // B-Fase2 — back-office servido bajo el dominio del cliente.
@@ -69,6 +70,10 @@ export default async function TenantAdminLayout({
 
   const branding = await getTenantBranding(tenant);
   const tokenStyle = branding ? buildAdminTokenStyle(branding.colors) : null;
+  // Rol del caller para filtrar el Sidebar (matriz de roles corte 3). React.cache
+  // dedup con el guard de la page dueño-only en el mismo request. Fail-closed:
+  // null → panel mínimo. La UI NO es la autoridad (lo es el guard + RLS).
+  const role = await getAgencyRole();
 
   if (!branding || !tokenStyle) {
     // Shell genérico (look pre-corte-2): branding incompleto no rompe nada.
@@ -117,6 +122,7 @@ export default async function TenantAdminLayout({
         user={user}
         basePath="/admin"
         branding={branding}
+        role={role}
       />
       <main className="flex-1 md:ml-64">
         <header className="border-stone/60 flex items-center justify-end border-b px-6 py-3.5 md:px-8">
