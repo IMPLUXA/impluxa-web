@@ -8,6 +8,8 @@ import {
   siteHostLabel,
   TENANT_SLUG_RE,
   getAdminBasePath,
+  tenantSlugFromHostValue,
+  tenantSlugFromHost,
 } from "@/lib/urls";
 
 // B-Fase2 — helpers de URL por-tenant. El regex de slug es la defensa C3
@@ -74,5 +76,54 @@ describe("getAdminBasePath (display/nav-only, derivado del Host)", () => {
   it("host con mayúsculas se normaliza", async () => {
     mockHost("PATAGONIAVIVA.IMPLUXA.COM");
     expect(await getAdminBasePath()).toBe("/admin");
+  });
+});
+
+describe("tenantSlugFromHostValue (F-UI-BRANDED corte 1 — parity middleware)", () => {
+  it("host de tenant → slug", () => {
+    expect(tenantSlugFromHostValue("patagoniaviva.impluxa.com")).toBe(
+      "patagoniaviva",
+    );
+    expect(tenantSlugFromHostValue("hakunamatata.impluxa.com")).toBe(
+      "hakunamatata",
+    );
+  });
+
+  it("mayúsculas se normalizan (parity middleware.ts:53)", () => {
+    expect(tenantSlugFromHostValue("PATAGONIAVIVA.IMPLUXA.COM")).toBe(
+      "patagoniaviva",
+    );
+  });
+
+  it("hosts de plataforma y www → null (sin query a DB)", () => {
+    expect(tenantSlugFromHostValue("app.impluxa.com")).toBeNull();
+    expect(tenantSlugFromHostValue("admin.impluxa.com")).toBeNull();
+    expect(tenantSlugFromHostValue("auth.impluxa.com")).toBeNull();
+    expect(tenantSlugFromHostValue("www.impluxa.com")).toBeNull();
+  });
+
+  it("hosts ajenos, vacíos o marketing → null", () => {
+    expect(tenantSlugFromHostValue("impluxa.com")).toBeNull();
+    expect(tenantSlugFromHostValue("evil.com")).toBeNull();
+    expect(tenantSlugFromHostValue("")).toBeNull();
+    expect(tenantSlugFromHostValue(null)).toBeNull();
+  });
+
+  it("host con puerto NO matchea el sufijo → null (mismo resultado que el middleware, que tampoco strippea puerto)", () => {
+    expect(tenantSlugFromHostValue("patagoniaviva.impluxa.com:443")).toBeNull();
+    expect(tenantSlugFromHostValue("localhost:3000")).toBeNull();
+  });
+
+  it("slug fuera de charset (C3) → null", () => {
+    expect(tenantSlugFromHostValue("a.b.impluxa.com")).toBeNull(); // punto en slug
+    expect(tenantSlugFromHostValue("-lead.impluxa.com")).toBeNull();
+    expect(tenantSlugFromHostValue("ab.impluxa.com")).toBeNull(); // <3 chars
+  });
+
+  it("wrapper async lee el Host header", async () => {
+    mockHost("patagoniaviva.impluxa.com");
+    expect(await tenantSlugFromHost()).toBe("patagoniaviva");
+    mockHost("app.impluxa.com");
+    expect(await tenantSlugFromHost()).toBeNull();
   });
 });

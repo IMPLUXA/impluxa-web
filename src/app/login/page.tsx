@@ -1,156 +1,198 @@
-"use client";
-import { useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Cinzel, Fredoka, Hanken_Grotesk, Inter } from "next/font/google";
+import { getLoginBranding } from "@/lib/tenants/login-branding";
+import { tenantSlugFromHost } from "@/lib/urls";
+import { LoginForm } from "./LoginForm";
 
-type Step = "email" | "code" | "verifying";
+// F-UI-BRANDED corte 1 — /login branded por host (plan-f-ui-branded-s50).
+// Server component: resuelve tenant por Host header y viste la pantalla con la
+// marca del tenant (published-only, gate Pass-2 SE); en hosts de plataforma
+// queda el genérico Impluxa. El REDIRECT post-login va por host (pedido a:
+// en host de tenant → /admin/dashboard); el BRANDING va por host+published —
+// dos decisiones separadas a propósito (un tenant draft igual loguea y cae al
+// admin, solo que sin vestido).
+//
+// headers() (vía tenantSlugFromHost) fuerza render dinámico; explícito igual:
+export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
-  const [sent, setSent] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
-  const [error, setError] = useState<string | null>(null);
+// Fonts conocidas de la plataforma (next/font exige instancias estáticas
+// module-level — mismo patrón que el FONTSETS de tenant/[slug]/layout.tsx).
+// El branding elige por NOMBRE desde design_json.fonts; nombre desconocido →
+// fallback del sistema (el corte no se bloquea por una font nueva).
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  display: "swap",
+});
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
-  async function handlePassword(e: React.FormEvent) {
-    e.preventDefault();
-    setSent("sending");
-    setError(null);
-    const sb = getSupabaseBrowserClient();
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      setSent("error");
-      setError(error.message);
-      return;
-    }
-    window.location.href = "/";
+const FONT_BY_NAME: Record<string, { variable: string; family: string }> = {
+  Cinzel: { variable: cinzel.variable, family: `Cinzel, serif` },
+  "Hanken Grotesk": {
+    variable: hanken.variable,
+    family: `"Hanken Grotesk", system-ui, sans-serif`,
+  },
+  Fredoka: {
+    variable: fredoka.variable,
+    family: `Fredoka, system-ui, sans-serif`,
+  },
+  Inter: { variable: inter.variable, family: `Inter, system-ui, sans-serif` },
+};
+
+export default async function LoginPage() {
+  // Slug derivado UNA vez; redirect por host-only, branding por host+published.
+  const slug = await tenantSlugFromHost();
+  const branding = await getLoginBranding(slug);
+  const postLoginPath = slug ? "/admin/dashboard" : "/";
+
+  if (!branding) {
+    // Genérico Impluxa: paridad visual con el login actual (solo que OTP-only).
+    return (
+      <main
+        className="bg-onyx text-bone flex min-h-screen items-center justify-center p-6"
+        style={
+          {
+            "--lg-heading": "var(--color-bone)",
+            "--lg-text": "var(--color-bone)",
+            "--lg-muted": "var(--color-ash)",
+            "--lg-input-bg": "var(--color-marble)",
+            "--lg-input-border": "var(--color-stone)",
+            "--lg-btn-bg": "var(--color-bone)",
+            "--lg-btn-text": "var(--color-onyx)",
+            "--lg-btn-bg-hover": "var(--color-bone)",
+            "--lg-accent": "var(--color-bone)",
+            "--lg-focus-ring": "transparent",
+          } as React.CSSProperties
+        }
+      >
+        <div className="w-full max-w-sm space-y-4">
+          <h1 className="font-serif text-2xl">Impluxa</h1>
+          <LoginForm postLoginPath={postLoginPath} brandedTenantName={null} />
+        </div>
+      </main>
+    );
   }
 
-  async function handleSendCode() {
-    setSent("sending");
-    setError(null);
-    const sb = getSupabaseBrowserClient();
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-      },
-    });
-    if (error) {
-      setSent("error");
-      setError(error.message);
-      return;
-    }
-    setSent("sent");
-    setStep("code");
-  }
+  const c = branding.colors;
+  // Paleta con fallbacks neutros si algún hex falta en design_json (raro: el
+  // helper ya validó formato; acá solo cubrimos ausencia).
+  const primary = c.primary ?? "#1f2937";
+  const background = c.background ?? "#f5f5f4";
+  const text = c.text ?? "#1f2937";
+  const accent = c.accent ?? primary;
+  const secondary = c.secondary ?? primary;
 
-  async function handleVerifyCode(e: React.FormEvent) {
-    e.preventDefault();
-    setStep("verifying");
-    setError(null);
-    const sb = getSupabaseBrowserClient();
-    const { error } = await sb.auth.verifyOtp({
-      email,
-      token: token.trim(),
-      type: "email",
-    });
-    if (error) {
-      setError(error.message);
-      setStep("code");
-      return;
-    }
-    window.location.href = "/";
-  }
-
-  function handleBack() {
-    setStep("email");
-    setToken("");
-    setError(null);
-    setSent("idle");
-  }
+  // Object.hasOwn: la clave viene de design_json (data del tenant) — un
+  // lookup directo con "__proto__" devolvería Object.prototype (Pass-2 SE).
+  const headingFont =
+    branding.fonts.heading &&
+    Object.hasOwn(FONT_BY_NAME, branding.fonts.heading)
+      ? FONT_BY_NAME[branding.fonts.heading]
+      : undefined;
+  const bodyFont =
+    branding.fonts.body && Object.hasOwn(FONT_BY_NAME, branding.fonts.body)
+      ? FONT_BY_NAME[branding.fonts.body]
+      : undefined;
+  const fontVars = [headingFont?.variable, bodyFont?.variable]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <main className="bg-onyx text-bone flex min-h-screen items-center justify-center p-6">
-      {step === "email" && (
-        <form onSubmit={handlePassword} className="w-full max-w-sm space-y-4">
-          <h1 className="font-serif text-2xl">Impluxa</h1>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="email"
-            autoComplete="email"
-            className="bg-marble border-stone w-full rounded border px-3 py-2"
+    <main
+      className={`flex min-h-screen flex-col items-center justify-center p-6 ${fontVars}`}
+      style={
+        {
+          background: `radial-gradient(900px 600px at 18% -10%, color-mix(in srgb, ${secondary} 28%, transparent), transparent 60%), radial-gradient(700px 500px at 100% 110%, color-mix(in srgb, ${accent} 16%, transparent), transparent 55%), linear-gradient(160deg, ${primary} 0%, color-mix(in srgb, ${primary} 72%, black) 100%)`,
+          fontFamily: bodyFont?.family,
+          "--lg-heading": primary,
+          "--lg-text": text,
+          "--lg-muted": `color-mix(in srgb, ${text} 64%, white)`,
+          "--lg-input-bg": "#fffef9",
+          "--lg-input-border": `color-mix(in srgb, ${text} 24%, transparent)`,
+          "--lg-btn-bg": primary,
+          "--lg-btn-text": background,
+          "--lg-btn-bg-hover": `color-mix(in srgb, ${primary} 86%, white)`,
+          "--lg-accent": accent,
+          "--lg-focus-ring": `color-mix(in srgb, ${accent} 24%, transparent)`,
+        } as React.CSSProperties
+      }
+    >
+      <div className="mb-7 flex flex-col items-center gap-2.5">
+        {branding.logoDarkUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={branding.logoDarkUrl}
+            alt={branding.tenantName}
+            className="h-16 w-auto"
           />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="password (opcional)"
-            autoComplete="current-password"
-            className="bg-marble border-stone w-full rounded border px-3 py-2"
-          />
-          <button
-            type="submit"
-            disabled={sent === "sending"}
-            className="bg-bone text-onyx w-full rounded py-2 disabled:opacity-50"
+        ) : (
+          <div
+            className="text-2xl font-semibold"
+            style={{
+              color: `color-mix(in srgb, ${background} 92%, transparent)`,
+              fontFamily: headingFont?.family,
+            }}
           >
-            Entrar con password
-          </button>
-          <button
-            type="button"
-            onClick={handleSendCode}
-            disabled={sent === "sending" || !email}
-            className="border-bone w-full rounded border py-2 disabled:opacity-50"
-          >
-            {sent === "sending" ? "Enviando..." : "Enviar código por email"}
-          </button>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-        </form>
-      )}
+            {branding.tenantName}
+          </div>
+        )}
+        <div
+          className="text-[12.5px]"
+          style={{
+            color: `color-mix(in srgb, ${background} 62%, transparent)`,
+          }}
+        >
+          {branding.hostLabel}
+        </div>
+      </div>
 
-      {(step === "code" || step === "verifying") && (
-        <form onSubmit={handleVerifyCode} className="w-full max-w-sm space-y-4">
-          <h1 className="font-serif text-2xl">Impluxa</h1>
-          <p className="text-ash text-sm">
-            Te enviamos un código de 6 dígitos a{" "}
-            <span className="text-bone font-medium">{email}</span>
-          </p>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="one-time-code"
-            required
-            minLength={6}
-            maxLength={6}
-            value={token}
-            onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
-            placeholder="código de 6 dígitos"
-            className="bg-marble border-stone w-full rounded border px-3 py-2 text-center text-2xl tracking-widest"
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={step === "verifying" || token.length < 6}
-            className="bg-bone text-onyx w-full rounded py-2 disabled:opacity-50"
-          >
-            {step === "verifying" ? "Verificando..." : "Verificar código"}
-          </button>
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-ash w-full text-center text-sm underline"
-          >
-            Volver
-          </button>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-        </form>
-      )}
+      <div
+        className="w-full max-w-[420px] rounded-[14px] border p-8 pb-7 shadow-2xl"
+        style={{
+          background,
+          borderColor: `color-mix(in srgb, ${text} 8%, transparent)`,
+        }}
+      >
+        <h1
+          className="text-[22px] leading-tight font-bold"
+          style={{ color: primary, fontFamily: headingFont?.family }}
+        >
+          Panel de Administración
+        </h1>
+        <p className="mt-1.5 mb-6 text-[14.5px] text-[var(--lg-muted)]">
+          Acceso para el equipo de{" "}
+          <span className="font-semibold text-[var(--lg-text)]">
+            {branding.tenantName}
+          </span>
+        </p>
+        <LoginForm
+          postLoginPath={postLoginPath}
+          brandedTenantName={branding.tenantName}
+        />
+      </div>
+
+      <div
+        className="mt-6 text-xs"
+        style={{ color: `color-mix(in srgb, ${background} 52%, transparent)` }}
+      >
+        Con tecnología de Impluxa
+      </div>
     </main>
   );
 }
