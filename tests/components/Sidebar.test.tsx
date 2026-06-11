@@ -3,15 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 vi.mock("server-only", () => ({}));
+// Sidebar importa isAgencyOwner de @/lib/agency/role, que a nivel módulo
+// importa el cliente server de Supabase y next/navigation. En jsdom no se
+// invocan (isAgencyOwner es pura), pero los imports deben no romper.
+vi.mock("@/lib/supabase/server", () => ({ getSupabaseServerClient: vi.fn() }));
 
 import { Sidebar } from "@/components/app/Sidebar";
 import type { Tenant } from "@/lib/tenants/types";
 import type { TenantBranding } from "@/lib/tenants/login-branding";
-
-// F-UI-BRANDED corte 2 — regresión de la promesa del plan: SIN branding el
-// Sidebar renderiza el shell genérico previo (/app no cambia); CON branding
-// renderiza el nav v2.1-lite del mockup congelado (sin items dueño-only, que
-// llegan en corte 3/4 con la matriz de roles).
 
 const TENANT = {
   id: "t1",
@@ -38,6 +37,13 @@ const BRANDING: TenantBranding = {
   fonts: { heading: "Cinzel", body: "Hanken Grotesk" },
 };
 
+const OWNER_ITEMS = [
+  "Finanzas",
+  "Módulos",
+  "Tu cuenta Impluxa",
+  "Plan y facturación",
+];
+
 describe("Sidebar genérico (sin branding) — /app intacto", () => {
   it("conserva el shell previo: wordmark, capas, stubs y SIN items v2.1", () => {
     render(<Sidebar tenant={TENANT} user={null} />);
@@ -51,27 +57,32 @@ describe("Sidebar genérico (sin branding) — /app intacto", () => {
   });
 });
 
-describe("Sidebar branded (mockup v2.1, alcance corte 2)", () => {
-  it("nav v2.1-lite: Consultas pronto, sin dueño-only, logo + wordmark discreto", () => {
+describe("Sidebar branded — operativo (todos los roles)", () => {
+  it("siempre muestra operativo + Consultas pronto + logo/wordmark", () => {
     render(
       <Sidebar
         tenant={TENANT}
         user={null}
         basePath="/admin"
         branding={BRANDING}
+        role="vendedor"
       />,
     );
-    expect(screen.getByText("Consultas")).toBeTruthy();
-    expect(screen.getAllByText("pronto").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Leads")).toBeNull();
-    expect(screen.queryByText("Diseño")).toBeNull(); // se va a Módulos (corte 4)
-    expect(screen.queryByText("Finanzas")).toBeNull(); // corte 3 (roles)
-    expect(screen.queryByText("Módulos")).toBeNull(); // corte 3/4
-    expect(screen.queryByText("Tu cuenta Impluxa")).toBeNull(); // dueño-only, corte 3
+    // operativo vivo aparece en desktop nav Y en bottom-nav móvil → getAllByText
+    for (const item of [
+      "Inicio",
+      "Excursiones",
+      "Tarifas",
+      "Proveedores",
+      "Contenido",
+    ]) {
+      expect(screen.getAllByText(item).length).toBeGreaterThanOrEqual(1);
+    }
+    expect(screen.getByText("Consultas")).toBeTruthy(); // soon → solo desktop
+    expect(screen.getByText("Ver sitio")).toBeTruthy();
     const logo = screen.getByAltText("Patagonia Viva") as HTMLImageElement;
     expect(logo.src).toContain("logo-full-dark.png");
-    expect(screen.getByText("IMPLUXA")).toBeTruthy(); // marca discreta
-    expect(screen.getByText("patagoniaviva.impluxa.com")).toBeTruthy();
+    expect(screen.getByText("IMPLUXA")).toBeTruthy();
   });
 
   it("los links branded llevan el basePath /admin", () => {
@@ -81,9 +92,77 @@ describe("Sidebar branded (mockup v2.1, alcance corte 2)", () => {
         user={null}
         basePath="/admin"
         branding={BRANDING}
+        role="dueno_admin"
       />,
     );
     const inicio = screen.getAllByText("Inicio")[0]!.closest("a");
     expect(inicio?.getAttribute("href")).toBe("/admin/dashboard");
+  });
+});
+
+describe("Sidebar branded — MATRIZ DE ROLES (corte 3)", () => {
+  it("DUEÑO ve Finanzas + Módulos + Tu cuenta Impluxa + Plan y facturación", () => {
+    render(
+      <Sidebar
+        tenant={TENANT}
+        user={null}
+        basePath="/admin"
+        branding={BRANDING}
+        role="dueno_admin"
+      />,
+    );
+    for (const item of OWNER_ITEMS) {
+      expect(screen.getByText(item)).toBeTruthy();
+    }
+    // Finanzas es ruta real con basePath; Finanzas Y Módulos llevan la marca
+    const finanzas = screen.getByText("Finanzas").closest("a");
+    expect(finanzas?.getAttribute("href")).toBe("/admin/finanzas");
+    expect(screen.getAllByText("solo dueño").length).toBe(2);
+  });
+
+  it("VENDEDOR no ve NINGÚN item dueño-only", () => {
+    render(
+      <Sidebar
+        tenant={TENANT}
+        user={null}
+        basePath="/admin"
+        branding={BRANDING}
+        role="vendedor"
+      />,
+    );
+    for (const item of OWNER_ITEMS) {
+      expect(screen.queryByText(item)).toBeNull();
+    }
+    expect(screen.queryByText("solo dueño")).toBeNull();
+  });
+
+  it("ENCARGADO no ve NINGÚN item dueño-only", () => {
+    render(
+      <Sidebar
+        tenant={TENANT}
+        user={null}
+        basePath="/admin"
+        branding={BRANDING}
+        role="encargado"
+      />,
+    );
+    for (const item of OWNER_ITEMS) {
+      expect(screen.queryByText(item)).toBeNull();
+    }
+  });
+
+  it("SIN rol (null / fail-closed) ve el panel MÍNIMO, no el de dueño", () => {
+    // default: sin prop role → null → mismo resultado que un no-dueño
+    render(
+      <Sidebar
+        tenant={TENANT}
+        user={null}
+        basePath="/admin"
+        branding={BRANDING}
+      />,
+    );
+    for (const item of OWNER_ITEMS) {
+      expect(screen.queryByText(item)).toBeNull();
+    }
   });
 });

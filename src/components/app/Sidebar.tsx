@@ -11,7 +11,13 @@ import {
   PencilSimpleLine,
   ChatCircleText,
   ArrowSquareOut,
+  Wallet,
+  SquaresFour,
+  CreditCard,
+  LockSimple,
 } from "@phosphor-icons/react/dist/ssr";
+import type { AgencyRole } from "@/lib/agency/role";
+import { isAgencyOwner } from "@/lib/agency/role";
 
 // B-Fase1 (plan-fases-arquitectura-2capas-s46, adelantada por decisión CEO
 // s49): el nav se parte en DOS CAPAS conceptuales sin mover nada de host
@@ -55,17 +61,20 @@ const NAV_SAAS: NavItem[] = [
 // a 5 y grid-cols-5 queda corto — revisar selección mobile al sumar páginas.
 const NAV_MOBILE = NAV_OPERATIVO.filter((n) => !n.soon).slice(0, 5);
 
-// Nav del shell BRANDED (mockup v2.1, alcance corte 2): operativo vivo +
-// Consultas como stub. Finanzas/Módulos (dueño-only) llegan en corte 3/4 con
-// la matriz de roles; hasta entonces el panel no muestra lo que no puede
-// gatear (panel honesto). Ícono = componente Phosphor (spec visual mockup).
+// Nav del shell BRANDED (mockup v2.1). Ícono = componente Phosphor.
+// MATRIZ DE ROLES v2.1 (corte 3): el bloque OPERATIVO lo ven TODOS los roles;
+// el bloque DUEÑO (Finanzas + Módulos) y la sección "Tu cuenta Impluxa" SOLO
+// dueno_admin. La visibilidad NO es la autoridad — la da el guard server-side
+// (requireAgencyOwner) + la RLS; esto es la capa UI que la espeja.
 type BrandedNavItem = {
   href: string;
   label: string;
   Icon: React.ComponentType<{ size?: number }>;
   soon?: boolean;
+  ownerOnly?: boolean;
 };
 
+// Operativo/logística: todos los roles.
 const NAV_BRANDED: BrandedNavItem[] = [
   { href: "/dashboard", label: "Inicio", Icon: House },
   { href: "/agency/excursions", label: "Excursiones", Icon: Mountains },
@@ -75,6 +84,32 @@ const NAV_BRANDED: BrandedNavItem[] = [
   { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
 ];
 
+// Dueño-only, dentro del bloque "Tu agencia". Finanzas YA es ruta real
+// (guardada, contenido "pronto"); Módulos llega como link en corte 4 (hoy stub).
+const NAV_BRANDED_OWNER: BrandedNavItem[] = [
+  { href: "/finanzas", label: "Finanzas", Icon: Wallet, ownerOnly: true },
+  {
+    href: "/modulos",
+    label: "Módulos",
+    Icon: SquaresFour,
+    soon: true,
+    ownerOnly: true,
+  },
+];
+
+// Dueño-only, sección "Tu cuenta Impluxa" (la relación con la plataforma).
+const NAV_BRANDED_ACCOUNT: BrandedNavItem[] = [
+  {
+    href: "/billing",
+    label: "Plan y facturación",
+    Icon: CreditCard,
+    soon: true,
+  },
+];
+
+// Mobile bottom-nav: SOLO operativo vivo (todos los roles). Los items
+// dueño-only NO entran al bottom-nav en corte 3 — PROPUESTA al CEO: 6to slot
+// "Más" que abre un sheet con Finanzas/Módulos/Tu cuenta (decide el CEO).
 const NAV_BRANDED_MOBILE = NAV_BRANDED.filter((n) => !n.soon).slice(0, 5);
 
 // basePath (B-Fase2): "" en app.impluxa.com (árbol /app) | "/admin" en el
@@ -112,11 +147,13 @@ function BrandedNavEntry({
   basePath,
   mutedColor,
   badgeStyle,
+  ownerBadgeStyle,
 }: {
   item: BrandedNavItem;
   basePath: string;
   mutedColor: string;
   badgeStyle: React.CSSProperties;
+  ownerBadgeStyle: React.CSSProperties;
 }) {
   const { Icon } = item;
   if (item.soon) {
@@ -129,8 +166,19 @@ function BrandedNavEntry({
       >
         <Icon size={18} />
         <span>{item.label}</span>
+        {/* soon + ownerOnly muestran AMBOS badges (Pass-2 CR: la rama soon
+            ignoraba ownerOnly — inconsistencia visual para el dueño). */}
+        {item.ownerOnly && (
+          <span
+            className="ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold"
+            style={ownerBadgeStyle}
+          >
+            <LockSimple size={10} />
+            solo dueño
+          </span>
+        )}
         <span
-          className="ml-auto rounded-full px-2 py-0.5 text-[9.5px] font-semibold"
+          className={`${item.ownerOnly ? "" : "ml-auto"}rounded-full px-2 py-0.5 text-[9.5px] font-semibold`}
           style={badgeStyle}
         >
           pronto
@@ -145,6 +193,15 @@ function BrandedNavEntry({
     >
       <Icon size={18} />
       <span>{item.label}</span>
+      {item.ownerOnly && (
+        <span
+          className="ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold"
+          style={ownerBadgeStyle}
+        >
+          <LockSimple size={10} />
+          solo dueño
+        </span>
+      )}
     </Link>
   );
 }
@@ -153,14 +210,20 @@ export function Sidebar({
   tenant,
   basePath = "",
   branding = null,
+  role = null,
 }: {
   tenant: Tenant;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any;
   basePath?: "" | "/admin";
   branding?: TenantBranding | null;
+  role?: AgencyRole;
 }) {
   if (branding) {
+    // MATRIZ DE ROLES (corte 3): dueño ve los bloques dueño-only; cualquier
+    // otro rol (o null = fail-closed) ve SOLO el operativo. La autoridad real
+    // es el guard server-side + RLS; esto es la capa UI.
+    const owner = isAgencyOwner(role);
     const primary = branding.colors.primary ?? "#1f2937";
     const background = branding.colors.background ?? "#f5f5f4";
     const accent = branding.colors.accent ?? background;
@@ -173,6 +236,11 @@ export function Sidebar({
     const accentSoft = `color-mix(in srgb, ${accent} 55%, white)`;
     const badgeStyle: React.CSSProperties = {
       background: `color-mix(in srgb, ${accent} 24%, transparent)`,
+      color: accentSoft,
+      letterSpacing: "0.04em",
+    };
+    const ownerBadgeStyle: React.CSSProperties = {
+      borderColor: `color-mix(in srgb, ${accent} 50%, transparent)`,
       color: accentSoft,
       letterSpacing: "0.04em",
     };
@@ -209,7 +277,7 @@ export function Sidebar({
           >
             Tu agencia
           </div>
-          <nav className="flex-1 space-y-0.5">
+          <nav className="space-y-0.5">
             {NAV_BRANDED.map((n) => (
               <BrandedNavEntry
                 key={n.href}
@@ -217,10 +285,49 @@ export function Sidebar({
                 basePath={basePath}
                 mutedColor={sideMuted}
                 badgeStyle={badgeStyle}
+                ownerBadgeStyle={ownerBadgeStyle}
               />
             ))}
+            {/* Bloque dueño-only dentro de "Tu agencia" */}
+            {owner &&
+              NAV_BRANDED_OWNER.map((n) => (
+                <BrandedNavEntry
+                  key={n.href}
+                  item={n}
+                  basePath={basePath}
+                  mutedColor={sideMuted}
+                  badgeStyle={badgeStyle}
+                  ownerBadgeStyle={ownerBadgeStyle}
+                />
+              ))}
           </nav>
 
+          {/* Sección "Tu cuenta Impluxa" — dueño-only (la relación con la
+              plataforma; datos sensibles no son para empleados). */}
+          {owner && (
+            <>
+              <div
+                className="mt-6 mb-2 px-3 text-[10px] font-semibold tracking-[0.14em] uppercase"
+                style={{ color: sideMuted }}
+              >
+                Tu cuenta Impluxa
+              </div>
+              <nav className="space-y-0.5">
+                {NAV_BRANDED_ACCOUNT.map((n) => (
+                  <BrandedNavEntry
+                    key={n.href}
+                    item={n}
+                    basePath={basePath}
+                    mutedColor={sideMuted}
+                    badgeStyle={badgeStyle}
+                    ownerBadgeStyle={ownerBadgeStyle}
+                  />
+                ))}
+              </nav>
+            </>
+          )}
+
+          <div className="flex-1" />
           <a
             href={siteUrl(tenant.slug)}
             target="_blank"
