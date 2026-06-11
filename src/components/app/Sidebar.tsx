@@ -18,6 +18,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { AgencyRole } from "@/lib/agency/role";
 import { isAgencyOwner } from "@/lib/agency/role";
+import { MoreSheet } from "@/components/app/MoreSheet";
 
 // B-Fase1 (plan-fases-arquitectura-2capas-s46, adelantada por decisión CEO
 // s49): el nav se parte en DOS CAPAS conceptuales sin mover nada de host
@@ -84,17 +85,11 @@ const NAV_BRANDED: BrandedNavItem[] = [
   { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
 ];
 
-// Dueño-only, dentro del bloque "Tu agencia". Finanzas YA es ruta real
-// (guardada, contenido "pronto"); Módulos llega como link en corte 4 (hoy stub).
+// Dueño-only, dentro del bloque "Tu agencia". Ambas son rutas REALES con
+// guard e10 en la page base (Finanzas C3, Módulos C4).
 const NAV_BRANDED_OWNER: BrandedNavItem[] = [
   { href: "/finanzas", label: "Finanzas", Icon: Wallet, ownerOnly: true },
-  {
-    href: "/modulos",
-    label: "Módulos",
-    Icon: SquaresFour,
-    soon: true,
-    ownerOnly: true,
-  },
+  { href: "/modulos", label: "Módulos", Icon: SquaresFour, ownerOnly: true },
 ];
 
 // Dueño-only, sección "Tu cuenta Impluxa" (la relación con la plataforma).
@@ -178,7 +173,11 @@ function BrandedNavEntry({
           </span>
         )}
         <span
-          className={`${item.ownerOnly ? "" : "ml-auto"}rounded-full px-2 py-0.5 text-[9.5px] font-semibold`}
+          className={
+            item.ownerOnly
+              ? "rounded-full px-2 py-0.5 text-[9.5px] font-semibold"
+              : "ml-auto rounded-full px-2 py-0.5 text-[9.5px] font-semibold"
+          }
           style={badgeStyle}
         >
           pronto
@@ -349,9 +348,11 @@ export function Sidebar({
           </div>
         </aside>
 
-        {/* Mobile bottom-nav branded (espejo de la regla: 5 operativas vivas) */}
+        {/* Mobile bottom-nav branded: 5 operativas vivas para TODOS los roles;
+            el dueño suma el 6º slot "Más" (sheet con Finanzas/Módulos/Tu cuenta
+            — decisión CEO s50; un no-dueño no recibe ni el botón). */}
         <nav
-          className="fixed right-0 bottom-0 left-0 z-30 grid grid-cols-5 gap-1 px-1 pt-2 pb-2.5 md:hidden"
+          className={`fixed right-0 bottom-0 left-0 z-30 grid ${owner ? "grid-cols-6" : "grid-cols-5"} gap-1 px-1 pt-2 pb-2.5 md:hidden`}
           style={{
             background: primary,
             borderTop: `1px solid color-mix(in srgb, ${background} 14%, transparent)`,
@@ -373,6 +374,13 @@ export function Sidebar({
               </Link>
             );
           })}
+          {owner && (
+            <MoreSheet
+              basePath={basePath}
+              primary={primary}
+              background={background}
+            />
+          )}
         </nav>
       </>
     );

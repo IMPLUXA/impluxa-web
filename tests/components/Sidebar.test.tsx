@@ -114,10 +114,14 @@ describe("Sidebar branded — MATRIZ DE ROLES (corte 3)", () => {
     for (const item of OWNER_ITEMS) {
       expect(screen.getByText(item)).toBeTruthy();
     }
-    // Finanzas es ruta real con basePath; Finanzas Y Módulos llevan la marca
+    // Finanzas Y Módulos son rutas reales con basePath y llevan la marca
     const finanzas = screen.getByText("Finanzas").closest("a");
     expect(finanzas?.getAttribute("href")).toBe("/admin/finanzas");
+    const modulos = screen.getByText("Módulos").closest("a");
+    expect(modulos?.getAttribute("href")).toBe("/admin/modulos"); // C4: link real
     expect(screen.getAllByText("solo dueño").length).toBe(2);
+    // C4: el dueño tiene el 6º slot "Más" del bottom-nav móvil
+    expect(screen.getByText("Más")).toBeTruthy();
   });
 
   it("VENDEDOR no ve NINGÚN item dueño-only", () => {
@@ -134,6 +138,8 @@ describe("Sidebar branded — MATRIZ DE ROLES (corte 3)", () => {
       expect(screen.queryByText(item)).toBeNull();
     }
     expect(screen.queryByText("solo dueño")).toBeNull();
+    // C4: el no-dueño NO recibe el slot "Más" (ni el botón ni el sheet)
+    expect(screen.queryByText("Más")).toBeNull();
   });
 
   it("ENCARGADO no ve NINGÚN item dueño-only", () => {
