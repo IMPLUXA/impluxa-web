@@ -11,10 +11,13 @@ const TENANT_SUFFIX =
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const host = (await headers()).get("host")?.toLowerCase() ?? "";
   // Exact custom-domain match first (allowlist, literal output) —
-  // DOMINIO-PV-1 fase B.
+  // DOMINIO-PV-1 fase B. ADMIN-AR C4b: /admin y /login son la puerta del
+  // dueño en este dominio (C3) → Disallow explícito (complementa el meta
+  // noindex de C4a en login; /admin ni siquiera sirve HTML sin sesión).
+  // Aditivo DENTRO del branch exacto: los demás returns quedan byte a byte.
   if (host === "patagoniaviva.ar") {
     return {
-      rules: [{ userAgent: "*", allow: "/" }],
+      rules: [{ userAgent: "*", allow: "/", disallow: ["/admin", "/login"] }],
       sitemap: "https://patagoniaviva.ar/sitemap.xml",
     };
   }
