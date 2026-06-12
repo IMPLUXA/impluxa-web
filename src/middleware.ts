@@ -90,12 +90,30 @@ export async function middleware(req: NextRequest) {
       dest.host = `patagoniaviva${TENANT_SUFFIX}`;
       return NextResponse.redirect(dest, 301);
     }
+    // DOMINIO-PV-1 fase B: 301 the public tree of the old subdomain to the
+    // custom domain. ENV-GATED OFF by default: ships inert, activated in the
+    // P7 cutover step by setting PV_AR_REDIRECT=on (+ redeploy). Preserves
+    // path + query. /admin is EXEMPT — the tenant admin stays on
+    // .impluxa.com (the .ar tree has no admin route, 404 by construction).
+    // /login, /api, /robots.txt, /sitemap.xml never reach this branch
+    // (SHARED_ROOT returns earlier).
+    if (
+      slug === "patagoniaviva" &&
+      process.env["PV_AR_REDIRECT"] === "on" &&
+      !url.pathname.startsWith("/admin")
+    ) {
+      const dest = req.nextUrl.clone();
+      dest.host = "patagoniaviva.ar";
+      dest.port = "";
+      return NextResponse.redirect(dest, 301);
+    }
     url.pathname = `/tenant/${slug}${url.pathname === "/" ? "" : url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
-  // Custom domain (future): route to tenant domain lookup
-  url.pathname = `/tenant_domain/${encodeURIComponent(host)}${url.pathname}`;
+  // Custom domain: route to tenant domain lookup (app/tenant_domain/[domain]).
+  // Root guard mirrors the tenant branch above — no trailing slash on "/".
+  url.pathname = `/tenant_domain/${encodeURIComponent(host)}${url.pathname === "/" ? "" : url.pathname}`;
   return NextResponse.rewrite(url);
 }
 

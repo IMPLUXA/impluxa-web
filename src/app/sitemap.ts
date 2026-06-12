@@ -28,6 +28,17 @@ const PV_SITEMAP: MetadataRoute.Sitemap = [
   },
 ];
 
+// Patagonia Viva on its custom domain (DOMINIO-PV-1 fase B). Same page,
+// .ar LITERALS — same anti-cache-poisoning principle: the Host only selects
+// the branch, it is never reflected into emitted URLs.
+const PV_AR_SITEMAP: MetadataRoute.Sitemap = [
+  {
+    url: "https://patagoniaviva.ar",
+    changeFrequency: "weekly",
+    priority: 1,
+  },
+];
+
 // Host-aware: reading the request Host opts this route into per-request
 // (dynamic) rendering. Allowlist-select — only an exact tenant slug match is
 // served its own sitemap; every other host (impluxa.com, hakunamatata,
@@ -35,6 +46,8 @@ const PV_SITEMAP: MetadataRoute.Sitemap = [
 // literal.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host = (await headers()).get("host")?.toLowerCase() ?? "";
+  // Exact custom-domain match first (allowlist, literal output).
+  if (host === "patagoniaviva.ar") return PV_AR_SITEMAP;
   const slug = host.endsWith(TENANT_SUFFIX)
     ? host.slice(0, -TENANT_SUFFIX.length)
     : "";
