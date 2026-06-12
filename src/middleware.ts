@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import createNextIntlMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 import { getMonitoringLimiter } from "./lib/ratelimit";
+import { CUSTOM_DOMAIN_TENANTS } from "./lib/tenants/custom-domain-map";
 
 const intlMiddleware = createNextIntlMiddleware(routing);
 
@@ -109,6 +110,23 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(dest, 301);
     }
     url.pathname = `/tenant/${slug}${url.pathname === "/" ? "" : url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // ADMIN-AR-MIGRATION C1: tenant admin on its custom domain. ENV-GATED OFF
+  // by default — ships inert, activated in C3 via PV_AR_ADMIN=on + redeploy.
+  // The rewrite lands on /tenant/<slug>/admin/** so the e07->e08->e09 guard
+  // chain runs byte-identical to the old host (slug comes from the literal
+  // map, authority stays claim JWT + RLS). Path guard mirrors the /admin
+  // exemption above. Custom domains NOT in the map fall through to the
+  // public lookup below (their /admin 404s structurally, unchanged).
+  const mappedSlug = CUSTOM_DOMAIN_TENANTS[host];
+  if (
+    mappedSlug &&
+    process.env["PV_AR_ADMIN"] === "on" &&
+    (url.pathname === "/admin" || url.pathname.startsWith("/admin/"))
+  ) {
+    url.pathname = `/tenant/${mappedSlug}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
