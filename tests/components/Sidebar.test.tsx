@@ -55,6 +55,15 @@ describe("Sidebar genérico (sin branding) — /app intacto", () => {
     expect(screen.queryByText("Consultas")).toBeNull(); // rename NO llega a /app
     expect(screen.getByText("Ver sitio ↗")).toBeTruthy();
   });
+
+  it("R1: Salidas VIVA en desktop y FUERA del bottom-nav (slice de 5 intacto)", () => {
+    render(<Sidebar tenant={TENANT} user={null} />);
+    // 1 sola aparición = solo desktop; los 5 vivos previos aparecen 2x (desktop+mobile)
+    expect(screen.getAllByText("Salidas").length).toBe(1);
+    const salidas = screen.getByText("Salidas").closest("a");
+    expect(salidas?.getAttribute("href")).toBe("/agency/departures");
+    expect(screen.getAllByText("Contenido").length).toBe(2); // sigue en mobile
+  });
 });
 
 describe("Sidebar branded — operativo (todos los roles)", () => {
@@ -79,6 +88,10 @@ describe("Sidebar branded — operativo (todos los roles)", () => {
       expect(screen.getAllByText(item).length).toBeGreaterThanOrEqual(1);
     }
     expect(screen.getByText("Consultas")).toBeTruthy(); // soon → solo desktop
+    // R1: Salidas viva en desktop, FUERA del bottom-nav branded (1 aparición)
+    expect(screen.getAllByText("Salidas").length).toBe(1);
+    const salidas = screen.getByText("Salidas").closest("a");
+    expect(salidas?.getAttribute("href")).toBe("/admin/agency/departures");
     expect(screen.getByText("Ver sitio")).toBeTruthy();
     const logo = screen.getByAltText("Patagonia Viva") as HTMLImageElement;
     expect(logo.src).toContain("logo-full-dark.png");

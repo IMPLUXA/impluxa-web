@@ -58,6 +58,54 @@ export const ExcursionUpdateSchema = z.object({
   active: z.boolean().optional(),
 });
 
+// ---- R1 salidas/cupo (excursion_departures) ----
+// Espeja los CHECK de F1: status open/closed/cancelled, capacity >= 0,
+// departure_time NULLABLE ("sin horario fijo", caso Catedral). El UNIQUE
+// (tenant, excursion, date, time) NO caza duplicados con time NULL (NULLs
+// distintos en Postgres) → la route hace pre-check explícito.
+
+export const DEPARTURE_STATUSES = ["open", "closed", "cancelled"] as const;
+export type DepartureStatus = (typeof DEPARTURE_STATUSES)[number];
+
+export const DEPARTURE_STATUS_LABELS: Record<DepartureStatus, string> = {
+  open: "Abierta",
+  closed: "Cerrada",
+  cancelled: "Cancelada",
+};
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export const DepartureCreateSchema = z.object({
+  excursion_id: z.string().uuid(),
+  departure_date: z
+    .string()
+    .regex(DATE_RE, "Fecha YYYY-MM-DD")
+    .refine((v) => !Number.isNaN(Date.parse(v)), "Fecha inválida"),
+  departure_time: z.string().regex(TIME_RE, "Hora HH:MM").nullable().optional(),
+  capacity: z.number().int().min(0).max(999),
+});
+
+// Edit v1 = SOLO cupo y estado. Cambiar fecha/hora de una salida existente
+// queda fuera a propósito (con reservas futuras eso es territorio C6):
+// se cancela y se crea otra.
+export const DepartureUpdateSchema = z.object({
+  id: z.string().uuid(),
+  capacity: z.number().int().min(0).max(999).optional(),
+  status: z.enum(DEPARTURE_STATUSES).optional(),
+});
+
+export type DepartureRow = {
+  id: string;
+  tenant_id: string;
+  excursion_id: string;
+  departure_date: string;
+  departure_time: string | null;
+  capacity: number;
+  status: DepartureStatus;
+  created_at: string;
+};
+
 export type ProviderRow = {
   id: string;
   tenant_id: string;
