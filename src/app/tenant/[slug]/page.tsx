@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/tenants/resolve";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { applyCurrentRates, getPublicCurrentRates } from "@/lib/public/rates";
 import { getTemplate } from "@/templates/registry";
 
 export const revalidate = 60;
@@ -50,7 +51,11 @@ export default async function TenantPage({
   const template = getTemplate(tenant.template_key);
   if (!template || !site) notFound();
 
-  const content = template.contentSchema.parse(site.content_json);
+  const rates = await getPublicCurrentRates(tenant.id);
+  const content = applyCurrentRates(
+    template.contentSchema.parse(site.content_json),
+    rates,
+  );
   const design = template.designSchema.parse(site.design_json);
   const media = template.mediaSchema.parse(site.media_json);
 
