@@ -9,6 +9,7 @@ import {
   CurrencyCircleDollar,
   Handshake,
   PencilSimpleLine,
+  CalendarCheck,
   ChatCircleText,
   ArrowSquareOut,
   Wallet,
@@ -44,6 +45,10 @@ const NAV_OPERATIVO: NavItem[] = [
   { href: "/agency/rates", label: "Tarifas", icon: "💰" },
   { href: "/agency/providers", label: "Proveedores", icon: "🤝" },
   { href: "/site/content", label: "Contenido", icon: "✏️" },
+  // R1: VIVA pero DESPUÉS de Contenido a propósito — NAV_MOBILE corta en los
+  // primeros 5 vivos y el bottom-nav actual queda idéntico (Salidas =
+  // desktop-only v1; el slot mobile es el TODO(B-Fase2+) de abajo).
+  { href: "/agency/departures", label: "Salidas", icon: "📅" },
   { href: "/site/design", label: "Diseño", icon: "🎨", soon: true },
   { href: "/site/media", label: "Imágenes", icon: "🖼️", soon: true },
   { href: "/leads", label: "Leads", icon: "📬", soon: true },
@@ -82,6 +87,9 @@ const NAV_BRANDED: BrandedNavItem[] = [
   { href: "/agency/rates", label: "Tarifas", Icon: CurrencyCircleDollar },
   { href: "/agency/providers", label: "Proveedores", Icon: Handshake },
   { href: "/site/content", label: "Contenido", Icon: PencilSimpleLine },
+  // R1: posición post-Contenido = NAV_BRANDED_MOBILE (primeros 5 vivos)
+  // intacto; Salidas desktop-only v1 (ver TODO mobile en NAV_OPERATIVO).
+  { href: "/agency/departures", label: "Salidas", Icon: CalendarCheck },
   { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
 ];
 
