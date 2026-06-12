@@ -13,8 +13,10 @@
 -- Gemini): errores de NEGOCIO = envelope jsonb {ok:false, error_code} con
 -- códigos estables; RAISE solo invariantes/concurrencia (errcode 40001).
 -- Montos del envelope en CENTAVOS ENTEROS (boundary numeric, lesson s49).
--- p_idempotency_key RESERVADO: v1 lo IGNORA (candado CEO: implementación
--- real es PREREQUISITO de C14/agente público).
+-- p_idempotency_key RESERVADO: v1 lo RECHAZA si viene non-null (decisión
+-- CEO post-preview: contrato honesto > ignorar mudo — un caller que reintenta
+-- creyendo idempotencia NO debe duplicar reservas en silencio). La
+-- implementación real es PREREQUISITO de C14/agente público.
 --
 -- Decisiones CEO fijadas (GO s51): TTL hold default 24h clamp 1..72 ·
 -- infante (factor 0.0) SÍ ocupa asiento · provider_cost escala por factor.
@@ -75,6 +77,14 @@ begin
      or length(p_holder_name) > 200 then
     return jsonb_build_object('ok', false, 'error_code', 'PARAMS_INVALIDOS',
       'message', 'holder_name requerido (1..200 caracteres)');
+  end if;
+
+  -- p_idempotency_key: RESERVADO para C14. v1 lo RECHAZA non-null (decisión
+  -- CEO): aceptar el parámetro ignorándolo sería prometer una semántica de
+  -- dedup que no existe.
+  if p_idempotency_key is not null then
+    return jsonb_build_object('ok', false, 'error_code', 'PARAMS_INVALIDOS',
+      'message', 'idempotency_key no soportado en v1 (reservado para C14)');
   end if;
 
   -- Caps de holder_* (SE riesgo-1 + CR sugerencia-2): columnas text sin
