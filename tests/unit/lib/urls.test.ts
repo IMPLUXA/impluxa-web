@@ -133,7 +133,8 @@ describe("ADMIN-AR C2 — dominios custom mapeados (gateados por PV_AR_ADMIN)", 
     vi.unstubAllEnvs();
   });
 
-  it(".ar con flag OFF (ausente) → null: dormido = comportamiento de hoy", () => {
+  it(".ar con flag OFF → null: dormido = comportamiento de hoy (stub '' = determinístico ante shells con la env exportada, nit cold C2)", () => {
+    vi.stubEnv("PV_AR_ADMIN", "");
     expect(tenantSlugFromHostValue("patagoniaviva.ar")).toBeNull();
   });
 
@@ -186,5 +187,17 @@ describe("ADMIN-AR C2 — dominios custom mapeados (gateados por PV_AR_ADMIN)", 
     expect(await getAdminBasePath()).toBe("/admin");
     mockHost("evil.com");
     expect(await getAdminBasePath()).toBe("");
+  });
+
+  it("wrapper async con .ar y flag ON → slug (el path exacto que consume login/page.tsx, nit cold C2)", async () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    mockHost("patagoniaviva.ar");
+    expect(await tenantSlugFromHost()).toBe("patagoniaviva");
+  });
+
+  it("host vacío/null con flag ON → null (boundary, informational SE C2)", () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(tenantSlugFromHostValue("")).toBeNull();
+    expect(tenantSlugFromHostValue(null)).toBeNull();
   });
 });
