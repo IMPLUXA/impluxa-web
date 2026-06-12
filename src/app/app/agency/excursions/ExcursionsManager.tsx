@@ -215,7 +215,11 @@ export function ExcursionsManager({
       {/* Form modal */}
       {open && (
         <div className="bg-onyx/70 fixed inset-0 z-40 flex items-center justify-center p-4">
-          <div className="bg-marble text-onyx w-full max-w-lg space-y-4 rounded-lg p-6">
+          {/* SIN text-onyx fijo (mismo bug que el walk CEO R1 cazó en
+              Salidas): bajo el admin BRANDED onyx = el crema del fondo y el
+              texto del modal quedaba invisible. El card hereda el color del
+              shell (patrón RatesManager, fix gemelo PR #57). */}
+          <div className="bg-marble w-full max-w-lg space-y-4 rounded-lg p-6">
             <h2 className="text-lg font-bold">
               {form.id ? "Editar excursión" : "Nueva excursión"}
             </h2>
