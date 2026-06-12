@@ -120,7 +120,11 @@ export async function middleware(req: NextRequest) {
   // map, authority stays claim JWT + RLS). Path guard mirrors the /admin
   // exemption above. Custom domains NOT in the map fall through to the
   // public lookup below (their /admin 404s structurally, unchanged).
-  const mappedSlug = CUSTOM_DOMAIN_TENANTS[host];
+  // Object.hasOwn: a Host like "__proto__"/"constructor" must not resolve
+  // members inherited from Object.prototype (fold dual CR+SE cold C1).
+  const mappedSlug = Object.hasOwn(CUSTOM_DOMAIN_TENANTS, host)
+    ? CUSTOM_DOMAIN_TENANTS[host]
+    : undefined;
   if (
     mappedSlug &&
     process.env["PV_AR_ADMIN"] === "on" &&
