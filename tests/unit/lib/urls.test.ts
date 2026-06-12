@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("next/headers", () => ({ headers: vi.fn() }));
 
@@ -125,5 +125,66 @@ describe("tenantSlugFromHostValue (F-UI-BRANDED corte 1 — parity middleware)",
     expect(await tenantSlugFromHost()).toBe("patagoniaviva");
     mockHost("app.impluxa.com");
     expect(await tenantSlugFromHost()).toBeNull();
+  });
+});
+
+describe("ADMIN-AR C2 — dominios custom mapeados (gateados por PV_AR_ADMIN)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it(".ar con flag OFF (ausente) → null: dormido = comportamiento de hoy", () => {
+    expect(tenantSlugFromHostValue("patagoniaviva.ar")).toBeNull();
+  });
+
+  it(".ar con flag ON → slug del mapa literal", () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(tenantSlugFromHostValue("patagoniaviva.ar")).toBe("patagoniaviva");
+  });
+
+  it(".ar con flag ON: mayúsculas se normalizan", () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(tenantSlugFromHostValue("PATAGONIAVIVA.AR")).toBe("patagoniaviva");
+  });
+
+  it("flag con valor distinto de 'on' → null (paridad estricta con middleware)", () => {
+    vi.stubEnv("PV_AR_ADMIN", "true");
+    expect(tenantSlugFromHostValue("patagoniaviva.ar")).toBeNull();
+  });
+
+  it("host con puerto NO matchea la key del mapa → null (sin strip, parity)", () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(tenantSlugFromHostValue("patagoniaviva.ar:443")).toBeNull();
+  });
+
+  it("Host tipo __proto__/constructor no resuelve heredados (hasOwn, fold C1)", () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(tenantSlugFromHostValue("__proto__")).toBeNull();
+    expect(tenantSlugFromHostValue("constructor")).toBeNull();
+  });
+
+  it("subdominios .impluxa.com intactos con flag ON (Hakuna byte-idéntica)", () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(tenantSlugFromHostValue("hakunamatata.impluxa.com")).toBe(
+      "hakunamatata",
+    );
+    expect(tenantSlugFromHostValue("app.impluxa.com")).toBeNull();
+  });
+
+  it("getAdminBasePath: .ar con flag OFF → '' ; con flag ON → /admin", async () => {
+    mockHost("patagoniaviva.ar");
+    expect(await getAdminBasePath()).toBe("");
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    expect(await getAdminBasePath()).toBe("/admin");
+  });
+
+  it("getAdminBasePath: hosts actuales intactos con flag ON", async () => {
+    vi.stubEnv("PV_AR_ADMIN", "on");
+    mockHost("app.impluxa.com");
+    expect(await getAdminBasePath()).toBe("");
+    mockHost("patagoniaviva.impluxa.com");
+    expect(await getAdminBasePath()).toBe("/admin");
+    mockHost("evil.com");
+    expect(await getAdminBasePath()).toBe("");
   });
 });

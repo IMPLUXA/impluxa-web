@@ -25,6 +25,18 @@
 
 ---
 
+## CI-VITEST-GAP — el workflow de CI no corre vitest
+
+- **Deferred from**: s52 (hallazgo colateral durante ADMIN-AR C1).
+- **Defer reason**: `.github/workflows/ci.yml` corre solo lint + tsc + build; vitest es disciplina LOCAL = un PR con tests rotos puede mergear si la disciplina falla. Registrado por orden auditor s52.
+- **Closure target**: sesion futura con decision CEO (propuesta: agregar step `npm run test` al workflow con los placeholders de env que ya existen en el build step + hosts reales para los literales de urls.test — medido s52: la suite necesita TENANT_SUFFIX=.impluxa.com para pasar).
+- **Closure criterion**: CI de un PR cualquiera muestra step de vitest verde, o decision CEO explicita de NO agregarlo.
+- **Cross-ref**: continuacion natural de lesson `verify-pre-push-honesto-comando-de-ci` (s51) — va como DATAPOINT de esa lesson en el /aprende del cierre, NO lesson nueva (decision auditor s52).
+- **Tripwire 3 (this BACKLOG entry)**: present.
+- **Risk if defer slips**: merge de PR con suite rota si la disciplina local se saltea un dia.
+
+---
+
 ## DOMINIO-PV-v1.1 — limpieza post-cutover patagoniaviva.ar (fase B COMPLETA s52)
 
 - **Deferred from**: s52 fase B cutover (P1-P7 SHIPPED 2026-06-12, gates 16/16 + 4/4 + 9/9).
