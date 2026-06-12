@@ -25,6 +25,25 @@
 
 ---
 
+## DOMINIO-PV-v1.1 — limpieza post-cutover patagoniaviva.ar (fase B COMPLETA s52)
+
+- **Deferred from**: s52 fase B cutover (P1-P7 SHIPPED 2026-06-12, gates 16/16 + 4/4 + 9/9).
+- **Defer reason**: items de hardening/limpieza que no bloquean el dominio vivo; agrupados para ejecutar juntos a las ~48h del cutover estable.
+- **Closure target**: ~2026-06-14 (TTL raise) / proxima sesion que toque DNS o SEO.
+- **Closure criterion** (sub-items verificables):
+  1. TTL records CF 60 → 3600 (zona patagoniaviva.ar, 6 records).
+  2. **[BLOQUEANTE DEL CIERRE de este item — condicion auditor s52]** Revocar token CF `CLOUDFLARE_API_TOKEN_DNS_PATAGONIAVIVA` + **verify de muerte con probe 401/403 (patron s51)**. El expiry auto 2026-06-19 es la RED, no el plan: el item NO cierra sin revocacion activa verificada.
+  3. Cache in-memory + negative caching en `resolveTenantByDomain` (paridad con `resolveTenantBySlug`) — PRIORIDAD SUBIDA: la ruta sirve Dynamic SIN edge-cache (medido s52: Cache-Control no-store, MISS perpetuo) = 2 queries service-role por request.
+  4. Google Search Console: alta property .ar + submit sitemap.
+  5. Cleanup literal `PV_SITEMAP` (branch sufijo viejo en sitemap.ts) post re-crawl Google.
+  6. Hardening /login /signup en .ar (noindex o host-gate) — preexistente via SHARED_ROOT. **CRUZADO con ADMIN-AR-MIGRATION (obra ACTIVA s52, decision CEO)**: con el admin mudandose a .ar, /login en .ar pasa de "sin sesion util" a PUERTA REAL — el hardening se resuelve DENTRO de esa obra, no aca. NO duplicar.
+  7. DNSSEC NIC.ar + CAA `issue letsencrypt.org` (opcional v1.1).
+- **Dossier**: D:\segundo-cerebro\meta\plan-dominio-pv-faseB-s52.md (seccion DELTA + folds SE).
+- **Tripwire 3 (this BACKLOG entry)**: present.
+- **Risk if defer slips**: TTL 60 = carga DNS extra (menor); token vivo mas alla del 19/06 imposible (expiry); resolver sin cache = costo DB lineal con trafico .ar (hoy ~0).
+
+---
+
 ## DB-H1 — `app_config` consumer wiring
 
 - **Deferred from**: W1.T1 5B.7 (Sub-paso 5.B, sesion 15).
