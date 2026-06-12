@@ -206,9 +206,7 @@ export function DeparturesManager({
         </label>
       </div>
 
-      {!open && status && (
-        <div className="text-sm text-amber-400">{status}</div>
-      )}
+      {!open && status && <div className="text-ash text-sm">{status}</div>}
 
       {visible.length === 0 ? (
         <p className="text-ash text-sm">
@@ -242,13 +240,16 @@ export function DeparturesManager({
                   <td className="px-3 py-2">{fmtTime(d.departure_time)}</td>
                   <td className="px-3 py-2">{d.capacity}</td>
                   <td className="px-3 py-2">
+                    {/* Chips neutros del patrón Rates: legibles en shell
+                        oscuro Y branded claro (emerald/red-300 eran solo-
+                        shell-oscuro, misma familia que el bug del modal). */}
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
                         d.status === "open"
-                          ? "bg-emerald-500/20 text-emerald-300"
+                          ? "bg-bone text-onyx font-medium"
                           : d.status === "closed"
-                            ? "bg-stone/40"
-                            : "bg-red-500/20 text-red-300"
+                            ? "bg-stone/40 text-ash"
+                            : "bg-stone/20 text-ash line-through"
                       }`}
                     >
                       {DEPARTURE_STATUS_LABELS[d.status]}
@@ -296,7 +297,11 @@ export function DeparturesManager({
 
       {open && (
         <div className="bg-onyx/70 fixed inset-0 z-40 flex items-center justify-center p-4">
-          <div className="bg-marble text-onyx w-full max-w-lg space-y-4 rounded-lg p-6">
+          {/* SIN text-onyx fijo (bug walk CEO R1): bajo el admin BRANDED las
+              vars se redefinen light-content (onyx = el crema del fondo) y el
+              texto quedaba invisible. Patrón RatesManager: el card hereda el
+              color de texto del shell — correcto en ambos mundos. */}
+          <div className="bg-marble w-full max-w-lg space-y-4 rounded-lg p-6">
             <h2 className="text-lg font-bold">Nueva salida</h2>
             <label className="block text-sm">
               Excursión
@@ -365,7 +370,7 @@ export function DeparturesManager({
                 Sin horario fijo
               </label>
             </div>
-            {status && <div className="text-sm text-red-600">{status}</div>}
+            {status && <div className="text-sm">{status}</div>}
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setOpen(false)}
