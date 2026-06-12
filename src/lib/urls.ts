@@ -1,5 +1,6 @@
 import "server-only";
 import { headers } from "next/headers";
+import { CUSTOM_DOMAIN_TENANTS } from "@/lib/tenants/custom-domain-map";
 
 // B-Fase2 — helpers canónicos de URLs por-tenant (mata los hardcodes
 // `.impluxa.com` dispersos, hallazgo Pass-2 B-Fase1). Server-only: el
@@ -34,6 +35,16 @@ export function siteHostLabel(slug: string): string {
  */
 export async function getAdminBasePath(): Promise<"" | "/admin"> {
   const host = ((await headers()).get("host") ?? "").toLowerCase();
+  // ADMIN-AR C2: el admin en dominio custom usa el MISMO basePath externo
+  // /admin (el rewrite C1 del middleware lo aterriza en /tenant/{slug}/admin).
+  // Gateado por el mismo flag que el rewrite — activación atómica. hasOwn:
+  // espejo del fold C1 (Host tipo "__proto__" no hereda de Object.prototype).
+  if (
+    process.env["PV_AR_ADMIN"] === "on" &&
+    Object.hasOwn(CUSTOM_DOMAIN_TENANTS, host)
+  ) {
+    return "/admin";
+  }
   if (host !== APP_HOST && host.endsWith(TENANT_SUFFIX)) return "/admin";
   return "";
 }
@@ -57,6 +68,17 @@ export const RESERVED_TENANT_SUBDOMAINS = new Set([
  */
 export function tenantSlugFromHostValue(rawHost: string | null): string | null {
   const host = (rawHost ?? "").toLowerCase();
+  // ADMIN-AR C2: dominio custom mapeado → slug del tenant (login branded +
+  // postLoginPath), gateado por el MISMO flag que el rewrite C1 — atómico.
+  // Sin strip de puerto: un host con puerto no matchea la key → null, mismo
+  // modo de falla que el sufijo. El slug sale del literal del mapa (jamás
+  // del request); DISPLAY/BRANDING-ONLY, la autoridad sigue en claim + RLS.
+  if (
+    process.env["PV_AR_ADMIN"] === "on" &&
+    Object.hasOwn(CUSTOM_DOMAIN_TENANTS, host)
+  ) {
+    return CUSTOM_DOMAIN_TENANTS[host];
+  }
   if (!host || host === APP_HOST || !host.endsWith(TENANT_SUFFIX)) return null;
   const slug = host.slice(0, -TENANT_SUFFIX.length);
   if (!slug || RESERVED_TENANT_SUBDOMAINS.has(slug)) return null;
