@@ -128,7 +128,9 @@ describe("applyCurrentRates (no-op por identidad + override mínimo)", () => {
   });
 
   it("servicio SIN price_ars en content → NO se agrega precio (la forma del render no cambia)", () => {
-    const content = { servicios: [{ title: "Sin Precio" }] };
+    const content: { servicios: { title: string; price_ars?: number }[] } = {
+      servicios: [{ title: "Sin Precio" }],
+    };
     const result = applyCurrentRates(content, new Map([["Sin Precio", 9000]]));
     expect(result.servicios![0]!.price_ars).toBeUndefined();
   });
