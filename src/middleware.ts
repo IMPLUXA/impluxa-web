@@ -109,6 +109,24 @@ export async function middleware(req: NextRequest) {
       dest.port = "";
       return NextResponse.redirect(dest, 301);
     }
+    // ADMIN-AR-MIGRATION corte 6: la PUERTA VIEJA del admin 301ea a la nueva
+    // en .ar. Es el COMPLEMENTO por path de la exención de arriba: dispara
+    // SOLO para /admin|/admin/* (mutuamente excluyente con el redirect público
+    // P7 → cero doble-redirect). ENV-GATED OFF: ship inerte, activado por
+    // PV_AR_ADMIN_REDIRECT=on + redeploy DESPUÉS de walk CEO verde + dueño
+    // avisado (doble gate humano). Preserva path+query. /login del host viejo
+    // NO se toca (SHARED_ROOT retorna antes); el 301 de /admin funela igual al
+    // dueño a .ar (301 → .ar/admin → e07 → .ar/login).
+    if (
+      slug === "patagoniaviva" &&
+      process.env["PV_AR_ADMIN_REDIRECT"] === "on" &&
+      (url.pathname === "/admin" || url.pathname.startsWith("/admin/"))
+    ) {
+      const dest = req.nextUrl.clone();
+      dest.host = "patagoniaviva.ar";
+      dest.port = "";
+      return NextResponse.redirect(dest, 301);
+    }
     url.pathname = `/tenant/${slug}${url.pathname === "/" ? "" : url.pathname}`;
     return NextResponse.rewrite(url);
   }
