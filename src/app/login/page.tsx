@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Cinzel, Fredoka, Hanken_Grotesk, Inter } from "next/font/google";
 import { getLoginBranding } from "@/lib/tenants/login-branding";
 import { tenantSlugFromHost } from "@/lib/urls";
+import { CUSTOM_DOMAIN_TENANTS } from "@/lib/tenants/custom-domain-map";
 import { LoginForm } from "./LoginForm";
 
 // F-UI-BRANDED corte 1 — /login branded por host (plan-f-ui-branded-s50).
@@ -54,6 +57,20 @@ const FONT_BY_NAME: Record<string, { variable: string; family: string }> = {
   },
   Inter: { variable: inter.variable, family: `Inter, system-ui, sans-serif` },
 };
+
+// ADMIN-AR C4a (item v1.1 cruzado): el /login en un dominio custom es PUERTA
+// REAL del admin (ya no "sin sesión útil") — noindex para que el login del
+// dueño no aparezca en buscadores. Host-aware: SOLO los dominios custom del
+// mapa emiten robots noindex; CUALQUIER otro host devuelve {} → metadata del
+// /login byte-idéntica a hoy (Hakuna, app, marketing intactos). Object.hasOwn:
+// espejo del fold C1/C2 (Host "__proto__" no hereda de Object.prototype).
+export async function generateMetadata(): Promise<Metadata> {
+  const host = ((await headers()).get("host") ?? "").toLowerCase();
+  if (Object.hasOwn(CUSTOM_DOMAIN_TENANTS, host)) {
+    return { robots: { index: false, follow: false } };
+  }
+  return {};
+}
 
 export default async function LoginPage() {
   // Slug derivado UNA vez; redirect por host-only, branding por host+published.
