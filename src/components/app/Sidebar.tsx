@@ -10,6 +10,7 @@ import {
   Handshake,
   PencilSimpleLine,
   CalendarCheck,
+  Ticket,
   ChatCircleText,
   ArrowSquareOut,
   Wallet,
@@ -49,6 +50,8 @@ const NAV_OPERATIVO: NavItem[] = [
   // primeros 5 vivos y el bottom-nav actual queda idéntico (Salidas =
   // desktop-only v1; el slot mobile es el TODO(B-Fase2+) de abajo).
   { href: "/agency/departures", label: "Salidas", icon: "📅" },
+  // R3: ídem Salidas — post-Contenido, fuera del slice mobile de 5.
+  { href: "/agency/reservas", label: "Reservas", icon: "🎟️" },
   { href: "/site/design", label: "Diseño", icon: "🎨", soon: true },
   { href: "/site/media", label: "Imágenes", icon: "🖼️", soon: true },
   { href: "/leads", label: "Leads", icon: "📬", soon: true },
@@ -90,6 +93,8 @@ const NAV_BRANDED: BrandedNavItem[] = [
   // R1: posición post-Contenido = NAV_BRANDED_MOBILE (primeros 5 vivos)
   // intacto; Salidas desktop-only v1 (ver TODO mobile en NAV_OPERATIVO).
   { href: "/agency/departures", label: "Salidas", Icon: CalendarCheck },
+  // R3: ídem Salidas — bottom-nav branded intacto (primeros 5 vivos).
+  { href: "/agency/reservas", label: "Reservas", Icon: Ticket },
   { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
 ];
 

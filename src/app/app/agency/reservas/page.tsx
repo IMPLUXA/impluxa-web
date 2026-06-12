@@ -1,0 +1,86 @@
+import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
+import { getActiveTenant } from "@/lib/tenants/membership";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getAgencyRole } from "@/lib/agency/role";
+import { redirect } from "next/navigation";
+import { ReservasManager } from "./ReservasManager";
+import type {
+  DepartureRow,
+  ExcursionRow,
+  PassengerCategoryRow,
+  ReservaRow,
+} from "@/lib/agency/schemas";
+
+// R3 reservas — área interna (back-office). NO toca el template público.
+// La LISTA viene con el cliente AUTENTICADO: la RLS aplica tal cual la
+// matriz de roles (vendedor ve SOLO sus reservas — policy por seller;
+// encargado/dueño ven todas las del tenant). Declarado en la UI.
+export const dynamic = "force-dynamic";
+
+export default async function ReservasPage() {
+  const { user, tenantId } = await requireActiveTenantOrRedirect();
+  const tenant = await getActiveTenant(user.id, tenantId);
+  if (!tenant) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "tenant_claim_membership_drift",
+        scope: "agency_reservas_page",
+        user_id: user.id,
+        claim_tenant_id: tenantId,
+      }),
+    );
+    redirect("/login?e=e08_drift");
+  }
+
+  const role = await getAgencyRole();
+  // Crear reserva = los 3 roles (la RPC #24 es la autoridad; null = fail-closed).
+  const canCreate =
+    role === "vendedor" || role === "encargado" || role === "dueno_admin";
+
+  const sb = await getSupabaseServerClient();
+  const [
+    { data: reservas },
+    { data: departures },
+    { data: excursions },
+    { data: categories },
+  ] = await Promise.all([
+    sb
+      .from("reservas")
+      .select(
+        "id,tenant_id,departure_id,seller_staff_id,holder_name,holder_email,holder_phone,holder_lodging,status,reservation_code,snapshot_currency,snapshot_gross,snapshot_provider_cost,snapshot_net,hold_expires_at,created_at",
+      )
+      .eq("tenant_id", tenant.id) // redundante a RLS, consistencia handlers
+      .order("created_at", { ascending: false }),
+    sb
+      .from("excursion_departures")
+      .select(
+        "id,tenant_id,excursion_id,departure_date,departure_time,capacity,status,created_at",
+      )
+      .eq("tenant_id", tenant.id)
+      .order("departure_date", { ascending: true }),
+    sb
+      .from("excursions")
+      .select(
+        "id,tenant_id,provider_id,name,description,category,active,default_currency,created_at",
+      )
+      .eq("tenant_id", tenant.id)
+      .order("name", { ascending: true }),
+    sb
+      .from("passenger_categories")
+      .select("id,tenant_id,code,label,price_factor,created_at")
+      .eq("tenant_id", tenant.id)
+      .order("price_factor", { ascending: false, nullsFirst: false }),
+  ]);
+
+  return (
+    <ReservasManager
+      initialReservas={(reservas ?? []) as ReservaRow[]}
+      departures={(departures ?? []) as DepartureRow[]}
+      excursions={(excursions ?? []) as ExcursionRow[]}
+      categories={(categories ?? []) as PassengerCategoryRow[]}
+      canCreate={canCreate}
+      isVendedor={role === "vendedor"}
+    />
+  );
+}

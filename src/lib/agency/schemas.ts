@@ -106,6 +106,56 @@ export type DepartureRow = {
   created_at: string;
 };
 
+// ---- R3 reservas (UI interna del panel) ----
+// La ÚNICA vía de escritura es la RPC agency_crear_reserva (#24): la UI
+// jamás INSERTa directo a reservas (contrato del ancla: todo writer pasa
+// por el FOR UPDATE de la salida). Este schema espeja el contrato de la
+// RPC para feedback 400 temprano; la autoridad es la función.
+
+export const ReservaPasajeroInputSchema = z.object({
+  categoria: z.string().trim().min(1).max(60),
+  qty: z.number().int().min(1).max(999),
+});
+
+export const ReservaCreateSchema = z.object({
+  departure_id: z.string().uuid(),
+  holder_name: z.string().trim().min(1).max(200),
+  holder_email: z.string().trim().max(320).optional(),
+  holder_phone: z.string().trim().max(50).optional(),
+  holder_lodging: z.string().trim().max(200).optional(),
+  pasajeros: z.array(ReservaPasajeroInputSchema).min(1).max(20),
+});
+
+export type ReservaStatus = "pre_reserva" | "reserva" | "cancelada";
+
+export const RESERVA_STATUS_LABELS: Record<ReservaStatus, string> = {
+  pre_reserva: "Pre-reserva",
+  reserva: "Confirmada",
+  cancelada: "Cancelada",
+};
+
+// PLATA: snapshot_* es numeric — PostgREST lo entrega como NÚMERO o string
+// según el camino (lesson P0 s49): number | string SIEMPRE, String() en el
+// boundary de display.
+export type ReservaRow = {
+  id: string;
+  tenant_id: string;
+  departure_id: string;
+  seller_staff_id: string | null;
+  holder_name: string;
+  holder_email: string | null;
+  holder_phone: string | null;
+  holder_lodging: string | null;
+  status: ReservaStatus;
+  reservation_code: string;
+  snapshot_currency: string;
+  snapshot_gross: number | string;
+  snapshot_provider_cost: number | string;
+  snapshot_net: number | string;
+  hold_expires_at: string | null;
+  created_at: string;
+};
+
 export type ProviderRow = {
   id: string;
   tenant_id: string;
