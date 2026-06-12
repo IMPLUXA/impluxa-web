@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { resolveTenantByDomain } from "@/lib/tenants/resolve";
 import TenantPage, {
   generateMetadata as slugGenerateMetadata,
-} from "../../tenant/[slug]/page";
+} from "@/app/tenant/[slug]/page";
 
 export const revalidate = 60;
 

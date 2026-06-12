@@ -100,7 +100,8 @@ export async function middleware(req: NextRequest) {
     if (
       slug === "patagoniaviva" &&
       process.env["PV_AR_REDIRECT"] === "on" &&
-      !url.pathname.startsWith("/admin")
+      url.pathname !== "/admin" &&
+      !url.pathname.startsWith("/admin/")
     ) {
       const dest = req.nextUrl.clone();
       dest.host = "patagoniaviva.ar";
