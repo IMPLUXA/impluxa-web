@@ -64,6 +64,14 @@ describe("Sidebar genérico (sin branding) — /app intacto", () => {
     expect(salidas?.getAttribute("href")).toBe("/agency/departures");
     expect(screen.getAllByText("Contenido").length).toBe(2); // sigue en mobile
   });
+
+  it("R3: Reservas VIVA en desktop y FUERA del bottom-nav (ídem Salidas)", () => {
+    render(<Sidebar tenant={TENANT} user={null} />);
+    expect(screen.getAllByText("Reservas").length).toBe(1);
+    const reservas = screen.getByText("Reservas").closest("a");
+    expect(reservas?.getAttribute("href")).toBe("/agency/reservas");
+    expect(screen.getAllByText("Contenido").length).toBe(2); // mobile intacto
+  });
 });
 
 describe("Sidebar branded — operativo (todos los roles)", () => {
@@ -92,6 +100,10 @@ describe("Sidebar branded — operativo (todos los roles)", () => {
     expect(screen.getAllByText("Salidas").length).toBe(1);
     const salidas = screen.getByText("Salidas").closest("a");
     expect(salidas?.getAttribute("href")).toBe("/admin/agency/departures");
+    // R3: Reservas ídem
+    expect(screen.getAllByText("Reservas").length).toBe(1);
+    const reservas = screen.getByText("Reservas").closest("a");
+    expect(reservas?.getAttribute("href")).toBe("/admin/agency/reservas");
     expect(screen.getByText("Ver sitio")).toBeTruthy();
     const logo = screen.getByAltText("Patagonia Viva") as HTMLImageElement;
     expect(logo.src).toContain("logo-full-dark.png");
