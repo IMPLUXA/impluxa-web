@@ -10,6 +10,14 @@ const TENANT_SUFFIX =
 // their robots.txt stays byte-identical to the previous static output.
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const host = (await headers()).get("host")?.toLowerCase() ?? "";
+  // Exact custom-domain match first (allowlist, literal output) —
+  // DOMINIO-PV-1 fase B.
+  if (host === "patagoniaviva.ar") {
+    return {
+      rules: [{ userAgent: "*", allow: "/" }],
+      sitemap: "https://patagoniaviva.ar/sitemap.xml",
+    };
+  }
   const slug = host.endsWith(TENANT_SUFFIX)
     ? host.slice(0, -TENANT_SUFFIX.length)
     : "";
