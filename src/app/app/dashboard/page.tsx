@@ -124,24 +124,18 @@ export default async function Dashboard() {
               {firstHistory.count ?? 0} versiones en el historial
             </div>
           </div>
-          <div className="bg-marble border-stone/60 rounded-[14px] border p-5 shadow-[0_10px_26px_rgba(20,48,56,0.07)]">
+          <Link
+            href={`${basePath}/agency/reservas`}
+            className="bg-marble border-stone/60 hover:border-stone block rounded-[14px] border p-5 shadow-[0_10px_26px_rgba(20,48,56,0.07)] transition hover:shadow-[0_14px_34px_rgba(20,48,56,0.13)]"
+          >
             <div className="text-ash text-[13px] font-semibold">Reservas</div>
-            <div className="mt-2">
-              <span
-                className="rounded-full px-3 py-1 text-[11px] font-semibold"
-                style={{
-                  color: "var(--pill-soon-text, rgb(var(--rgb-ash)))",
-                  background:
-                    "var(--pill-soon-bg, color-mix(in srgb, rgb(var(--rgb-stone)) 40%, transparent))",
-                }}
-              >
-                pronto
-              </span>
+            <div className="text-bone mt-2 text-2xl font-bold">
+              Ver reservas →
             </div>
-            <div className="text-ash mt-2 text-[12.5px]">
-              se activa con el motor de reservas
+            <div className="text-ash mt-1 text-[12.5px]">
+              gestioná reservas y cupos por salida
             </div>
-          </div>
+          </Link>
         </div>
 
         <div className="flex flex-wrap gap-3">
