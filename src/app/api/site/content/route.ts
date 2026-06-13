@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -31,5 +32,24 @@ export async function POST(req: NextRequest) {
       { ok: false, error: error.message },
       { status: 403 },
     );
+
+  // B.2 (R-PUB): on-demand revalidation de la web pública (con B.1 el .ar es SSG
+  // cacheado → sin esto un edit de contenido no se vería hasta el TTL). El render
+  // usa supabase client (no Next fetch) → revalidatePath de las 2 rutas, NO tag.
+  // Query RLS-safe (el user es miembro del tenant). Best-effort: si falla, el
+  // update ya entró; el TTL (60s) lo refresca igual.
+  const { data: t } = await sb
+    .from("tenants")
+    .select("slug,custom_domain")
+    .eq("id", parsed.data.tenant_id)
+    .single();
+  if (t?.slug) {
+    revalidatePath(`/tenant/${t.slug}`);
+    if (t.custom_domain) {
+      revalidatePath(
+        `/tenant_domain/${encodeURIComponent(t.custom_domain.toLowerCase())}`,
+      );
+    }
+  }
   return NextResponse.json({ ok: true });
 }

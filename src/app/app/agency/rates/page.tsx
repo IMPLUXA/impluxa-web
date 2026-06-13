@@ -52,6 +52,8 @@ export default async function RatesPage() {
       initialCategories={categories ?? []}
       role={role}
       canEdit={role === "dueno_admin"}
+      tenantSlug={tenant.slug}
+      tenantCustomDomain={tenant.custom_domain}
     />
   );
 }

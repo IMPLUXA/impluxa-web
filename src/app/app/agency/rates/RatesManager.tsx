@@ -11,6 +11,7 @@ import {
   type RateRow,
   type PassengerCategoryRow,
 } from "@/lib/agency/schemas";
+import { setRateAction } from "./actions";
 
 // F3b CRUD UI tarifas (dueño-only write).
 // ESCRITURA: exclusivamente (a) RPC agency_set_rate vía cliente browser
@@ -78,12 +79,17 @@ export function RatesManager({
   initialCategories,
   role,
   canEdit,
+  tenantSlug,
+  tenantCustomDomain,
 }: {
   excursions: ExcursionRow[];
   initialRates: RateRow[];
   initialCategories: PassengerCategoryRow[];
   role: string | null;
   canEdit: boolean;
+  // B.2 (R-PUB): destino del revalidatePath de la web pública al guardar un rate.
+  tenantSlug: string;
+  tenantCustomDomain: string | null;
 }) {
   const [rates, setRates] = useState<RateRow[]>(initialRates);
   const [categories, setCategories] =
@@ -141,17 +147,20 @@ export function RatesManager({
     // try/finally: si el refresh post-RPC explota (red/5xx), busy NO puede
     // quedar trabado — el write ya entró a DB (Pass-1 blocker 2).
     try {
-      // La RPC hace el cierre de la vigente + alta de la nueva ATÓMICAMENTE.
-      // Plata como string → numeric exacto (cero float en el camino).
-      const sb = getSupabaseBrowserClient();
-      const { error } = await sb.rpc("agency_set_rate", {
-        p_excursion_id: form.excursionId,
-        p_base_price: parsed.data.base_price,
-        p_provider_cost: parsed.data.provider_cost,
-        p_currency: parsed.data.currency,
+      // B.2 (R-PUB): el RPC ahora va por SERVER ACTION (mismo RPC, cierre+alta
+      // atómico, dueño-only por RLS via la sesión del usuario) para poder disparar
+      // revalidatePath de la web pública → el edit-to-web sigue INSTANTÁNEO aunque
+      // el .ar pase a SSG cacheado (B.1). Plata como string → numeric exacto.
+      const result = await setRateAction({
+        excursion_id: form.excursionId,
+        base_price: parsed.data.base_price,
+        provider_cost: parsed.data.provider_cost,
+        currency: parsed.data.currency,
+        tenantSlug,
+        tenantCustomDomain,
       });
-      if (error) {
-        setStatus(rpcErrorMessage(error.code));
+      if (!result.ok) {
+        setStatus(rpcErrorMessage(result.code));
         return;
       }
       let refreshed = false;
