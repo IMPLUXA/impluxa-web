@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logo Patagonia Viva — comparador de tamaños (login) — s53</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --pv-primary:#143038;
+    --pv-secondary:#3E7C95;
+    --pv-accent:#B48448;
+    --pv-bg:#F4EDDC;
+    --pv-text:#1E2B2C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Hanken Grotesk",system-ui,sans-serif;
+    background:#eceae6;color:#1f2937;line-height:1.5;
+    padding:28px 18px 60px;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+  header.intro{text-align:center;margin-bottom:8px}
+  header.intro h1{font-family:"Cinzel",serif;font-size:24px;color:#143038;font-weight:600;letter-spacing:.3px}
+  header.intro p{font-size:14.5px;color:#4b5563;margin-top:8px;max-width:680px;margin-left:auto;margin-right:auto}
+  header.intro .meta{font-size:12px;color:#9ca3af;margin-top:10px}
+
+  /* Grid comparador */
+  .grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:26px;
+  }
+  @media (max-width:680px){ .grid{grid-template-columns:1fr} }
+  .panel{
+    border-radius:14px;overflow:hidden;border:1px solid #d8d5cd;
+    box-shadow:0 6px 22px rgba(20,48,56,.10);background:#fff;
+  }
+  .login-bg{
+    position:relative;min-height:230px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;padding:30px 18px;
+    background:
+      radial-gradient(900px 600px at 18% -10%, color-mix(in srgb, var(--pv-secondary) 28%, transparent), transparent 60%),
+      radial-gradient(700px 500px at 100% 110%, color-mix(in srgb, var(--pv-accent) 16%, transparent), transparent 55%),
+      linear-gradient(160deg, var(--pv-primary) 0%, color-mix(in srgb, var(--pv-primary) 72%, black) 100%);
+  }
+  .login-bg img.logo{width:auto;display:block}
+  .hostlabel{
+    font-size:12.5px;
+    color:color-mix(in srgb, var(--pv-bg) 62%, transparent);
+  }
+  .badge-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 15px;background:#fbfaf7;border-top:1px solid #e7e4dc;
+  }
+  .badge{font-size:13px;font-weight:600;color:#143038;font-family:"Hanken Grotesk",sans-serif}
+  .badge .px{color:#8a8f98;font-weight:500}
+  .tag-actual{
+    font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    background:#143038;color:#F4EDDC;padding:3px 9px;border-radius:999px;
+  }
+  .tag-pick{
+    font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    background:#B48448;color:#fff;padding:3px 9px;border-radius:999px;
+  }
+
+  /* Contexto completo */
+  .ctx-title{margin:42px 0 14px;text-align:center;font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:.8px}
+  .full{
+    border-radius:16px;overflow:hidden;border:1px solid #d8d5cd;
+    box-shadow:0 8px 30px rgba(20,48,56,.14);
+  }
+  .full .login-bg{min-height:520px;justify-content:flex-start;gap:0;padding:54px 22px}
+  .logo-block{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:28px}
+  .card{
+    width:100%;max-width:420px;border-radius:14px;padding:30px 32px 28px;
+    background:var(--pv-bg);
+    border:1px solid color-mix(in srgb, var(--pv-text) 8%, transparent);
+    box-shadow:0 18px 40px rgba(0,0,0,.28);
+  }
+  .card h2{font-family:"Cinzel",serif;font-size:22px;line-height:1.15;font-weight:700;color:var(--pv-primary)}
+  .card .sub{font-size:14.5px;margin:6px 0 22px;color:color-mix(in srgb, var(--pv-text) 64%, white)}
+  .card .sub b{color:var(--pv-text);font-weight:600}
+  .card .field{font-size:12.5px;color:color-mix(in srgb, var(--pv-text) 70%, white);margin-bottom:7px}
+  .card .inp{height:42px;border-radius:9px;border:1px solid color-mix(in srgb, var(--pv-text) 24%, transparent);background:#fffef9;margin-bottom:16px}
+  .card .btn{height:44px;border-radius:9px;background:var(--pv-primary);color:var(--pv-bg);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+  .foot{margin-top:24px;font-size:12px;color:color-mix(in srgb, var(--pv-bg) 52%, transparent);text-align:center}
+
+  .note{
+    margin:40px auto 0;max-width:680px;background:#fff;border:1px solid #e2dfd6;border-radius:12px;
+    padding:18px 20px;font-size:14px;color:#374151;
+  }
+  .note b{color:#143038}
+  .note ul{margin:10px 0 0 18px}
+  .note li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="intro">
+    <h1>Logo Patagonia Viva — tamaños para el login</h1>
+    <p>Comparador a tamaño real sobre el fondo y las fuentes reales del login (gradiente teal · Cinzel · Hanken). El logo de hoy es <b>h-16 (64px)</b>. Elegí uno de los tres más grandes.</p>
+    <div class="meta">Superficie: patagoniaviva.ar/login · logo db-asset (logo-full-dark.png) · solo afecta a tenants con logo (Hakuna cae al fallback de texto)</div>
+  </header>
+
+  <div class="grid">
+    <!-- ACTUAL h-16 -->
+    <div class="panel">
+      <div class="login-bg">
+        <img class="logo" style="height:64px" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+        <div class="hostlabel">patagoniaviva.ar</div>
+      </div>
+      <div class="badge-row">
+        <span class="badge">h-16 <span class="px">· 64px</span></span>
+        <span class="tag-actual">Actual</span>
+      </div>
+    </div>
+
+    <!-- h-20 -->
+    <div class="panel">
+      <div class="login-bg">
+        <img class="logo" style="height:80px" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+        <div class="hostlabel">patagoniaviva.ar</div>
+      </div>
+      <div class="badge-row">
+        <span class="badge">h-20 <span class="px">· 80px</span></span>
+        <span class="tag-pick">Opción A</span>
+      </div>
+    </div>
+
+    <!-- h-24 -->
+    <div class="panel">
+      <div class="login-bg">
+        <img class="logo" style="height:96px" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+        <div class="hostlabel">patagoniaviva.ar</div>
+      </div>
+      <div class="badge-row">
+        <span class="badge">h-24 <span class="px">· 96px</span></span>
+        <span class="tag-pick">Opción B</span>
+      </div>
+    </div>
+
+    <!-- h-28 -->
+    <div class="panel">
+      <div class="login-bg">
+        <img class="logo" style="height:112px" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+        <div class="hostlabel">patagoniaviva.ar</div>
+      </div>
+      <div class="badge-row">
+        <span class="badge">h-28 <span class="px">· 112px</span></span>
+        <span class="tag-pick">Opción C</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctx-title">Contexto completo del login (ejemplo a h-24)</div>
+  <div class="full">
+    <div class="login-bg">
+      <div class="logo-block">
+        <img class="logo" style="height:96px" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+        <div class="hostlabel">patagoniaviva.ar</div>
+      </div>
+      <div class="card">
+        <h2>Panel de Administración</h2>
+        <div class="sub">Acceso para el equipo de <b>Patagonia Viva</b></div>
+        <div class="field">Email</div>
+        <div class="inp"></div>
+        <div class="btn">Enviar código</div>
+      </div>
+      <div class="foot">Con tecnología de Impluxa</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Nota técnica</b> — esto es solo un mockup para elegir tamaño (cero cambio de código todavía).
+    <ul>
+      <li>El hostLabel ya aparece como <b>patagoniaviva.ar</b> acá para que se vea el login objetivo (FIX 1a, separado).</li>
+      <li>El tamaño se cambia en una clase Tailwind (<b>h-16 → h-NN</b>) del login; el sidebar usa su propio tamaño (h-[52px]) y no se toca en este fix.</li>
+      <li>Avisá cuál: <b>h-20</b> / <b>h-24</b> / <b>h-28</b> (o un valor intermedio si ninguno cierra).</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
