@@ -252,7 +252,7 @@ export default async function Dashboard() {
             target="_blank"
             rel="noreferrer"
           >
-            {siteHostLabel(tenant.slug)} ↗
+            {siteHostLabel(tenant.slug, tenant.custom_domain)} ↗
           </a>
         </p>
       </header>

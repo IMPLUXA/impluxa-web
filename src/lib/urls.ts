@@ -21,9 +21,20 @@ export function siteUrl(slug: string): string {
   return `https://${slug}${TENANT_SUFFIX}`;
 }
 
-/** Host visible del sitio del tenant (slug.impluxa.com, sin scheme). */
-export function siteHostLabel(slug: string): string {
-  return `${slug}${TENANT_SUFFIX}`;
+/**
+ * Host visible del sitio del tenant (DISPLAY-ONLY, sin scheme). Tenant-aware
+ * (FIX 1a s53): si el tenant tiene `custom_domain` seteado, ese es el host
+ * canónico visible (PV → patagoniaviva.ar). Sin custom_domain (null/undefined
+ * → Hakuna y todo tenant sin dominio propio) cae al slug+sufijo EXACTO de
+ * siempre = delta-0. El `??` solo cubre null/undefined (custom_domain es
+ * string|null por tipo+DB, nunca ""). NO construye URLs — eso es siteUrl;
+ * cambiar este label no toca ningún href.
+ */
+export function siteHostLabel(
+  slug: string,
+  customDomain?: string | null,
+): string {
+  return customDomain ?? `${slug}${TENANT_SUFFIX}`;
 }
 
 /**
