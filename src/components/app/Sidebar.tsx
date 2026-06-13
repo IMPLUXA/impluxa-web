@@ -115,9 +115,10 @@ const NAV_BRANDED_ACCOUNT: BrandedNavItem[] = [
   },
 ];
 
-// Mobile bottom-nav: SOLO operativo vivo (todos los roles). Los items
-// dueño-only NO entran al bottom-nav en corte 3 — PROPUESTA al CEO: 6to slot
-// "Más" que abre un sheet con Finanzas/Módulos/Tu cuenta (decide el CEO).
+// Mobile bottom-nav branded: los primeros 5 operativos vivos. El overflow
+// (Salidas/Reservas) + los dueño-only viven en el 6º slot "Más" (MoreSheet,
+// secciones "Operativo" todos-los-roles + "Solo dueño" dueño-only) — ejecutado
+// PR-3 s53 (reemplaza la PROPUESTA al CEO del corte 3).
 const NAV_BRANDED_MOBILE = NAV_BRANDED.filter((n) => !n.soon).slice(0, 5);
 
 // basePath (B-Fase2): "" en app.impluxa.com (árbol /app) | "/admin" en el
@@ -361,11 +362,12 @@ export function Sidebar({
           </div>
         </aside>
 
-        {/* Mobile bottom-nav branded: 5 operativas vivas para TODOS los roles;
-            el dueño suma el 6º slot "Más" (sheet con Finanzas/Módulos/Tu cuenta
-            — decisión CEO s50; un no-dueño no recibe ni el botón). */}
+        {/* Mobile bottom-nav branded: 5 operativas vivas (NAV_BRANDED_MOBILE) +
+            6º slot "Más" para TODOS los roles (PR-3 s53). El sheet tiene una
+            sección "Operativo" (Salidas/Reservas, todos los roles — overflow del
+            slice 5) + "Solo dueño" (Finanzas/Módulos/Plan, solo dueño, intacto). */}
         <nav
-          className={`fixed right-0 bottom-0 left-0 z-30 grid ${owner ? "grid-cols-6" : "grid-cols-5"} gap-1 px-1 pt-2 pb-2.5 md:hidden`}
+          className={`fixed right-0 bottom-0 left-0 z-30 grid grid-cols-6 gap-1 px-1 pt-2 pb-2.5 md:hidden`}
           style={{
             background: primary,
             borderTop: `1px solid color-mix(in srgb, ${background} 14%, transparent)`,
@@ -387,13 +389,12 @@ export function Sidebar({
               </Link>
             );
           })}
-          {owner && (
-            <MoreSheet
-              basePath={basePath}
-              primary={primary}
-              background={background}
-            />
-          )}
+          <MoreSheet
+            owner={owner}
+            basePath={basePath}
+            primary={primary}
+            background={background}
+          />
         </nav>
       </>
     );

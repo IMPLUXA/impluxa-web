@@ -4,57 +4,118 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   DotsThree,
+  CalendarCheck,
+  Ticket,
   Wallet,
   SquaresFour,
   CreditCard,
   X,
 } from "@phosphor-icons/react";
 
-// F-UI-BRANDED corte 4 — 6º slot "Más" del bottom-nav móvil branded
-// (decisión CEO s50: sheet dueño-only; la alternativa de columna fija
-// mostraría un slot muerto a empleados). Client island chico: el Sidebar
-// (server) lo monta SOLO cuando el rol es dueño — un no-dueño no recibe ni
-// el botón ni el markup del sheet. La autoridad sigue siendo el guard
-// server-side de cada página destino (e10) + RLS; esto es navegación.
+// F-UI-BRANDED corte 4 + PR-3 s53 — 6º slot "Más" del bottom-nav móvil branded.
+// El bottom-nav muestra los primeros 5 operativos (NAV_BRANDED_MOBILE); este
+// sheet es el OVERFLOW del resto, en DOS secciones bajo UN solo botón "Más":
+//   - "Operativo" (TODOS los roles): Salidas + Reservas — viven en NAV_BRANDED
+//     pero quedan fuera del slice(0,5) del bottom-nav. PR-3 las hace alcanzables
+//     en móvil sin amontonar la barra de 5 (decisión CEO s53 opción b).
+//   - "Solo dueño" (dueño-only, INTACTO vs pre-PR-3): Finanzas/Módulos/Plan — la
+//     relación con la plataforma; datos sensibles no son para empleados. Un
+//     no-dueño NO recibe esta sección.
+// La autoridad sigue siendo el guard server-side de cada página destino (e10) +
+// RLS; esto es navegación. Espejo móvil de NAV_BRANDED (overflow operativo) +
+// NAV_BRANDED_OWNER + NAV_BRANDED_ACCOUNT (Sidebar): si tocás aquellos, tocá
+// esto (drift declarado — los íconos /dist/ssr del server no cruzan al client
+// island).
+// NOTA scope (decisión CEO s53): la nav NO está gateada por vertical/data — el
+// admin (no usado) de un tenant sin agencia también vería estos items, inocuo
+// (0 staff). El gating-por-data (hasAgency, mobile+desktop) está en BACKLOG.
 
 type SheetItem = {
   href: string;
   label: string;
-  icon: "wallet" | "squares" | "card";
+  Icon: React.ComponentType<{ size?: number }>;
   soon?: boolean;
 };
 
-const ICONS = {
-  wallet: Wallet,
-  squares: SquaresFour,
-  card: CreditCard,
-} as const;
+// Operativo: espejo del overflow de NAV_BRANDED (lo que cae fuera del slice 5).
+const OPERATIONAL: SheetItem[] = [
+  { href: "/agency/departures", label: "Salidas", Icon: CalendarCheck },
+  { href: "/agency/reservas", label: "Reservas", Icon: Ticket },
+];
+
+// Dueño-only: espejo de NAV_BRANDED_OWNER + NAV_BRANDED_ACCOUNT. INTACTO — PR-3
+// no agrega ni saca nada de este bloque.
+const OWNER_ONLY: SheetItem[] = [
+  { href: "/finanzas", label: "Finanzas", Icon: Wallet },
+  { href: "/modulos", label: "Módulos", Icon: SquaresFour },
+  {
+    href: "/billing",
+    label: "Plan y facturación",
+    Icon: CreditCard,
+    soon: true,
+  },
+];
 
 export function MoreSheet({
   basePath,
   primary,
   background,
+  owner,
 }: {
   basePath: string;
   primary: string;
   background: string;
+  owner: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
-  // Espejo móvil de NAV_BRANDED_OWNER + NAV_BRANDED_ACCOUNT (Sidebar). Si
-  // tocás aquellos, tocá esto (Pass-2 CR: drift declarado, no derivable
-  // directo porque los íconos server /dist/ssr no cruzan a client island).
-  // TODO(billing-live): cuando /billing pierda `soon`, bajo el árbol admin
-  // el href debe ser URL ABSOLUTA al app host — con basePath relativo daría
-  // /admin/billing → 404 (mismo TODO que Sidebar NAV_SAAS).
-  const items: SheetItem[] = [
-    { href: "/finanzas", label: "Finanzas", icon: "wallet" },
-    { href: "/modulos", label: "Módulos", icon: "squares" },
-    { href: "/billing", label: "Plan y facturación", icon: "card", soon: true },
-  ];
-
   const textColor = `color-mix(in srgb, ${background} 88%, ${primary})`;
   const mutedColor = `color-mix(in srgb, ${background} 50%, transparent)`;
+
+  function Section({ title, items }: { title: string; items: SheetItem[] }) {
+    return (
+      <>
+        <div
+          className="mt-1 mb-1 px-1 text-[10px] font-semibold tracking-[0.14em] uppercase"
+          style={{ color: mutedColor }}
+        >
+          {title}
+        </div>
+        <nav className="mb-1 space-y-1">
+          {items.map((it) => {
+            const Icon = it.Icon;
+            if (it.soon) {
+              return (
+                <span
+                  key={it.href}
+                  aria-disabled="true"
+                  className="flex cursor-default items-center gap-3 rounded-[10px] px-3 py-3 text-sm font-medium"
+                  style={{ color: mutedColor }}
+                >
+                  <Icon size={20} />
+                  {it.label}
+                  <span className="ml-auto text-[10px] font-semibold">
+                    pronto
+                  </span>
+                </span>
+              );
+            }
+            return (
+              <Link
+                key={it.href}
+                href={`${basePath}${it.href}`}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-[10px] px-3 py-3 text-sm font-medium hover:bg-white/10"
+              >
+                <Icon size={20} />
+                {it.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </>
+    );
+  }
 
   return (
     <>
@@ -92,13 +153,7 @@ export function MoreSheet({
             className="absolute right-0 bottom-0 left-0 rounded-t-2xl p-4 pb-6"
             style={{ background: primary, color: textColor }}
           >
-            <div className="mb-2 flex items-center justify-between px-1">
-              <span
-                className="text-[10px] font-semibold tracking-[0.14em] uppercase"
-                style={{ color: mutedColor }}
-              >
-                Solo dueño
-              </span>
+            <div className="mb-1 flex items-center justify-end px-1">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -108,38 +163,8 @@ export function MoreSheet({
                 <X size={16} />
               </button>
             </div>
-            <nav className="space-y-1">
-              {items.map((it) => {
-                const Icon = ICONS[it.icon];
-                if (it.soon) {
-                  return (
-                    <span
-                      key={it.href}
-                      aria-disabled="true"
-                      className="flex cursor-default items-center gap-3 rounded-[10px] px-3 py-3 text-sm font-medium"
-                      style={{ color: mutedColor }}
-                    >
-                      <Icon size={20} />
-                      {it.label}
-                      <span className="ml-auto text-[10px] font-semibold">
-                        pronto
-                      </span>
-                    </span>
-                  );
-                }
-                return (
-                  <Link
-                    key={it.href}
-                    href={`${basePath}${it.href}`}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-[10px] px-3 py-3 text-sm font-medium hover:bg-white/10"
-                  >
-                    <Icon size={20} />
-                    {it.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            <Section title="Operativo" items={OPERATIONAL} />
+            {owner && <Section title="Solo dueño" items={OWNER_ONLY} />}
           </div>
         </div>
       )}
