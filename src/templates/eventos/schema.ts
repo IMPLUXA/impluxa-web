@@ -18,6 +18,12 @@ export const ServicioSchema = z.object({
   // under the ~10% threshold renders clean (no strike/badge). Absent -> single
   // price as before (backward-compat; Hakuna has no servicios offer -> unaffected).
   price_regular_ars: z.number().optional(),
+  // BRIDGE-KEY-1 closure (M4 s53): id estable de la excursión del motor para que
+  // el puente público (rates.ts) pueda preferir el id sobre el join-by-name (robusto
+  // ante rename del title). OPT-IN: absent (Hakuna / tenants sin motor) -> el puente
+  // cae al match por title (comportamiento actual). zod sin .strict() strippea claves
+  // desconocidas, por eso el campo debe existir en el schema para poder persistirse (M4).
+  excursion_id: z.string().uuid().optional(),
   // Optional photo album (gallery) for the card. Absent (Hakuna) -> no gallery
   // rendered, no lightbox JS loaded. Each entry is an image URL.
   gallery: z.array(z.string()).optional(),
@@ -97,6 +103,10 @@ export const PaseoSchema = z.object({
   // ~10% threshold). Absent -> single price (backward-compat).
   price_regular_ars: z.number().optional(),
   group: z.enum(["regulares", "especiales"]).optional(),
+  // BRIDGE-KEY-1 closure (M4 s53): ver ServicioSchema.excursion_id. OPT-IN: absent
+  // -> puente cae al match por title. Debe existir en el schema (zod strippea claves
+  // desconocidas) para poder persistir el id en M4.
+  excursion_id: z.string().uuid().optional(),
 });
 
 export const ContactoSchema = z.object({
