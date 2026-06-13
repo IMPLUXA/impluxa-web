@@ -9,6 +9,13 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
+// B.2 (R-PUB): RatesManager ahora importa el server action (actions.ts → server.ts
+// "server-only", que tira en jsdom). Mockearlo evita cargar esa cadena + provee la
+// fn (este test es regresión de RENDER, no ejercita el submit del rate-save).
+vi.mock("@/app/app/agency/rates/actions", () => ({
+  setRateAction: vi.fn(async () => ({ ok: true })),
+}));
+
 import { RatesManager } from "@/app/app/agency/rates/RatesManager";
 import type {
   ExcursionRow,
@@ -74,6 +81,8 @@ describe("RatesManager con payload numérico real (regresión P0 s49)", () => {
         initialCategories={CATS}
         role="dueno_admin"
         canEdit={true}
+        tenantSlug="patagoniaviva"
+        tenantCustomDomain={null}
       />,
     );
     expect(screen.getByText("Cerro Catedral")).toBeTruthy();
@@ -89,6 +98,8 @@ describe("RatesManager con payload numérico real (regresión P0 s49)", () => {
         initialCategories={CATS}
         role="dueno_admin"
         canEdit={true}
+        tenantSlug="patagoniaviva"
+        tenantCustomDomain={null}
       />,
     );
     // Exactamente el gesto que mató la página en prod:
