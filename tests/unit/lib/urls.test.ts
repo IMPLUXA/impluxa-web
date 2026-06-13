@@ -33,6 +33,33 @@ describe("siteUrl / siteHostLabel", () => {
   });
 });
 
+describe("siteHostLabel — tenant-aware (FIX 1a s53: custom_domain ?? slug+sufijo)", () => {
+  // El gate byte-id EN VIVO (login curl + canary 9364a04c) cubre la superficie
+  // LOGIN + el render PÚBLICO de Hakuna. Pero el sidebar-admin y la leads-view
+  // del dashboard (Hakuna SÍ los renderiza, tras auth = NO medibles en vivo)
+  // llaman siteHostLabel: este caso-null es la prueba byte-a-byte de que esos
+  // call sites de Hakuna quedan delta-0 (sin custom_domain → slug+sufijo EXACTO,
+  // igual que antes del fix). "delta-0 por construcción" pasa de razonamiento a
+  // test que pasa.
+  it("SIN custom_domain (path Hakuna / tenant sin dominio) → slug+sufijo EXACTO = delta-0", () => {
+    expect(siteHostLabel("hakunamatata")).toBe("hakunamatata.impluxa.com");
+    expect(siteHostLabel("hakunamatata", null)).toBe(
+      "hakunamatata.impluxa.com",
+    );
+    expect(siteHostLabel("hakunamatata", undefined)).toBe(
+      "hakunamatata.impluxa.com",
+    );
+  });
+
+  it("CON custom_domain → el dominio custom canónico (path PV)", () => {
+    expect(siteHostLabel("patagoniaviva", "patagoniaviva.ar")).toBe(
+      "patagoniaviva.ar",
+    );
+    // con custom_domain el slug es irrelevante: gana el dominio canónico
+    expect(siteHostLabel("otroslug", "midominio.com")).toBe("midominio.com");
+  });
+});
+
 describe("TENANT_SLUG_RE (defensa C3 para URLs absolutas)", () => {
   it("acepta slugs reales", () => {
     expect(TENANT_SLUG_RE.test("patagoniaviva")).toBe(true);

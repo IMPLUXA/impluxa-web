@@ -156,7 +156,7 @@ export default async function LoginPage() {
           <img
             src={branding.logoDarkUrl}
             alt={branding.tenantName}
-            className="h-16 w-auto"
+            className="h-28 w-auto"
           />
         ) : (
           <div
@@ -204,12 +204,39 @@ export default async function LoginPage() {
         />
       </div>
 
-      <div
-        className="mt-6 text-xs"
-        style={{ color: `color-mix(in srgb, ${background} 52%, transparent)` }}
-      >
-        Con tecnología de Impluxa
-      </div>
+      {/* FIX 1c s53 — footer PV-opt-in. Byte-id: branch a nivel del <div>; el
+          else-branch es VERBATIM el JSX previo (texto estático, cero
+          interpolación) → Hakuna y todo no-PV renderizan idéntico a hoy,
+          evitando los comment-markers de React SSR entre text-nodes
+          interpolados (lesson react-ssr-comment-markers). Solo PV recibe el
+          <a> a impluxa.com. */}
+      {slug === "patagoniaviva" ? (
+        <div
+          className="mt-6 text-xs"
+          style={{
+            color: `color-mix(in srgb, ${background} 52%, transparent)`,
+          }}
+        >
+          Con tecnología de{" "}
+          <a
+            href="https://impluxa.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Impluxa
+          </a>
+        </div>
+      ) : (
+        <div
+          className="mt-6 text-xs"
+          style={{
+            color: `color-mix(in srgb, ${background} 52%, transparent)`,
+          }}
+        >
+          Con tecnología de Impluxa
+        </div>
+      )}
     </main>
   );
 }

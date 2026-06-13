@@ -406,7 +406,7 @@ export function Sidebar({
         <div className="mb-8 font-serif text-2xl">IMPLUXA</div>
         <div className="text-ash mb-1 text-sm">{tenant.name}</div>
         <div className="text-ash mb-6 text-xs">
-          {siteHostLabel(tenant.slug)}
+          {siteHostLabel(tenant.slug, tenant.custom_domain)}
         </div>
         <nav className="flex-1">
           <div className="text-ash mb-2 px-3 text-[10px] tracking-widest uppercase">

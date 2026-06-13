@@ -89,7 +89,15 @@ export type TenantBranding = LoginBranding & {
   faviconUrl: string | null;
 };
 
-type TenantLike = { id: string; name: string; slug: string };
+type TenantLike = {
+  id: string;
+  name: string;
+  slug: string;
+  // FIX 1a s53: el caller pasa el tenant resuelto (Tenant tiene custom_domain);
+  // opcional acá para no romper callers que pasen un objeto mínimo → fallback
+  // slug+sufijo (= delta-0). Tenant (string|null) es asignable a esto.
+  custom_domain?: string | null;
+};
 
 /**
  * Branding del tenant YA RESUELTO (el caller trae el tenant de su propio
@@ -119,7 +127,7 @@ export const getTenantBranding = cache(async function getTenantBranding(
 
   return {
     tenantName: tenant.name,
-    hostLabel: siteHostLabel(tenant.slug),
+    hostLabel: siteHostLabel(tenant.slug, tenant.custom_domain),
     colors: {
       primary: hexOrNull(colors["primary"]),
       secondary: hexOrNull(colors["secondary"]),
