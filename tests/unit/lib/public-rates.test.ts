@@ -153,3 +153,106 @@ describe("applyCurrentRates (no-op por identidad + override mínimo)", () => {
     expect(logged).toContain("Excursion Renombrada");
   });
 });
+
+describe("applyCurrentRates — paseos[] (M3: puente extendido a las 'Otras')", () => {
+  it("match por title en un paseo → pisa price_ars con la vigente", () => {
+    const content = {
+      paseos: [
+        { title: "Villa Traful", price_ars: 82000 },
+        { title: "Canopy", price_ars: 115000 },
+      ],
+    };
+    const result = applyCurrentRates(
+      content,
+      new Map([["Villa Traful", 90000]]),
+    );
+    expect(result.paseos![0]!.price_ars).toBe(90000); // pisado
+    expect(result.paseos![1]!.price_ars).toBe(115000); // sin match: intacto
+  });
+
+  it("price_regular_ars de un paseo JAMÁS se toca (tachada legal-safe)", () => {
+    const content = {
+      paseos: [
+        {
+          title: "Teleférico Cerro Otto",
+          price_ars: 40000,
+          price_regular_ars: 70000,
+        },
+      ],
+    };
+    const result = applyCurrentRates(
+      content,
+      new Map([["Teleférico Cerro Otto", 45000]]),
+    );
+    expect(result.paseos![0]!.price_ars).toBe(45000);
+    expect(result.paseos![0]!.price_regular_ars).toBe(70000);
+  });
+
+  it("paseo SIN price_ars → NO se agrega precio (la forma del render no cambia)", () => {
+    const content: { paseos: { title: string; price_ars?: number }[] } = {
+      paseos: [{ title: "Sin Precio" }],
+    };
+    const result = applyCurrentRates(content, new Map([["Sin Precio", 9000]]));
+    expect(result.paseos![0]!.price_ars).toBeUndefined();
+  });
+
+  it("pisa servicios Y paseos en la misma pasada", () => {
+    const content = {
+      servicios: [{ title: "Cerro Catedral", price_ars: 38000 }],
+      paseos: [{ title: "Kayak en Lago Gutiérrez", price_ars: 72000 }],
+    };
+    const result = applyCurrentRates(
+      content,
+      new Map([
+        ["Cerro Catedral", 40000],
+        ["Kayak en Lago Gutiérrez", 80000],
+      ]),
+    );
+    expect(result.servicios![0]!.price_ars).toBe(40000);
+    expect(result.paseos![0]!.price_ars).toBe(80000);
+  });
+
+  it("una tarifa que matchea un PASEO no se loggea como unmatched", () => {
+    const content = {
+      servicios: [{ title: "Cerro Catedral", price_ars: 38000 }],
+      paseos: [{ title: "Villa Traful", price_ars: 82000 }],
+    };
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    spy.mockClear(); // aislar de logs de tests previos (mock compartido, sin clearMocks)
+    applyCurrentRates(
+      content,
+      new Map([
+        ["Cerro Catedral", 39000],
+        ["Villa Traful", 90000], // matchea un paseo, NO un servicio
+      ]),
+    );
+    const logged = spy.mock.calls.map((c) => String(c[0])).join("\n");
+    expect(logged).not.toContain("public_rates_unmatched");
+  });
+
+  it("paseo con tachada: el rate vigente JAMÁS toca price_regular_ars (la oferta se autoprotege en el template)", () => {
+    // Si el dueño sube el rate por encima del regular, el bridge pisa price_ars
+    // con el alto pero NO toca price_regular_ars; el componente recalcula
+    // offerPct <= 0 -> rama flat (tachada desaparece sola, legal-safe).
+    const content = {
+      paseos: [
+        { title: "Villa Traful", price_ars: 82000, price_regular_ars: 95000 },
+      ],
+    };
+    const result = applyCurrentRates(
+      content,
+      new Map([["Villa Traful", 99000]]), // rate > price_regular_ars
+    );
+    expect(result.paseos![0]!.price_ars).toBe(99000);
+    expect(result.paseos![0]!.price_regular_ars).toBe(95000); // intacto
+  });
+
+  it("sin servicios NI paseos → mismo objeto aunque haya rates (no-op)", () => {
+    const content = {} as {
+      servicios?: { title: string; price_ars?: number }[];
+      paseos?: { title: string; price_ars?: number }[];
+    };
+    const result = applyCurrentRates(content, new Map([["X", 1000]]));
+    expect(result).toBe(content);
+  });
+});
