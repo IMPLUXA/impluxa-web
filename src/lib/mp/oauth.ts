@@ -125,13 +125,13 @@ const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 180;
 async function postToken(
   body: Record<string, unknown>,
 ): Promise<MpTokenResponse> {
-  // test_token configurable por entorno (NO hardcodeado): boolean true SOLO en sandbox/Preview
-  // (MP_OAUTH_TEST_TOKEN="true"); false en prod. (La doc muestra el ejemplo curl como string
-  // "false"; enviamos boolean — si el sandbox real lo rechaza, pasar a string es trivial.)
+  // test_token configurable por entorno (NO hardcodeado): "true" SOLO en sandbox/Preview
+  // (MP_OAUTH_TEST_TOKEN="true"); "false" en prod. Enviado como STRING (matchea la doc curl
+  // MP "test_token":"false"). Fail-safe: env ausente => "false" => tokens de PRODUCCIÓN.
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ ...body, test_token: testTokenEnabled() }),
+    body: JSON.stringify({ ...body, test_token: String(testTokenEnabled()) }),
   });
   if (!res.ok) {
     // NO loguear el body de respuesta (puede traer detalle sensible); el status alcanza.
