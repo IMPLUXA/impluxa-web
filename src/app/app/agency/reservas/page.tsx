@@ -37,6 +37,9 @@ export default async function ReservasPage() {
   // Crear reserva = los 3 roles (la RPC #24 es la autoridad; null = fail-closed).
   const canCreate =
     role === "vendedor" || role === "encargado" || role === "dueno_admin";
+  // C7.2: cobrar/confirmar = SOLO encargado/dueño (vendedor NO, discovery s52).
+  // Misma fuente que el role-gate del route (current_agency_role) → sin drift.
+  const canCharge = role === "encargado" || role === "dueno_admin";
 
   const sb = await getSupabaseServerClient();
   const [
@@ -44,6 +47,7 @@ export default async function ReservasPage() {
     { data: departures },
     { data: excursions },
     { data: categories },
+    { data: paymentMethods },
   ] = await Promise.all([
     sb
       .from("reservas")
@@ -71,6 +75,12 @@ export default async function ReservasPage() {
       .select("id,tenant_id,code,label,price_factor,created_at")
       .eq("tenant_id", tenant.id)
       .order("price_factor", { ascending: false, nullsFirst: false }),
+    sb
+      .from("payment_methods")
+      .select("code,label,active")
+      .eq("tenant_id", tenant.id)
+      .eq("active", true)
+      .order("code", { ascending: true }),
   ]);
 
   return (
@@ -80,6 +90,11 @@ export default async function ReservasPage() {
       excursions={(excursions ?? []) as ExcursionRow[]}
       categories={(categories ?? []) as PassengerCategoryRow[]}
       canCreate={canCreate}
+      canCharge={canCharge}
+      paymentMethods={(paymentMethods ?? []).map((m) => ({
+        code: m.code as string,
+        label: m.label as string,
+      }))}
       isVendedor={role === "vendedor"}
     />
   );

@@ -64,6 +64,8 @@ export function ReservasManager({
   excursions,
   categories,
   canCreate,
+  canCharge,
+  paymentMethods,
   isVendedor,
 }: {
   initialReservas: ReservaRow[];
@@ -71,6 +73,8 @@ export function ReservasManager({
   excursions: ExcursionRow[];
   categories: PassengerCategoryRow[];
   canCreate: boolean;
+  canCharge: boolean;
+  paymentMethods: { code: string; label: string }[];
   isVendedor: boolean;
 }) {
   const [reservas, setReservas] = useState<ReservaRow[]>(initialReservas);
@@ -79,6 +83,15 @@ export function ReservasManager({
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
+
+  // C7.2 — cobro manual presencial (efectivo/transferencia)
+  const [payRes, setPayRes] = useState<ReservaRow | null>(null);
+  const [payMethod, setPayMethod] = useState("");
+  const [payAmount, setPayAmount] = useState("");
+  const [payConfirm, setPayConfirm] = useState(true);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payStatus, setPayStatus] = useState<string | null>(null);
+  const [payIdemKey, setPayIdemKey] = useState("");
 
   const [formDep, setFormDep] = useState("");
   const [holderName, setHolderName] = useState("");
@@ -170,6 +183,67 @@ export function ReservasManager({
     window.location.reload();
   }
 
+  function openPay(r: ReservaRow) {
+    setPayRes(r);
+    setPayMethod(paymentMethods[0]?.code ?? "");
+    // boundary number|string del snapshot (lesson P0 s49); el monto autoritativo es
+    // snapshot_gross, B1 lo valida server-side.
+    setPayAmount(String(r.snapshot_gross ?? ""));
+    setPayConfirm(true);
+    setPayStatus(null);
+    // key por INTENTO (reusado en reintentos del mismo dialog) = idempotencia real,
+    // no sólo el busy. Defensa en profundidad con pagos_tenant_idem_uk.
+    setPayIdemKey(crypto.randomUUID());
+  }
+
+  function payErrorMessage(
+    body: { error_code?: string; message?: string },
+    httpStatus: number,
+  ): string {
+    switch (body.error_code) {
+      case "MONTO_EXCEDE_SALDO":
+        return "El monto excede el saldo pendiente";
+      case "HOLD_VENCIDO":
+        return "El hold de la reserva venció";
+      case "METODO_PAGO_INVALIDO":
+        return "Método de pago inválido";
+      case "ESTADO_INVALIDO":
+        return "La reserva no está en pre-reserva";
+      case "RESERVA_INEXISTENTE":
+        return "Reserva inexistente";
+      case "IDEMPOTENCY_CONFLICT":
+        return "Ese comprobante ya se usó en otra reserva";
+      case "PARAMS_INVALIDOS":
+        return body.message ?? "Datos inválidos";
+    }
+    if (httpStatus === 403) return "Sin permiso para cobrar";
+    return body.message ?? "Error al registrar el pago";
+  }
+
+  async function submitPay() {
+    if (!payRes) return;
+    setPayBusy(true);
+    setPayStatus(null);
+    const res = await fetch(`/api/agency/reservas/${payRes.id}/pago`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        method_code: payMethod,
+        amount: Number(payAmount), // número JSON (el RPC exige jsonb number)
+        idempotency_key: payIdemKey,
+        confirm: payConfirm,
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    setPayBusy(false);
+    if (!res.ok) {
+      setPayStatus(payErrorMessage(body, res.status));
+      return;
+    }
+    // ok (incluye idempotent_replay = ya aplicado a ESTA reserva) → recargar (fuente de verdad).
+    window.location.reload();
+  }
+
   return (
     <div className="max-w-6xl space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -235,6 +309,7 @@ export function ReservasManager({
                 <th className="px-3 py-2">Total</th>
                 <th className="px-3 py-2">Estado</th>
                 <th className="px-3 py-2">Hold hasta</th>
+                {canCharge && <th className="px-3 py-2">Acción</th>}
               </tr>
             </thead>
             <tbody>
@@ -290,6 +365,18 @@ export function ReservasManager({
                           })
                         : "—"}
                     </td>
+                    {canCharge && (
+                      <td className="px-3 py-2">
+                        {r.status === "pre_reserva" && !vencido ? (
+                          <button
+                            onClick={() => openPay(r)}
+                            className="bg-onyx text-bone rounded px-3 py-1 text-xs hover:opacity-90"
+                          >
+                            Registrar pago
+                          </button>
+                        ) : null}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -395,6 +482,69 @@ export function ReservasManager({
                 className="bg-onyx text-bone rounded px-4 py-2 text-sm disabled:opacity-50"
               >
                 {busy ? "Reservando…" : "Crear reserva"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {payRes && (
+        <div className="bg-onyx/70 fixed inset-0 z-40 flex items-center justify-center p-4">
+          {/* Card hereda el color del shell (lesson R1). */}
+          <div className="bg-marble w-full max-w-md space-y-4 rounded-lg p-6">
+            <h2 className="text-lg font-bold">Registrar pago</h2>
+            <p className="text-ash text-sm">
+              {payRes.reservation_code} · {payRes.holder_name} · total{" "}
+              {fmtMoney(payRes.snapshot_gross)}
+            </p>
+            <label className="block text-sm">
+              Método
+              <select
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value)}
+                className="border-stone mt-1 w-full rounded border px-3 py-2"
+              >
+                {paymentMethods.map((m) => (
+                  <option key={m.code} value={m.code}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm">
+              Monto
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+                className="border-stone mt-1 w-full rounded border px-3 py-2"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={payConfirm}
+                onChange={(e) => setPayConfirm(e.target.checked)}
+              />
+              Confirmar la reserva (pre-reserva → reserva)
+            </label>
+            {payStatus && <div className="text-sm">{payStatus}</div>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setPayRes(null)}
+                disabled={payBusy}
+                className="rounded px-4 py-2 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitPay}
+                disabled={payBusy || payMethod === "" || Number(payAmount) <= 0}
+                className="bg-onyx text-bone rounded px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {payBusy ? "Registrando…" : "Registrar pago"}
               </button>
             </div>
           </div>
