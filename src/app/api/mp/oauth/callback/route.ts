@@ -25,29 +25,51 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const stateParam = url.searchParams.get("state");
-  const errBack = NextResponse.redirect(new URL("/app?mp=error", req.url));
 
-  if (!cookie || !code || !stateParam) return errBack;
+  // Observabilidad PURA (s55): cada rechazo pre-exchange loguea un reason-code NO
+  // sensible para diagnosticar por qué corta el callback. NUNCA tokens, NUNCA el
+  // valor de la cookie/state, NUNCA PII: solo el código de motivo, booleanos de
+  // PRESENCIA (has_*) y el label de rol (no sensible). El redirect sigue a /app
+  // (target host-aware = deuda go-live, fuera de este corte).
+  const reject = (reason: string, extra?: Record<string, unknown>) => {
+    console.log(
+      JSON.stringify({
+        level: "info",
+        event: "mp_oauth_callback_reject",
+        reason,
+        ...extra,
+      }),
+    );
+    return NextResponse.redirect(new URL("/app?mp=error", req.url));
+  };
+
+  if (!cookie || !code || !stateParam)
+    return reject("missing_params", {
+      has_cookie: !!cookie,
+      has_code: !!code,
+      has_state: !!stateParam,
+    });
 
   let payload;
   try {
     payload = await verifyState(cookie);
   } catch {
-    return errBack; // firma/expiración inválida
+    return reject("state_verify_failed"); // firma/expiración inválida
   }
-  if (payload.state !== stateParam) return errBack; // anti-CSRF
+  if (payload.state !== stateParam) return reject("state_mismatch"); // anti-CSRF
 
   // Defensa en profundidad (Two-Pass cold P1): la cookie firmada prueba quién
   // INICIÓ el flujo; esto confirma que sigue siendo el mismo usuario + tenant +
   // rol AHORA (sesión pudo cambiar / rol pudo degradarse en la ventana de 10m).
   const guard = await requireActiveTenantOrResponse();
-  if (!guard.ok) return errBack; // sesión perdida → fail-closed
+  if (!guard.ok) return reject("no_active_session"); // sesión perdida → fail-closed
   if (guard.user.id !== payload.userId || guard.tenantId !== payload.tenantId) {
-    return errBack; // el actor/tenant cambió entre authorize y callback
+    return reject("actor_or_tenant_mismatch"); // el actor/tenant cambió entre authorize y callback
   }
   const sb = await getSupabaseServerClient();
   const { data: role } = await sb.rpc("current_agency_role");
-  if (role !== "dueno_admin" && role !== "encargado") return errBack; // rol degradado
+  if (role !== "dueno_admin" && role !== "encargado")
+    return reject("role_not_allowed", { role: role ?? null }); // rol degradado
 
   try {
     const tokens = await exchangeCodeForTokens({
@@ -71,7 +93,7 @@ export async function GET(req: NextRequest) {
         err: err instanceof Error ? err.message : String(err),
       }),
     );
-    return errBack;
+    return NextResponse.redirect(new URL("/app?mp=error", req.url));
   }
 
   return NextResponse.redirect(new URL("/app?mp=connected", req.url));
