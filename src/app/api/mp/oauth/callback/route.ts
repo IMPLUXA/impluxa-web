@@ -13,7 +13,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 // GET /api/mp/oauth/callback?code=...&state=... — vuelta del consentimiento MP.
 // Valida state (cookie firmada single-use) vs el state echo, intercambia el code
-// server-to-server (cliente confidencial, sin PKCE) y persiste los tokens CIFRADOS. Redirige
+// server-to-server (con el PKCE verifier) y persiste los tokens CIFRADOS. Redirige
 // al panel con ?mp=connected | ?mp=error (sin filtrar detalle). SCAFFOLD: el exchange
 // real necesita F0 (creds en env); sin eso falla fail-closed → ?mp=error.
 export async function GET(req: NextRequest) {
@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
   try {
     const tokens = await exchangeCodeForTokens({
       code,
+      codeVerifier: payload.verifier,
     });
     await upsertMpCredentials(payload.tenantId, {
       accessToken: tokens.accessToken,

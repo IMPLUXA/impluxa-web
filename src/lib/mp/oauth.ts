@@ -1,5 +1,5 @@
 import "server-only";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 
 // ============================================================================
@@ -10,11 +10,13 @@ import { SignJWT, jwtVerify } from "jose";
 //   exchange server-to-server en /oauth/token -> access_token (180d) +
 //   refresh_token (6m, requiere scope offline_access).
 //
-// SIN PKCE (s55): la doc viva de MP NO usa code_challenge/code_verifier en este flujo
-// (mandarlos rompe el exchange con 400). Cliente CONFIDENCIAL: el `client_secret`
-// autentica el token request server-to-server y el `code` JAMÁS va al browser, así que
-// el secret ES la auth (PKCE no aporta acá). El `state` (anti-CSRF, atado a tenant+user)
-// viaja en una cookie httpOnly FIRMADA (jose HS256), single-use, TTL 10m.
+// PKCE OBLIGATORIO (s55): la app tiene PKCE habilitado en el panel MP -> MP EXIGE
+// code_verifier en el exchange (probado empirico: 400 "code_verifier is a required
+// parameter"). authorize manda code_challenge (S256); el code_verifier se persiste en
+// la cookie FIRMADA del state y se manda en el exchange. El `client_secret` y el `code`
+// JAMAS van al browser (exchange server-to-server). El `state` (anti-CSRF, atado a
+// tenant+user) + el verifier viajan en una cookie httpOnly FIRMADA (jose HS256),
+// single-use, TTL 10m.
 //
 // F0 (CEO): los valores reales (client id/secret, redirect uri, secreto de
 // firma del state) son env de deploy. SCAFFOLD: en preview alcanzan valores de
@@ -25,7 +27,11 @@ import { SignJWT, jwtVerify } from "jose";
 // esquivar un falso-positivo del Sentinel (regla *_SECRET$ / patrón env).
 // ============================================================================
 
-const AUTH_BASE = "https://auth.mercadopago.com/authorization";
+// Host del authorize POR PAIS (AR): auth.mercadopago.com.ar dispara el login de
+// MercadoLibre + el consent. El host GLOBAL (.com) cae en un picker de pais que NO
+// encadena al login (callejon, probado empirico s55). DEUDA go-live multi-pais: derivar
+// el host del pais del seller. El TOKEN_URL del exchange es global y NO cambia.
+const AUTH_BASE = "https://auth.mercadopago.com.ar/authorization";
 const TOKEN_URL = "https://api.mercadopago.com/oauth/token";
 // Prefijo __Host- (Two-Pass cold P2): el navegador fuerza Secure + sin Domain +
 // Path=/ → endurece contra cookie-injection desde subdominios.
@@ -58,32 +64,46 @@ function testTokenEnabled(): boolean {
 
 const b64url = (buf: Buffer) => buf.toString("base64url");
 
+/** PKCE S256: verifier aleatorio + challenge = base64url(sha256(verifier)). */
+export function generatePkce(): { verifier: string; challenge: string } {
+  const verifier = b64url(randomBytes(32));
+  const challenge = b64url(createHash("sha256").update(verifier).digest());
+  return { verifier, challenge };
+}
+
 /** state anti-CSRF aleatorio (≥128 bits). */
 export function generateState(): string {
   return b64url(randomBytes(16));
 }
 
-/** URL de autorización (solo lleva client_id/redirect/state; nunca el secret).
- *  SIN PKCE: la doc viva de MP no usa code_challenge en este flujo. */
-export function buildAuthorizeUrl(args: { state: string }): string {
+/** URL de autorización (client_id/redirect/state/code_challenge; nunca el secret).
+ *  PKCE S256: la app tiene PKCE habilitado -> MP exige code_challenge aquí + code_verifier
+ *  en el exchange. */
+export function buildAuthorizeUrl(args: {
+  state: string;
+  codeChallenge: string;
+}): string {
   const u = new URL(AUTH_BASE);
   u.searchParams.set("client_id", clientId());
   u.searchParams.set("response_type", "code");
   u.searchParams.set("platform_id", "mp");
   u.searchParams.set("redirect_uri", redirectUri());
   u.searchParams.set("state", args.state);
+  u.searchParams.set("code_challenge", args.codeChallenge);
+  u.searchParams.set("code_challenge_method", "S256");
   return u.toString();
 }
 
 export type StatePayload = {
   state: string;
+  verifier: string;
   tenantId: string;
   userId: string;
 };
 
 /** Firma el payload de state en un JWT HS256 single-use (TTL 10m) para la cookie httpOnly. */
 export async function signState(p: StatePayload): Promise<string> {
-  return new SignJWT({ st: p.state, t: p.tenantId, u: p.userId })
+  return new SignJWT({ st: p.state, v: p.verifier, t: p.tenantId, u: p.userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
@@ -95,6 +115,7 @@ export async function verifyState(token: string): Promise<StatePayload> {
   const { payload } = await jwtVerify(token, stateSigningKey());
   return {
     state: payload.st as string,
+    verifier: payload.v as string,
     tenantId: payload.t as string,
     userId: payload.u as string,
   };
@@ -184,9 +205,10 @@ async function postToken(
   };
 }
 
-/** Intercambia el `code` del callback por tokens (server-to-server, cliente confidencial). */
+/** Intercambia el `code` del callback por tokens (server-to-server, con PKCE verifier). */
 export async function exchangeCodeForTokens(args: {
   code: string;
+  codeVerifier: string;
 }): Promise<MpTokenResponse> {
   return postToken({
     client_id: clientId(),
@@ -194,6 +216,7 @@ export async function exchangeCodeForTokens(args: {
     code: args.code,
     grant_type: "authorization_code",
     redirect_uri: redirectUri(),
+    code_verifier: args.codeVerifier,
   });
 }
 
