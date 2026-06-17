@@ -143,7 +143,30 @@ async function postToken(
     user_id?: number | string;
     scope?: string;
     expires_in?: number;
+    live_mode?: boolean;
   };
+  // Marcador AUTORITATIVO del MODO del token (sandbox vs produccion). Gate de
+  // verificacion sandbox (Two-Pass cold s55, P0/P1). NO loguea el token: solo el
+  // prefijo-de-TIPO (parte ANTES del primer "-": p.ej. "TEST" | "APP_USR" = etiqueta
+  // no-secreta, nunca el random) + live_mode si MP lo devuelve. live_mode===false o
+  // prefijo "TEST" => sandbox; "APP_USR" => produccion. Permite probar el test_token
+  // POST-exchange en runtime SIN descifrar ni exponer el access_token (el resto del
+  // body sigue sin loguearse, ver arriba).
+  const at = j.access_token ?? "";
+  const tokenPrefix = at.includes("-")
+    ? at.slice(0, Math.min(at.indexOf("-"), 12)) // cap defensivo: jamas un segmento largo
+    : at
+      ? "NO_DASH"
+      : "EMPTY";
+  console.log(
+    JSON.stringify({
+      level: "info",
+      event: "mp_oauth_token_mode",
+      grant: typeof body.grant_type === "string" ? body.grant_type : null,
+      live_mode: j.live_mode ?? null,
+      token_prefix: tokenPrefix,
+    }),
+  );
   const now = Date.now();
   return {
     accessToken: j.access_token,
