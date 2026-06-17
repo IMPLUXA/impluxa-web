@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 import { requireActiveTenantOrResponse } from "@/lib/auth/guard";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
-  generatePkce,
   generateState,
   buildAuthorizeUrl,
   signState,
@@ -14,7 +13,7 @@ import {
 
 // GET /api/mp/oauth/authorize — inicia el OAuth-connect del tenant con MercadoPago.
 // Solo dueño/encargado puede conectar (un vendedor NO debe enlazar/pisar la cuenta MP).
-// Setea cookie httpOnly firmada con {state, verifier, tenant, user} y redirige a MP.
+// Setea cookie httpOnly firmada con {state, tenant, user} y redirige a MP.
 // SCAFFOLD: requiere F0 (MP_CLIENT_ID / redirect / firma del state en env). Sin esos
 // env, signState/buildAuthorizeUrl fallan fail-closed (500), por diseño.
 export async function GET() {
@@ -31,11 +30,9 @@ export async function GET() {
     );
   }
 
-  const { verifier, challenge } = generatePkce();
   const state = generateState();
   const cookie = await signState({
     state,
-    verifier,
     tenantId: guard.tenantId,
     userId: guard.user.id,
   });
@@ -49,7 +46,5 @@ export async function GET() {
     maxAge: 600, // 10m — alineado con la validez del code de MP
   });
 
-  return NextResponse.redirect(
-    buildAuthorizeUrl({ state, codeChallenge: challenge }),
-  );
+  return NextResponse.redirect(buildAuthorizeUrl({ state }));
 }

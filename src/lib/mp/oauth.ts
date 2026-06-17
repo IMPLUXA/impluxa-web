@@ -1,18 +1,20 @@
 import "server-only";
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 
 // ============================================================================
-// Helpers OAuth MercadoPago (F2 build MP s55) — authorization_code + PKCE S256.
+// Helpers OAuth MercadoPago (F2 build MP s55) — authorization_code (cliente confidencial).
 //
-// Flujo (doc MP verificada 2026-06-15):
+// Flujo (doc viva MP verificada 2026-06-17):
 //   authorize -> el dueño consiente en MP -> redirect con `code` (10 min) ->
 //   exchange server-to-server en /oauth/token -> access_token (180d) +
 //   refresh_token (6m, requiere scope offline_access).
 //
-// Seguridad: el `state` (anti-CSRF, atado a tenant+user) y el `code_verifier`
-// (PKCE) viajan en una cookie httpOnly FIRMADA (jose HS256), single-use, TTL 10m.
-// El client-secret y el `code` JAMÁS van al browser: el exchange es server-side.
+// SIN PKCE (s55): la doc viva de MP NO usa code_challenge/code_verifier en este flujo
+// (mandarlos rompe el exchange con 400). Cliente CONFIDENCIAL: el `client_secret`
+// autentica el token request server-to-server y el `code` JAMÁS va al browser, así que
+// el secret ES la auth (PKCE no aporta acá). El `state` (anti-CSRF, atado a tenant+user)
+// viaja en una cookie httpOnly FIRMADA (jose HS256), single-use, TTL 10m.
 //
 // F0 (CEO): los valores reales (client id/secret, redirect uri, secreto de
 // firma del state) son env de deploy. SCAFFOLD: en preview alcanzan valores de
@@ -56,44 +58,32 @@ function testTokenEnabled(): boolean {
 
 const b64url = (buf: Buffer) => buf.toString("base64url");
 
-/** PKCE S256: verifier aleatorio + challenge = base64url(sha256(verifier)). */
-export function generatePkce(): { verifier: string; challenge: string } {
-  const verifier = b64url(randomBytes(32));
-  const challenge = b64url(createHash("sha256").update(verifier).digest());
-  return { verifier, challenge };
-}
-
 /** state anti-CSRF aleatorio (≥128 bits). */
 export function generateState(): string {
   return b64url(randomBytes(16));
 }
 
-/** URL de autorización (solo lleva client_id/redirect/state/challenge; nunca el secret). */
-export function buildAuthorizeUrl(args: {
-  state: string;
-  codeChallenge: string;
-}): string {
+/** URL de autorización (solo lleva client_id/redirect/state; nunca el secret).
+ *  SIN PKCE: la doc viva de MP no usa code_challenge en este flujo. */
+export function buildAuthorizeUrl(args: { state: string }): string {
   const u = new URL(AUTH_BASE);
   u.searchParams.set("client_id", clientId());
   u.searchParams.set("response_type", "code");
   u.searchParams.set("platform_id", "mp");
   u.searchParams.set("redirect_uri", redirectUri());
   u.searchParams.set("state", args.state);
-  u.searchParams.set("code_challenge", args.codeChallenge);
-  u.searchParams.set("code_challenge_method", "S256");
   return u.toString();
 }
 
 export type StatePayload = {
   state: string;
-  verifier: string;
   tenantId: string;
   userId: string;
 };
 
 /** Firma el payload de state en un JWT HS256 single-use (TTL 10m) para la cookie httpOnly. */
 export async function signState(p: StatePayload): Promise<string> {
-  return new SignJWT({ st: p.state, v: p.verifier, t: p.tenantId, u: p.userId })
+  return new SignJWT({ st: p.state, t: p.tenantId, u: p.userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
@@ -105,7 +95,6 @@ export async function verifyState(token: string): Promise<StatePayload> {
   const { payload } = await jwtVerify(token, stateSigningKey());
   return {
     state: payload.st as string,
-    verifier: payload.v as string,
     tenantId: payload.t as string,
     userId: payload.u as string,
   };
@@ -134,7 +123,24 @@ async function postToken(
     body: JSON.stringify({ ...body, test_token: String(testTokenEnabled()) }),
   });
   if (!res.ok) {
-    // NO loguear el body de respuesta (puede traer detalle sensible); el status alcanza.
+    // RED de diagnóstico (s55): el body de un 4xx de /oauth/token es el ERROR de MP
+    // (p.ej. {"error":"invalid_grant"|"invalid_client",...}). NO trae access/refresh token
+    // (el exchange falló) NI el client_secret (un server OAuth NUNCA devuelve el secret en
+    // la respuesta). Observabilidad pura para diagnosticar el fallo del exchange.
+    let errBody = "";
+    try {
+      errBody = (await res.text()).slice(0, 500);
+    } catch {
+      errBody = "<no-body>";
+    }
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "mp_oauth_token_http_error",
+        status: res.status,
+        body: errBody,
+      }),
+    );
     throw new Error(`mp-oauth: token endpoint respondió ${res.status}`);
   }
   const j = (await res.json()) as {
@@ -178,10 +184,9 @@ async function postToken(
   };
 }
 
-/** Intercambia el `code` del callback por tokens (server-to-server, con PKCE verifier). */
+/** Intercambia el `code` del callback por tokens (server-to-server, cliente confidencial). */
 export async function exchangeCodeForTokens(args: {
   code: string;
-  codeVerifier: string;
 }): Promise<MpTokenResponse> {
   return postToken({
     client_id: clientId(),
@@ -189,7 +194,6 @@ export async function exchangeCodeForTokens(args: {
     code: args.code,
     grant_type: "authorization_code",
     redirect_uri: redirectUri(),
-    code_verifier: args.codeVerifier,
   });
 }
 
