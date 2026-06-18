@@ -138,4 +138,17 @@ describe("buildCheckoutProPreferenceBody", () => {
     expect(u.searchParams.get("foo")).toBe("bar");
     expect(u.searchParams.get("source_news")).toBe("webhooks");
   });
+
+  it("F3: externalReference override codifica tenant:reserva (CHECK, no autoridad)", () => {
+    const b = buildCheckoutProPreferenceBody({
+      ...base,
+      externalReference: "tenant-abc:reserva-xyz",
+    });
+    expect(b.external_reference).toBe("tenant-abc:reserva-xyz");
+  });
+
+  it("F3: sin externalReference, external_reference cae a reservaId (compat previo)", () => {
+    const b = buildCheckoutProPreferenceBody(base);
+    expect(b.external_reference).toBe(base.reservaId);
+  });
 });

@@ -33,6 +33,10 @@ export type BuildPreferenceInput = {
   notificationUrl: string; // https, endpoint del webhook (se le agrega source_news=webhooks)
   itemId?: string;
   autoReturn?: "approved" | "all"; // default "approved" (redirige solo si aprobó)
+  // F3: override de external_reference. Si se da, codifica "<tenant_id>:<reserva_id>"
+  // como CHECK de consistencia (NO autoridad: el webhook resuelve el tenant por el
+  // collector_id del payment). Si se omite, default = reservaId (compat previo).
+  externalReference?: string;
 };
 
 export type CheckoutProPreferenceBody = {
@@ -108,7 +112,7 @@ export function buildCheckoutProPreferenceBody(
         currency_id: currency,
       },
     ],
-    external_reference: reservaId,
+    external_reference: input.externalReference ?? reservaId,
     back_urls: {
       success: backUrls.success,
       pending: backUrls.pending,

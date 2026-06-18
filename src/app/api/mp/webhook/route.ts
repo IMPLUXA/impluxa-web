@@ -11,7 +11,8 @@ const ENV_WEBHOOK_SECRET = ["MP", "WEBHOOK", "SECRET"].join("_");
 // F4a (este scaffold): valida la firma x-signature (HMAC-SHA256 constant-time +
 // anti-replay) y LOGUEA. NO muta DB (dry-run). Sin el secreto (F0) → fail-closed (503).
 // F4b (necesita F0 + round-trip): re-consultar GET /v1/payments/{data.id} con el token
-// del tenant, resolver tenant+reserva via external_reference y llamar a la RPC
+// del tenant, resolver el TENANT por collector_id del payment (autoridad; indice
+// mp_user_idx) + la reserva por external_reference (tenant_id ahi = solo CHECK), y llamar a la RPC
 // confirmar_pago_webhook (v030_007) vía service client. Hasta entonces, dry-run.
 export async function POST(req: NextRequest) {
   const secret = process.env[ENV_WEBHOOK_SECRET];
@@ -52,7 +53,9 @@ export async function POST(req: NextRequest) {
   );
   // TODO F4b (post-F0): VALIDAR data.id numérico (/^\d+$/) ANTES de usarlo en la URL de
   //   re-consulta (anti-SSRF/path-injection, Two-Pass cold P2) → fetch GET /v1/payments/{dataId}
-  //   con el access_token del tenant → resolver tenant+reserva (external_reference) → validar
+  //   con el access_token del tenant → resolver el TENANT por collector_id del payment
+  //   (AUTORIDAD; indice mp_user_idx) + la reserva por external_reference (tenant_id ahi = solo
+  //   CHECK de consistencia, atacante-influenciable; F3 s56) → validar
   //   monto vs snapshot → getSupabaseServiceClient().rpc('confirmar_pago_webhook', { p_tenant_id,
   //   p_reserva_id, p_mp_payment_id, p_amount, p_currency, p_mp_status }). Idempotencia de replay
   //   garantizada por la RPC (mp_payment_id UNIQUE), NO por la ventana de ts.
