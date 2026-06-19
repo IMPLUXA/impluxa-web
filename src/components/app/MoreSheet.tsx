@@ -9,6 +9,7 @@ import {
   Wallet,
   SquaresFour,
   CreditCard,
+  Money,
   X,
 } from "@phosphor-icons/react";
 
@@ -47,6 +48,8 @@ const OPERATIONAL: SheetItem[] = [
 // no agrega ni saca nada de este bloque.
 const OWNER_ONLY: SheetItem[] = [
   { href: "/finanzas", label: "Finanzas", Icon: Wallet },
+  // UI-connect MP (s57): espejo móvil de NAV_BRANDED_OWNER (drift declarado).
+  { href: "/pagos", label: "Cobros", Icon: Money },
   { href: "/modulos", label: "Módulos", Icon: SquaresFour },
   {
     href: "/billing",
