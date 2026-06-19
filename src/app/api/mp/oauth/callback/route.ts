@@ -18,6 +18,17 @@ import { getAdminBasePath, mpConnectReturnPath } from "@/lib/urls";
 // a la sección Cobros del panel (HOST-AWARE, UI-connect s57) con ?mp=connected | ?mp=error
 // (sin filtrar detalle). El exchange real necesita F0 (creds en env).
 export async function GET(req: NextRequest) {
+  // Guard SIGNAL-14: el callback escribe tokens a tenant_mp_credentials (prod). En
+  // preview/dev (el env apunta a prod, sin preview-DB) NO debe mutar -> fue la ruta que
+  // mas muto prod desde un preview en s55 (round-trip OAuth). 403 antes de tocar
+  // cookie/exchange/upsert. VERCEL_ENV ausente local = permitido.
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") {
+    return NextResponse.json(
+      { ok: false, error: "forbidden", code: "E_NON_PROD" },
+      { status: 403 },
+    );
+  }
+
   const store = await cookies();
   const cookie = store.get(MP_OAUTH_STATE_COOKIE)?.value;
   // single-use: limpiar la cookie SIEMPRE, pase lo que pase.

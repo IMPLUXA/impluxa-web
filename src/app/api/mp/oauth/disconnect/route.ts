@@ -34,6 +34,17 @@ function originMatchesHost(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  // Guard SIGNAL-14: nunca mutar prod desde preview/dev. No hay preview-DB -> el env de
+  // Preview apunta a la DB de prod. VERCEL_ENV = "production"|"preview"|"development";
+  // ausente local (tests/dev) = permitido. Cierra el footgun: Desconectar en un preview
+  // NO revoca la conexion real de prod.
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") {
+    return NextResponse.json(
+      { ok: false, error: "forbidden", code: "E_NON_PROD" },
+      { status: 403 },
+    );
+  }
+
   const guard = await requireActiveTenantOrResponse();
   if (!guard.ok) return guard.response;
 

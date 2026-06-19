@@ -59,6 +59,7 @@ describe("POST /api/mp/oauth/disconnect", () => {
     ctl.rpcResult = { data: { ok: true, pending: 0 }, error: null };
     ctl.setStatusCalls = [];
     ctl.setStatusThrows = false;
+    delete process.env.VERCEL_ENV;
   });
 
   it("sin sesión activa → devuelve la response del guard", async () => {
@@ -82,6 +83,14 @@ describe("POST /api/mp/oauth/disconnect", () => {
     const res = await POST(mockReq({ host: "patagoniaviva.ar" }));
     expect(res.status).toBe(403);
     expect((await res.json()).code).toBe("E_ROLE");
+    expect(ctl.setStatusCalls).toHaveLength(0);
+  });
+
+  it("VERCEL_ENV=preview → 403 E_NON_PROD (guard SIGNAL-14, no muta prod desde preview)", async () => {
+    process.env.VERCEL_ENV = "preview";
+    const res = await POST(mockReq({ host: "patagoniaviva.ar" }));
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("E_NON_PROD");
     expect(ctl.setStatusCalls).toHaveLength(0);
   });
 
