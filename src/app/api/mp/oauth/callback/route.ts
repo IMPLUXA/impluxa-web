@@ -10,13 +10,25 @@ import {
 import { upsertMpCredentials } from "@/lib/mp/credentials";
 import { requireActiveTenantOrResponse } from "@/lib/auth/guard";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getAdminBasePath, mpConnectReturnPath } from "@/lib/urls";
 
 // GET /api/mp/oauth/callback?code=...&state=... — vuelta del consentimiento MP.
 // Valida state (cookie firmada single-use) vs el state echo, intercambia el code
 // server-to-server (con el PKCE verifier) y persiste los tokens CIFRADOS. Redirige
-// al panel con ?mp=connected | ?mp=error (sin filtrar detalle). SCAFFOLD: el exchange
-// real necesita F0 (creds en env); sin eso falla fail-closed → ?mp=error.
+// a la sección Cobros del panel (HOST-AWARE, UI-connect s57) con ?mp=connected | ?mp=error
+// (sin filtrar detalle). El exchange real necesita F0 (creds en env).
 export async function GET(req: NextRequest) {
+  // Guard SIGNAL-14: el callback escribe tokens a tenant_mp_credentials (prod). En
+  // preview/dev (el env apunta a prod, sin preview-DB) NO debe mutar -> fue la ruta que
+  // mas muto prod desde un preview en s55 (round-trip OAuth). 403 antes de tocar
+  // cookie/exchange/upsert. VERCEL_ENV ausente local = permitido.
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") {
+    return NextResponse.json(
+      { ok: false, error: "forbidden", code: "E_NON_PROD" },
+      { status: 403 },
+    );
+  }
+
   const store = await cookies();
   const cookie = store.get(MP_OAUTH_STATE_COOKIE)?.value;
   // single-use: limpiar la cookie SIEMPRE, pase lo que pase.
@@ -26,11 +38,14 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get("code");
   const stateParam = url.searchParams.get("state");
 
+  // Target host-aware del retorno (UI-connect s57): en .ar → /admin/pagos, en
+  // app.impluxa.com → /pagos. Cierra el 404 cosmético del connect del dueño.
+  const basePath = await getAdminBasePath();
+
   // Observabilidad PURA (s55): cada rechazo pre-exchange loguea un reason-code NO
   // sensible para diagnosticar por qué corta el callback. NUNCA tokens, NUNCA el
   // valor de la cookie/state, NUNCA PII: solo el código de motivo, booleanos de
-  // PRESENCIA (has_*) y el label de rol (no sensible). El redirect sigue a /app
-  // (target host-aware = deuda go-live, fuera de este corte).
+  // PRESENCIA (has_*) y el label de rol (no sensible).
   const reject = (reason: string, extra?: Record<string, unknown>) => {
     console.log(
       JSON.stringify({
@@ -40,7 +55,9 @@ export async function GET(req: NextRequest) {
         ...extra,
       }),
     );
-    return NextResponse.redirect(new URL("/app?mp=error", req.url));
+    return NextResponse.redirect(
+      new URL(mpConnectReturnPath(basePath, "error"), req.url),
+    );
   };
 
   if (!cookie || !code || !stateParam)
@@ -93,8 +110,12 @@ export async function GET(req: NextRequest) {
         err: err instanceof Error ? err.message : String(err),
       }),
     );
-    return NextResponse.redirect(new URL("/app?mp=error", req.url));
+    return NextResponse.redirect(
+      new URL(mpConnectReturnPath(basePath, "error"), req.url),
+    );
   }
 
-  return NextResponse.redirect(new URL("/app?mp=connected", req.url));
+  return NextResponse.redirect(
+    new URL(mpConnectReturnPath(basePath, "connected"), req.url),
+  );
 }
