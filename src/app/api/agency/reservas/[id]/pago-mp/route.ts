@@ -13,6 +13,7 @@ import {
   type MpCurrency,
 } from "@/lib/mp/preference";
 import { createCheckoutProPreference } from "@/lib/mp/preference-api";
+import { getAdminBasePath, mpCheckoutReturnPath } from "@/lib/urls";
 
 export const runtime = "nodejs";
 
@@ -175,6 +176,10 @@ export async function POST(
   // (3) Crea la preferencia en MP. Si falla -> cleanup de la fila pendiente.
   const host = req.headers.get("host");
   const base = `https://${host}`;
+  // Host-aware return (C-COBRO-MP C1): el dueño/pasajero vuelve a la página de retorno del
+  // panel correcto. Cierra el 404 VIVO de `/app?mp=return` en patagoniaviva.ar (/app no
+  // existe en el dominio custom; sólo /admin/* se rewritea). basePath del MISMO host del request.
+  const adminBase = await getAdminBasePath();
   try {
     const pref = await createCheckoutProPreference(
       creds.accessToken,
@@ -184,9 +189,9 @@ export async function POST(
         currency: currency as MpCurrency,
         title: `Reserva ${id.slice(0, 8)}`,
         backUrls: {
-          success: `${base}/app?mp=return`,
-          pending: `${base}/app?mp=return`,
-          failure: `${base}/app?mp=return`,
+          success: `${base}${mpCheckoutReturnPath(adminBase, "approved")}`,
+          pending: `${base}${mpCheckoutReturnPath(adminBase, "pending")}`,
+          failure: `${base}${mpCheckoutReturnPath(adminBase, "failure")}`,
         },
         notificationUrl: `${base}/api/mp/webhook`,
         // CHECK de consistencia (NO autoridad): el webhook resolvera el tenant por

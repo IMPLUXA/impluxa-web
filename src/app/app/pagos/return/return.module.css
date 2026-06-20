@@ -1,0 +1,150 @@
+/* C-COBRO-MP C1 — piel "Momento PV" del retorno post-checkout (dir. B firmada).
+ * CSS MODULE: clases locales/scopeadas → cero impacto global, cero .pv-*, cero eventos
+ * (byte-identidad Hakuna por construcción). Valores reales de PV: copper #b48448, pine
+ * #143038, sand #fbf6ea, sombras de 2 capas, easing ease-out-quint. Fuentes via las vars
+ * --font-cinzel / --font-hanken que cablea la page a nivel de página (next/font scoped). */
+
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 22px;
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    #ffffff 0%,
+    #fbf6ea 55%,
+    #f4eddc 100%
+  );
+  color: #143038;
+  font-family: var(--font-hanken), system-ui, sans-serif;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  background: #fffdf8;
+  border: 1px solid rgba(180, 132, 72, 0.25);
+  border-radius: 20px;
+  padding: 40px 32px 34px;
+  box-shadow:
+    0 1px 2px rgba(60, 40, 20, 0.06),
+    0 18px 44px -16px rgba(40, 30, 15, 0.22);
+  animation: reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, transparent, #b48448, transparent);
+  opacity: 0.6;
+}
+
+.seal {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 26px -10px rgba(20, 48, 40, 0.5);
+  animation: pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.seal svg {
+  width: 30px;
+  height: 30px;
+}
+.sealOk {
+  background: radial-gradient(circle at 35% 30%, #2f6b4f, #143038);
+}
+.sealWarn {
+  background: radial-gradient(circle at 35% 30%, #d9a566, #b48448);
+}
+.sealBad {
+  background: radial-gradient(circle at 35% 30%, #b85a54, #7c322e);
+}
+
+.title {
+  font-family: var(--font-cinzel), Georgia, serif;
+  font-weight: 600;
+  font-size: 24px;
+  letter-spacing: 0.01em;
+  margin: 6px 0 10px;
+  color: #143038;
+  text-wrap: balance;
+}
+
+.body {
+  color: #4f5e5c;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 auto 22px;
+  max-width: 36ch;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 11px 22px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  color: #10242a;
+  border: 1px solid #b48448;
+  background: linear-gradient(180deg, #d9a566, #b48448);
+  box-shadow: 0 10px 24px -12px rgba(120, 80, 30, 0.6);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pill:hover {
+  transform: translateY(-2px);
+}
+.pill:focus-visible {
+  outline: 2px solid #143038;
+  outline-offset: 2px;
+}
+.pillGhost {
+  background: transparent;
+  color: #143038;
+  border: 1.5px solid rgba(20, 48, 56, 0.3);
+  box-shadow: none;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .seal {
+    animation: none;
+  }
+  .pill {
+    transition: none;
+  }
+}
