@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
 
   const sb = await getSupabaseServerClient();
   const { data, error } = await sb.rpc("agency_crear_reserva", {
-    p_departure_id: parsed.data.departure_id,
+    p_excursion_id: parsed.data.excursion_id,
+    p_departure_date: parsed.data.departure_date,
     p_holder_name: parsed.data.holder_name,
     p_pasajeros: parsed.data.pasajeros,
     p_holder_email: parsed.data.holder_email ?? null,

@@ -118,7 +118,11 @@ export const ReservaPasajeroInputSchema = z.object({
 });
 
 export const ReservaCreateSchema = z.object({
-  departure_id: z.string().uuid(),
+  // Cutover dual-signature s59: el alta va por (excursion, fecha) -> RPC nueva
+  // agency_crear_reserva(p_excursion_id, p_departure_date, ...). El modelo abierto-
+  // por-defecto resuelve/materializa el ancla time-NULL de esa (excursion, fecha).
+  excursion_id: z.string().uuid(),
+  departure_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "fecha YYYY-MM-DD"),
   holder_name: z.string().trim().min(1).max(200),
   holder_email: z.string().trim().max(320).optional(),
   holder_phone: z.string().trim().max(50).optional(),
