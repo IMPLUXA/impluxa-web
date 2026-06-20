@@ -1,39 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
-  canSeeMargin,
   reservaSelectColumns,
   computeCobranza,
-  RESERVA_MARGIN_COLUMNS,
 } from "@/lib/agency/reserva-detail";
 
-// DETALLE-DE-RESERVA (s59) — el gate de margen tiene DOS capas: render condicional
-// (visual) + seleccion condicional de columnas (no-leak RSC). Este test cubre la 2da:
-// si canSeeMargin=false, las columnas de costo/neto NI se piden -> no llegan al payload.
+// DETALLE-DE-RESERVA (s59) — costo de proveedor / neto / comisiones NO se traen al
+// detalle para NINGUN rol (van a Finanzas, regla CEO). Data minimization: la columna
+// que no se pide no entra al HTML/flight -> no se filtra. Este test fija el invariante.
 
-describe("canSeeMargin", () => {
-  it("encargado/dueno ven margen; vendedor/null NO", () => {
-    expect(canSeeMargin("dueno_admin")).toBe(true);
-    expect(canSeeMargin("encargado")).toBe(true);
-    expect(canSeeMargin("vendedor")).toBe(false);
-    expect(canSeeMargin(null)).toBe(false);
+describe("reservaSelectColumns — data minimization (sin margen ni comisiones)", () => {
+  it("NO incluye costo de proveedor, neto ni FK de ruleset de comision", () => {
+    const cols = reservaSelectColumns();
+    expect(cols.includes("snapshot_provider_cost")).toBe(false);
+    expect(cols.includes("snapshot_net")).toBe(false);
+    expect(cols.includes("commission_ruleset_id")).toBe(false);
   });
-});
 
-describe("reservaSelectColumns — gate de no-leak RSC", () => {
-  it("vendedor (false): NO incluye ninguna columna de margen", () => {
-    const cols = reservaSelectColumns(false);
-    for (const c of RESERVA_MARGIN_COLUMNS) {
-      expect(cols.includes(c)).toBe(false);
-    }
-    // pero SI el total (snapshot_gross), que el listado ya muestra a todos
+  it("SI incluye el total (snapshot_gross) y datos no sensibles", () => {
+    const cols = reservaSelectColumns();
     expect(cols.includes("snapshot_gross")).toBe(true);
-  });
-
-  it("encargado/dueno (true): incluye todas las columnas de margen", () => {
-    const cols = reservaSelectColumns(true);
-    for (const c of RESERVA_MARGIN_COLUMNS) {
-      expect(cols.includes(c)).toBe(true);
-    }
+    expect(cols.includes("reservation_code")).toBe(true);
+    expect(cols.includes("holder_name")).toBe(true);
   });
 });
 

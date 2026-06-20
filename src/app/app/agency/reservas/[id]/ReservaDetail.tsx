@@ -6,14 +6,13 @@ import {
   type PaxRow,
   type PagoRow,
   type DepartureInfo,
-  type MarginInfo,
 } from "@/lib/agency/reserva-detail";
 import { RESERVA_STATUS_LABELS } from "@/lib/agency/schemas";
 
 // DETALLE-DE-RESERVA (s59) — presentacional, SERVER PURO (cero "use client"): nada se
-// serializa a flight como props de cliente. El bloque margen se renderiza SOLO si
-// seeMargin (y sus campos ni llegan en `reserva` cuando seeMargin=false). Colores del
-// shell (lesson R1, mismo patron que ReservasManager/Rates).
+// serializa a flight como props de cliente. Costo/neto/comisiones NO se muestran (van
+// a Finanzas, regla CEO; ni se traen al server). Colores del shell (lesson R1, mismo
+// patron que ReservasManager/Rates).
 
 function money(
   raw: number | string | null | undefined,
@@ -27,12 +26,6 @@ function money(
     currency: currency || "ARS",
     maximumFractionDigits: 2,
   }).format(n);
-}
-
-function pct(raw: number | string | null | undefined): string {
-  if (raw === null || raw === undefined || raw === "") return "—";
-  const n = Number(String(raw));
-  return Number.isFinite(n) ? `${n}%` : "—";
 }
 
 const tsFmt = new Intl.DateTimeFormat("es-AR", {
@@ -110,8 +103,6 @@ export function ReservaDetail({
   pagos,
   departure,
   sellerName,
-  seeMargin,
-  margin,
   backHref,
 }: {
   reserva: ReservaDetailRow;
@@ -119,8 +110,6 @@ export function ReservaDetail({
   pagos: PagoRow[];
   departure: DepartureInfo | null;
   sellerName: string | null;
-  seeMargin: boolean;
-  margin: MarginInfo | null;
   backHref: string;
 }) {
   const currency = reserva.snapshot_currency || "ARS";
@@ -209,15 +198,6 @@ export function ReservaDetail({
         <Row label="Total">{money(reserva.snapshot_gross, currency)}</Row>
         <Row label="Cobrado">{money(cobrado, currency)}</Row>
         <Row label="Saldo">{money(saldo, currency)}</Row>
-        {seeMargin && (
-          <div className="border-stone/40 mt-3 border-t pt-3">
-            <p className="text-ash mb-1 text-xs uppercase">Margen (interno)</p>
-            <Row label="Costo de proveedor">
-              {money(reserva.snapshot_provider_cost, currency)}
-            </Row>
-            <Row label="Neto">{money(reserva.snapshot_net, currency)}</Row>
-          </div>
-        )}
         <div className="border-stone/40 mt-3 border-t pt-3">
           <p className="text-ash mb-1 text-xs uppercase">Pagos</p>
           {pagos.length === 0 ? (
@@ -243,49 +223,6 @@ export function ReservaDetail({
           )}
         </div>
       </Section>
-
-      {seeMargin && (
-        <Section title="Comisiones (atribucion)">
-          {margin?.ruleset && (
-            <div className="mb-3">
-              <Row label="Comision neta %">
-                {pct(margin.ruleset.net_commission_pct)}
-              </Row>
-              <Row label="Split dueno %">
-                {pct(margin.ruleset.split_dueno_pct)}
-              </Row>
-              <Row label="Split vendedor %">
-                {pct(margin.ruleset.split_vendedor_pct)}
-              </Row>
-              {margin.ruleset.is_provisional && (
-                <p className="text-ash text-xs">Ruleset provisional.</p>
-              )}
-            </div>
-          )}
-          {!margin || margin.splits.length === 0 ? (
-            <p className="text-ash text-sm">
-              Sin atribucion de comisiones todavia.
-            </p>
-          ) : (
-            <ul className="space-y-1 text-sm">
-              {margin.splits.map((s, i) => (
-                <li key={i} className="flex flex-wrap justify-between gap-2">
-                  <span>
-                    {s.role_at_sale}
-                    <span className="text-ash">
-                      {" "}
-                      · {s.agency_staff?.display_name ?? "—"}
-                    </span>
-                  </span>
-                  <span>
-                    {money(s.amount, currency)} ({pct(s.pct_applied)})
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-      )}
 
       <Section title="Trazabilidad">
         <Row label="Vendedor / cargador">{dash(sellerName)}</Row>
