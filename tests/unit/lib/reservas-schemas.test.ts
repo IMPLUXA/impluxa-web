@@ -7,7 +7,8 @@ import { ReservaCreateSchema } from "@/lib/agency/schemas";
 const UUID = "77777777-0000-4000-8000-0000000000a1";
 
 const base = {
-  departure_id: UUID,
+  excursion_id: UUID,
+  departure_date: "2026-09-15",
   holder_name: "Titular Test",
   pasajeros: [{ categoria: "adulto", qty: 2 }],
 };
@@ -15,6 +16,20 @@ const base = {
 describe("ReservaCreateSchema", () => {
   it("reserva mínima válida (titular + 1 categoría)", () => {
     expect(ReservaCreateSchema.safeParse(base).success).toBe(true);
+  });
+
+  it("excursion_id no-uuid y departure_date mal formato rechazados (cutover s59)", () => {
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, excursion_id: "nope" }).success,
+    ).toBe(false);
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, departure_date: "15/09/2026" })
+        .success,
+    ).toBe(false);
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, departure_date: undefined })
+        .success,
+    ).toBe(false);
   });
 
   it("holder_name vacío o >200 rechazado", () => {

@@ -166,11 +166,15 @@ export function ReservasManager({
     const pasajeros = categories
       .map((c) => ({ categoria: c.code, qty: Number(pax[c.code] || 0) }))
       .filter((p) => p.qty > 0);
+    // Cutover dual-signature s59: el alta llama la RPC nueva por (excursion, fecha),
+    // derivadas de la salida elegida. Sin cambio visible: mismo selector de salida.
+    const dep = depById.get(formDep);
     const res = await fetch("/api/agency/reservas", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        departure_id: formDep,
+        excursion_id: dep?.excursion_id,
+        departure_date: dep?.departure_date,
         holder_name: holderName,
         holder_email: holderEmail.trim() || undefined,
         holder_phone: holderPhone.trim() || undefined,
