@@ -150,8 +150,10 @@ export type ReservaRow = {
   reservation_code: string;
   snapshot_currency: string;
   snapshot_gross: number | string;
-  snapshot_provider_cost: number | string;
-  snapshot_net: number | string;
+  // Margen: opcionales — NO se traen al listado (data minimization, leak RSC s59).
+  // Presentes solo donde se gatea por rol (detalle usa su propio ReservaDetailRow).
+  snapshot_provider_cost?: number | string;
+  snapshot_net?: number | string;
   hold_expires_at: string | null;
   created_at: string;
 };

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   RESERVA_STATUS_LABELS,
@@ -62,6 +63,7 @@ function holdVencido(r: ReservaRow): boolean {
 
 export function ReservasManager({
   initialReservas,
+  adminBase,
   departures,
   excursions,
   categories,
@@ -71,6 +73,7 @@ export function ReservasManager({
   isVendedor,
 }: {
   initialReservas: ReservaRow[];
+  adminBase: string;
   departures: DepartureRow[];
   excursions: ExcursionRow[];
   categories: PassengerCategoryRow[];
@@ -327,7 +330,12 @@ export function ReservasManager({
                     className={`border-stone/30 border-b ${r.status === "cancelada" ? "opacity-50" : ""}`}
                   >
                     <td className="px-3 py-2 font-mono font-semibold">
-                      {r.reservation_code}
+                      <Link
+                        href={`${adminBase}/agency/reservas/${r.id}`}
+                        className="hover:underline"
+                      >
+                        {r.reservation_code}
+                      </Link>
                     </td>
                     <td className="px-3 py-2">
                       {dep ? (

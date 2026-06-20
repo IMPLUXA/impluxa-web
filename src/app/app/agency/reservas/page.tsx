@@ -2,6 +2,7 @@ import { requireActiveTenantOrRedirect } from "@/lib/auth/guard";
 import { getActiveTenant } from "@/lib/tenants/membership";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getAgencyRole } from "@/lib/agency/role";
+import { getAdminBasePath } from "@/lib/urls";
 import { redirect } from "next/navigation";
 import { ReservasManager } from "./ReservasManager";
 import type {
@@ -42,6 +43,8 @@ export default async function ReservasPage() {
   const canCharge = role === "encargado" || role === "dueno_admin";
 
   const sb = await getSupabaseServerClient();
+  // adminBase host-aware (server-only) -> prop al client (la fila arma el href del detalle).
+  const adminBase = await getAdminBasePath();
   const [
     { data: reservas },
     { data: departures },
@@ -52,7 +55,11 @@ export default async function ReservasPage() {
     sb
       .from("reservas")
       .select(
-        "id,tenant_id,departure_id,seller_staff_id,holder_name,holder_email,holder_phone,holder_lodging,status,reservation_code,snapshot_currency,snapshot_gross,snapshot_provider_cost,snapshot_net,hold_expires_at,created_at",
+        // Margen (snapshot_provider_cost/net) NO se trae al listado: nadie lo
+        // renderiza y arrastrarlo al flight = leak RSC (Security cold s59). Costos
+        // y comisiones van a finanzas, no a las vistas de reserva. El detalle lo
+        // trae gateado por rol. Data minimization: lo que no se trae no se filtra.
+        "id,tenant_id,departure_id,seller_staff_id,holder_name,holder_email,holder_phone,holder_lodging,status,reservation_code,snapshot_currency,snapshot_gross,hold_expires_at,created_at",
       )
       .eq("tenant_id", tenant.id) // redundante a RLS, consistencia handlers
       .order("created_at", { ascending: false }),
@@ -85,6 +92,7 @@ export default async function ReservasPage() {
 
   return (
     <ReservasManager
+      adminBase={adminBase}
       initialReservas={(reservas ?? []) as ReservaRow[]}
       departures={(departures ?? []) as DepartureRow[]}
       excursions={(excursions ?? []) as ExcursionRow[]}
