@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup F1b - Salidas como calendario (Patagonia Viva)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:#fbf6ea; --sand2:#f2e9d6; --sand3:#ece0c8;
+    --pine:#143038; --pine2:#1f4a54; --pineSoft:#3d6b73;
+    --copper:#b48448; --copperSoft:#d8b384;
+    --ink:#2a2a26; --muted:#7d7768; --line:rgba(20,48,56,.14);
+    --closed:#cfc8b8; --closedInk:#8a8474;
+    --ok:#2f6d4f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--sand);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:14px;line-height:1.45}
+  .app{display:flex;min-height:100vh}
+  /* Sidebar */
+  .side{width:236px;flex:none;background:var(--pine);color:#e9e0cb;padding:22px 16px;display:flex;flex-direction:column;gap:6px}
+  .brand{font-family:"Cinzel",serif;font-weight:700;font-size:19px;letter-spacing:.06em;color:#fff;padding:6px 8px 18px}
+  .brand small{display:block;font-family:"Hanken Grotesk";font-weight:400;font-size:10.5px;letter-spacing:.22em;color:var(--copperSoft);margin-top:4px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:#cdd6cf;text-decoration:none;font-size:13.5px}
+  .nav a.active{background:rgba(180,132,72,.18);color:#fff;font-weight:600}
+  .nav a .dot{width:6px;height:6px;border-radius:50%;background:var(--copper);opacity:.0}
+  .nav a.active .dot{opacity:1}
+  .side .foot{margin-top:auto;font-size:11px;color:#7e958f;padding:8px}
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .top{display:flex;justify-content:flex-end;align-items:center;padding:13px 26px;border-bottom:1px solid var(--line)}
+  .pill{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 15px 5px 6px;font-size:13px;color:#5d574a}
+  .pill .av{width:28px;height:28px;border-radius:50%;background:var(--pine);color:var(--sand);display:flex;align-items:center;justify-content:center;font-size:13px}
+  .wrap{padding:26px 30px;max-width:1240px}
+  h1{font-family:"Cinzel",serif;font-weight:600;font-size:23px;color:var(--pine);margin:0 0 6px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px;max-width:640px}
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:16px}
+  .seg{display:inline-flex;background:var(--sand2);border:1px solid var(--line);border-radius:11px;padding:3px}
+  .seg button{border:0;background:transparent;font:inherit;font-size:13px;color:#6c6557;padding:6px 13px;border-radius:8px;cursor:pointer}
+  .seg button.on{background:var(--pine);color:var(--sand);font-weight:600}
+  .monthnav{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .monthnav .arw{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--pine);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .monthnav .lbl{font-family:"Cinzel",serif;font-weight:600;font-size:15px;color:var(--pine);min-width:138px;text-align:center}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+  .toggle .sw{width:34px;height:19px;border-radius:999px;background:var(--sand3);position:relative}
+  .toggle .sw::after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;color:#6c6557;margin-bottom:18px;padding:10px 14px;background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:11px}
+  .legend i{display:inline-block;width:13px;height:13px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+  .lg-open{background:var(--sand);border:1px solid var(--sand3)}
+  .lg-lim{background:var(--copper)}
+  .lg-clo{background:var(--closed)}
+  .lg-res{background:var(--pine)}
+  /* split */
+  .split{display:grid;grid-template-columns:1fr 384px;gap:22px;align-items:start}
+  @media(max-width:1080px){.split{grid-template-columns:1fr}}
+  /* calendar */
+  .cal{background:rgba(255,255,255,.45);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
+  .dow span{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .cell{aspect-ratio:1/1.06;border-radius:10px;padding:8px 8px 7px;position:relative;display:flex;flex-direction:column;cursor:pointer;border:1px solid transparent;overflow:hidden}
+  .cell .d{font-size:12px;font-weight:600;color:var(--pine);opacity:.85}
+  .cell .mid{margin-top:auto}
+  .cell .big{font-weight:700;font-size:16px;line-height:1;font-variant-numeric:tabular-nums}
+  .cell .cap{font-size:11px;color:var(--muted)}
+  /* open-default = sand intencional */
+  .c-open{background:var(--sand);border-color:var(--sand3)}
+  .c-open .big{color:var(--pineSoft);font-weight:600;font-size:13px}
+  .c-open .big small{font-weight:400;color:var(--muted)}
+  /* has reservations */
+  .c-res{background:var(--sand);border-color:var(--sand3)}
+  .c-res .big{color:var(--pine)}
+  .meter{height:5px;border-radius:99px;background:var(--sand3);margin-top:5px;overflow:hidden}
+  .meter > i{display:block;height:100%;background:var(--pine);border-radius:99px}
+  .meter.hot > i{background:var(--copper)}
+  /* limited */
+  .c-lim{background:#fff;border-color:var(--copper);box-shadow:inset 3px 0 0 var(--copper)}
+  .c-lim .big{color:var(--copper)}
+  .c-lim .tag{position:absolute;top:7px;right:7px;font-size:9.5px;color:var(--copper)}
+  /* closed */
+  .c-clo{background:repeating-linear-gradient(45deg,#eee7d6,#eee7d6 6px,#e7dfcc 6px,#e7dfcc 12px);border-color:var(--sand3)}
+  .c-clo .d{opacity:.55}
+  .c-clo .big{color:var(--closedInk);font-size:12px;font-weight:600}
+  /* full */
+  .c-full .big{color:var(--copper)}
+  .badge{position:absolute;top:6px;right:7px;font-size:8.5px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--copper);padding:2px 6px;border-radius:99px}
+  /* legacy marker */
+  .legacy{position:absolute;bottom:7px;right:7px;font-size:9.5px;color:var(--pineSoft);background:rgba(31,74,84,.1);padding:1px 6px;border-radius:99px;font-weight:600}
+  /* today + past + sel */
+  .today{outline:2px solid var(--pine);outline-offset:0}
+  .past{opacity:.4}
+  .sel{box-shadow:0 0 0 2px var(--copper),0 6px 18px rgba(20,48,56,.16)}
+  /* empty hint */
+  .hint{margin-top:12px;font-size:12px;color:var(--muted);text-align:center}
+  /* drawer */
+  .drawer{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 40px rgba(20,48,56,.12);overflow:hidden;position:sticky;top:16px}
+  .dwh{background:var(--pine);color:#fff;padding:16px 18px}
+  .dwh .ex{font-family:"Cinzel",serif;font-size:16px;font-weight:600}
+  .dwh .dt{font-size:12.5px;color:#bcd0cd;margin-top:2px;text-transform:capitalize}
+  .dwh .state{display:inline-block;margin-top:10px;font-size:11.5px;background:rgba(180,132,72,.22);color:#f0d8b6;padding:3px 10px;border-radius:99px;font-weight:600}
+  .dwb{padding:16px 18px}
+  .row1{display:flex;justify-content:space-between;align-items:baseline}
+  .row1 .n{font-size:22px;font-weight:700;color:var(--pine);font-variant-numeric:tabular-nums}
+  .row1 .n small{font-size:13px;color:var(--muted);font-weight:500}
+  .row1 .free{font-size:12.5px;color:var(--ok);font-weight:600}
+  .bigmeter{height:8px;border-radius:99px;background:var(--sand2);margin:10px 0 4px;overflow:hidden}
+  .bigmeter > i{display:block;height:100%;background:var(--pine)}
+  .lnk{font-size:12px;color:var(--copper);font-weight:600;text-decoration:none}
+  .sec{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+  .sec h4{margin:0 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .sec .note{font-size:11.5px;color:var(--muted);margin:0 0 11px}
+  .slot{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--sand)}
+  .slot.primary{background:rgba(31,74,84,.06);border-color:rgba(31,74,84,.25)}
+  .slot .t{font-weight:700;color:var(--pine);font-size:13.5px;min-width:74px}
+  .slot .info{font-size:12px;color:var(--muted);flex:1}
+  .slot .info b{color:var(--pine);font-weight:600}
+  .slot .act{font-size:11px;border:1px solid var(--line);background:#fff;color:var(--pine);padding:5px 9px;border-radius:8px;cursor:pointer}
+  .slot .lock{font-size:10.5px;color:var(--pineSoft);display:flex;align-items:center;gap:5px}
+  .actions{margin-top:18px;display:flex;flex-direction:column;gap:9px}
+  .btn{border:0;font:inherit;font-weight:600;font-size:13px;padding:11px 14px;border-radius:10px;cursor:pointer;text-align:center}
+  .btn.primary{background:var(--copper);color:#fff}
+  .btn.ghost{background:var(--sand2);color:var(--pine)}
+  .btn.line{background:#fff;border:1px solid var(--line);color:var(--pine)}
+  .reset{font-size:11px;color:var(--muted);margin-top:2px;text-align:center}
+  .frame-note{max-width:1240px;margin:6px 30px 26px;font-size:11.5px;color:#9a9384}
+  .frame-note b{color:var(--copper)}
+  .cap-warn{margin-top:9px;font-size:11.5px;color:#9a4b32;background:rgba(154,75,50,.08);border:1px solid rgba(154,75,50,.22);border-radius:8px;padding:7px 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand">PATAGONIA VIVA<small>PANEL DEL DUENO</small></div>
+    <nav class="nav">
+      <a href="#"><span class="dot"></span>Inicio</a>
+      <a href="#"><span class="dot"></span>Reservas</a>
+      <a href="#" class="active"><span class="dot"></span>Salidas y cupo</a>
+      <a href="#"><span class="dot"></span>Excursiones</a>
+      <a href="#"><span class="dot"></span>Tarifas</a>
+      <a href="#"><span class="dot"></span>Finanzas</a>
+      <a href="#"><span class="dot"></span>Modulos</a>
+    </nav>
+    <div class="foot">Mockup F1b - s59 - no funcional</div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="top">
+      <div class="pill"><span class="av">P</span>Tu cuenta</div>
+    </div>
+
+    <div class="wrap">
+      <h1>Salidas y cupo</h1>
+      <p class="sub">Todo abierto todos los dias, cupo 50 por defecto. Tocas un dia solo para
+        <b>cerrarlo</b> o <b>limitar el cupo</b>. Los dias que no tocas siguen abiertos solos.</p>
+
+      <!-- CONTROLS -->
+      <div class="controls">
+        <div class="seg">
+          <button>Cerro Catedral</button>
+          <button class="on">Cerro Tronador</button>
+          <button>Circuito Chico</button>
+          <button>Cascada</button>
+        </div>
+        <div class="monthnav">
+          <button class="arw">&lsaquo;</button>
+          <span class="lbl">Junio 2026</span>
+          <button class="arw">&rsaquo;</button>
+        </div>
+        <div class="toggle"><span class="sw"></span>Ver pasadas</div>
+        <div class="seg" style="padding:3px">
+          <button class="on">Calendario</button>
+          <button>Lista</button>
+        </div>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="legend">
+        <span><i class="lg-open"></i>Abierto por defecto (cupo 50)</span>
+        <span><i class="lg-lim"></i>Cupo limitado</span>
+        <span><i class="lg-clo"></i>Cerrado</span>
+        <span><i class="lg-res"></i>Numero pine = reservas / cupo</span>
+        <span style="margin-left:auto;color:var(--pineSoft)">Hoy = borde pine</span>
+      </div>
+
+      <!-- SPLIT: calendar + drawer -->
+      <div class="split">
+        <!-- CALENDAR -->
+        <div class="cal">
+          <div class="dow"><span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span></div>
+          <div class="grid">
+            <!-- Semana 1: Jun 1-7 (pasados) -->
+            <div class="cell c-open past"><span class="d">1</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">2</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">3</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">4</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">5</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">6</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">7</span><div class="mid"><div class="big">50</div></div></div>
+            <!-- Semana 2: 8-14 -->
+            <div class="cell c-open past"><span class="d">8</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">9</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">10</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">11</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-res past"><span class="d">12</span><div class="mid"><div class="big">2 <small>/50</small></div><div class="meter"><i style="width:4%"></i></div></div></div>
+            <div class="cell c-open past"><span class="d">13</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-open past"><span class="d">14</span><div class="mid"><div class="big">50</div></div></div>
+            <!-- Semana 3: 15-21 -->
+            <div class="cell c-clo past"><span class="d">15</span><div class="mid"><div class="big">Cerrado</div></div></div>
+            <div class="cell c-res past"><span class="d">16</span><div class="mid"><div class="big">5 <small>/20</small></div><div class="meter"><i style="width:25%"></i></div></div></div>
+            <div class="cell c-open past"><span class="d">17</span><div class="mid"><div class="big">50</div></div></div>
+            <div class="cell c-clo past"><span class="d">18</span><div class="mid"><div class="big">Cerrado</div></div></div>
+            <div class="cell c-open past"><span class="d">19</span><div class="mid"><div class="big">50</div></div></div>
+            <!-- Jun 20 = HOY, seleccionado, legacy multi-horario -->
+            <div class="cell c-res today sel"><span class="d">20</span><span class="legacy">+2 horarios</span><div class="mid"><div class="big">2 <small>/50</small></div><div class="meter"><i style="width:4%"></i></div></div></div>
+            <div class="cell c-open"><span class="d">21</span><div class="mid"><div class="big"><small>cupo </small>50</div></div></div>
+            <!-- Semana 4: 22-28 -->
+            <div class="cell c-open"><span class="d">22</span><div class="mid"><div class="big"><small>cupo </small>50</div></div></div>
+            <div class="cell c-open"><span class="d">23</span><div class="mid"><div class="big"><small>cupo </small>50</div></div></div>
+            <div class="cell c-lim"><span class="d">24</span><span class="tag">limitado</span><div class="mid"><div class="big">0 <small style="color:var(--muted)">/30</small></div><div class="cap">cupo 30</div></div></div>
+            <div class="cell c-res c-full"><span class="d">25</span><span class="badge">COMPLETO</span><div class="mid"><div class="big">50 <small>/50</small></div><div class="meter hot"><i style="width:100%"></i></div></div></div>
+            <div class="cell c-res"><span class="d">26</span><div class="mid"><div class="big">12 <small>/50</small></div><div class="meter"><i style="width:24%"></i></div></div></div>
+            <div class="cell c-lim"><span class="d">27</span><span class="tag">limitado</span><div class="mid"><div class="big">8 <small style="color:var(--muted)">/30</small></div><div class="meter hot"><i style="width:27%"></i></div></div></div>
+            <div class="cell c-open"><span class="d">28</span><div class="mid"><div class="big"><small>cupo </small>50</div></div></div>
+            <!-- Semana 5: 29-30 -->
+            <div class="cell c-open"><span class="d">29</span><div class="mid"><div class="big"><small>cupo </small>50</div></div></div>
+            <div class="cell c-clo"><span class="d">30</span><div class="mid"><div class="big">Cerrado</div></div></div>
+          </div>
+          <p class="hint">Mes lleno de sand = todo abierto. Sin reservas todavia, igual esta abierto todos los dias.</p>
+        </div>
+
+        <!-- DRAWER (dia 20, legacy) -->
+        <div class="drawer">
+          <div class="dwh">
+            <div class="ex">Cerro Tronador</div>
+            <div class="dt">sabado 20 jun 2026 - hoy</div>
+            <span class="state">Abierto por defecto - cupo 50</span>
+          </div>
+          <div class="dwb">
+            <div class="row1">
+              <div class="n">2 <small>/ 50</small></div>
+              <div class="free">48 lugares libres</div>
+            </div>
+            <div class="bigmeter"><i style="width:4%"></i></div>
+            <a href="#" class="lnk">Ver las 2 reservas &rsaquo;</a>
+
+            <div class="sec">
+              <h4>Horarios</h4>
+              <p class="note">Horarios viejos de esta fecha. El modelo nuevo es 1 salida por dia (dia completo).</p>
+
+              <div class="slot primary">
+                <div class="t">Dia completo</div>
+                <div class="info"><b>1 reserva</b> &middot; 49 libres &middot; cupo 50</div>
+              </div>
+
+              <div class="slot">
+                <div class="t">09:00</div>
+                <div class="info"><b>0 reservas</b> &middot; cupo 20 <span style="color:var(--copper)">(legacy)</span></div>
+                <button class="act">Jubilar</button>
+              </div>
+
+              <div class="slot">
+                <div class="t">21:00</div>
+                <div class="info"><b>1 reserva</b> &middot; 19 libres &middot; cupo 20</div>
+                <div class="lock">&#9679; tiene reserva</div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary">Limitar cupo del dia</button>
+              <button class="btn ghost">Cerrar este dia</button>
+              <button class="btn line">Volver a abierto por defecto</button>
+              <div class="reset">Quita cualquier excepcion: vuelve a abierto, cupo 50, sin tocar.</div>
+            </div>
+
+            <div class="cap-warn"><b>Guardrail:</b> si bajas el cupo por debajo de las reservas ya tomadas, el panel lo bloquea (no podes dejar 1 reserva sin lugar).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="frame-note">Mockup <b>F1b</b> (s59) - calendario del modelo abierto-por-defecto, scopeado a una excursion.
+      Estados sembrados: abierto-default (sand), con-reservas (numero pine + barra), limitado (copper), cerrado (hatch),
+      COMPLETO, y el dia 20 con <b>+2 horarios legacy</b> (drawer abierto: dia completo + 09:00 jubilable + 21:00 con reserva, bloqueado).
+      Datos ilustrativos sobre la estructura real de PV. No funcional - para walk del CEO antes de construir.</p>
+  </div>
+</div>
+</body>
+</html>
