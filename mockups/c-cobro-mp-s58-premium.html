@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>C-COBRO-MP premium — mockup s58 (dir. B "Momento PV")</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* PV brand (valores reales del sitio publico, globals.css) */
+    --copper:#b48448; --copper-lo:#d9a566; --copper-ink:#10242a;
+    --pine:#143038; --pine-deep:#0E2329; --gold:#ebc87e; --gold-soft:#E7C99B;
+    --sand:#fbf6ea; --sand-2:#f4eddc; --lead:#ECE4D2; --muted-warm:#4f5e5c;
+    /* admin base */
+    --onyx:#0A0A0A; --marble:#1A1A1A; --marble-2:#202020; --stone:#4A4A4A; --bone:#E8DCC4; --ash:#9a958c;
+    --mp:#009EE3;
+    --ok:#7BB661; --warn:#E0B968; --bad:#D2706A;
+    --ease:cubic-bezier(0.22,1,0.36,1); --spring:cubic-bezier(0.2,0.8,0.2,1);
+    --sh-rest:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -6px rgba(0,0,0,.5);
+    --sh-lift:0 14px 38px -10px rgba(0,0,0,.62), 0 4px 10px rgba(0,0,0,.4);
+    --sh-warm:0 12px 30px -12px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(120% 80% at 50% -10%, #161616 0%, var(--onyx) 60%);
+    color:var(--bone);font-family:"Hanken Grotesk",system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:30px 22px 90px}
+  .eyebrow{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--copper);display:inline-flex;align-items:center;gap:9px;margin:0 0 8px}
+  .eyebrow::before{content:"";width:30px;height:2px;background:var(--copper);display:inline-block}
+  h1{font-family:"Cinzel",serif;font-weight:600;font-size:30px;letter-spacing:.005em;margin:0 0 6px;color:var(--lead)}
+  .sub{color:var(--ash);font-size:13.5px;margin:0;max-width:70ch}
+  h2{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);margin:48px 0 16px;
+     display:flex;align-items:center;gap:12px}
+  h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--stone),transparent)}
+  .note{color:var(--ash);font-size:12.5px;margin:14px 0 0;max-width:78ch}
+  .note b{color:var(--bone)} code{font-family:"JetBrains Mono",monospace;font-size:.86em;color:var(--gold-soft);
+    background:rgba(180,132,72,.1);border:1px solid rgba(180,132,72,.22);border-radius:5px;padding:1px 6px}
+  .anim{opacity:0;transform:translateY(16px);animation:fadeUp .55s var(--ease) forwards}
+  @keyframes fadeUp{to{opacity:1;transform:none}}
+
+  /* ---- 1 · tabla / fila ---- */
+  .panel{background:linear-gradient(180deg,var(--marble-2),var(--marble));border:1px solid #2c2c2c;
+    border-radius:16px;overflow:hidden;box-shadow:var(--sh-rest)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;color:var(--ash);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;
+     padding:13px 16px;border-bottom:1px solid #2c2c2c;background:rgba(0,0,0,.25)}
+  td{padding:15px 16px;border-bottom:1px solid #242424;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .code{font-family:"JetBrains Mono",monospace;color:var(--lead);font-size:12.5px}
+  .num{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+  .chip{display:inline-block;font-size:11px;border-radius:999px;padding:3px 10px;border:1px solid;letter-spacing:.02em}
+  .chip.pre{background:rgba(235,200,126,.08);border-color:rgba(235,200,126,.35);color:var(--gold)}
+  .chip.ok{background:rgba(123,182,97,.08);border-color:rgba(123,182,97,.3);color:var(--ok)}
+  .row-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .btn{font:inherit;font-weight:600;font-size:12.5px;border-radius:9px;padding:8px 14px;cursor:pointer;
+    border:1px solid var(--stone);background:transparent;color:var(--bone);transition:all .2s var(--spring)}
+  .btn:hover{border-color:#6a6a6a;transform:translateY(-1px)}
+  .btn:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+  /* CTA cobro MP: copper, profundidad, NADA de franja lateral */
+  .btn-mp{position:relative;border:0;color:var(--copper-ink);font-weight:700;padding:9px 15px 9px 12px;
+    background:linear-gradient(180deg,var(--copper-lo),var(--copper));
+    box-shadow:var(--sh-warm), 0 1px 0 rgba(255,255,255,.28) inset;display:inline-flex;align-items:center;gap:9px}
+  .btn-mp:hover{transform:translateY(-2px);box-shadow:0 18px 36px -14px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.3) inset;border:0}
+  .mpmark{width:18px;height:18px;border-radius:50%;flex:0 0 auto;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .empty{color:var(--ash);font-size:12px;font-style:italic}
+
+  /* ---- 2 · modal ---- */
+  .stage{background:rgba(8,8,8,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border-radius:16px;padding:38px 18px;display:flex;justify-content:center;border:1px solid #222}
+  .modal{width:100%;max-width:430px;background:linear-gradient(180deg,#1d1d1d,var(--marble));
+    border:1px solid #313131;border-top:1px solid rgba(180,132,72,.35);border-radius:18px;padding:24px;
+    box-shadow:var(--sh-lift)}
+  .modal .mphead{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+  .mpbadge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,158,227,.12);border:1px solid rgba(0,158,227,.4);
+    color:#7fd0f5;font-size:11px;font-weight:600;border-radius:999px;padding:3px 9px}
+  .modal h3{font-family:"Cinzel",serif;font-weight:600;font-size:19px;margin:10px 0 3px;color:var(--lead)}
+  .ctx{color:var(--ash);font-size:13px;margin:0 0 18px}
+  .amount-wrap{background:rgba(0,0,0,.3);border:1px solid #303030;border-radius:12px;padding:14px 16px}
+  .amount-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);margin:0 0 4px}
+  .amount{display:flex;align-items:baseline;gap:8px}
+  .amount .cur{color:var(--copper);font-weight:600;font-size:15px}
+  .amount input{flex:1;background:transparent;border:0;outline:none;color:var(--lead);width:100%;
+    font-family:"Cinzel",serif;font-weight:600;font-size:34px;letter-spacing:.01em}
+  .amount-help{font-size:11.5px;color:var(--ash);margin:8px 2px 0}
+  .foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+  .btn-ghost{background:transparent;border:1px solid #333}
+  .err{display:flex;gap:10px;align-items:flex-start;background:rgba(210,112,106,.1);border:1px solid rgba(210,112,106,.4);
+    color:#eab3ae;font-size:12.5px;border-radius:10px;padding:11px 13px;margin-top:16px}
+  /* loading */
+  .loadbar{height:3px;border-radius:3px;margin-top:16px;background:#2a2a2a;overflow:hidden}
+  .loadbar i{display:block;height:100%;width:40%;border-radius:3px;background:linear-gradient(90deg,var(--copper-lo),var(--copper));
+    animation:slide 1.1s var(--ease) infinite}
+  @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
+  .loadtxt{font-size:12.5px;color:var(--gold-soft);margin-top:10px;display:flex;align-items:center;gap:8px}
+
+  /* ---- 3 · retorno "Momento PV" (claro, cinematografico) ---- */
+  .return-stage{border-radius:18px;overflow:hidden;border:1px solid rgba(180,132,72,.25)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0}
+  .ret{position:relative;padding:34px 26px 30px;text-align:center;
+    background:radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--sand) 55%, var(--sand-2) 100%);
+    color:var(--pine);border-right:1px solid rgba(180,132,72,.18)}
+  .ret:last-child{border-right:0}
+  .ret::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,transparent,var(--copper),transparent);opacity:.6}
+  .seal{width:62px;height:62px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;
+    box-shadow:0 10px 26px -10px rgba(20,48,40,.5)}
+  .seal svg{width:30px;height:30px}
+  .seal.ok{background:radial-gradient(circle at 35% 30%, #2f6b4f, var(--pine))}
+  .seal.warn{background:radial-gradient(circle at 35% 30%, var(--copper-lo), var(--copper))}
+  .seal.bad{background:radial-gradient(circle at 35% 30%, #b85a54, #7c322e)}
+  .ret h3{font-family:"Cinzel",serif;font-weight:600;font-size:21px;margin:4px 0 8px;color:var(--pine);letter-spacing:.01em;text-wrap:balance}
+  .ret p{color:var(--muted-warm);font-size:13px;margin:0 auto 16px;max-width:34ch}
+  .ret .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 18px;font-weight:600;font-size:13px;
+    border:1px solid var(--copper);color:var(--copper-ink);background:linear-gradient(180deg,var(--copper-lo),var(--copper));
+    box-shadow:0 8px 20px -10px rgba(120,80,30,.6);cursor:pointer;text-decoration:none;transition:transform .2s var(--spring)}
+  .ret .pill:hover{transform:translateY(-2px)}
+  .ret .ghost-pill{background:transparent;border:1.5px solid rgba(20,48,56,.3);color:var(--pine);box-shadow:none}
+  .ret .micro{font-size:11px;color:var(--muted-warm);margin-top:12px;letter-spacing:.01em}
+  .reveal{opacity:0;transform:translateY(10px) scale(.985);animation:reveal .7s var(--ease) forwards}
+  .reveal:nth-child(2){animation-delay:.08s}.reveal:nth-child(3){animation-delay:.16s}
+  @keyframes reveal{to{opacity:1;transform:none}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .anim,.reveal{opacity:1!important;transform:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="anim">
+    <span class="eyebrow">Patagonia Viva &middot; cobros</span>
+    <h1>Cobrar con MercadoPago</h1>
+    <p class="sub">Re-mockup premium (dir. B "Momento PV"). Misma mecanica, mismos estados, mismo mapa de errores que el plan firmado: cambia la piel, no el flujo. Valores reales de PV (copper #b48448, pine #143038, Cinzel + Hanken, profundidad y motion ease-out-quint). BMP-safe, cero templates/eventos.</p>
+  </header>
+
+  <h2>1 &middot; El boton en la fila de la reserva</h2>
+  <div class="panel anim" style="animation-delay:.06s">
+    <table>
+      <thead><tr><th>Codigo</th><th>Pasajero</th><th>Estado</th><th>Total</th><th>Accion</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="code">V64UPY</td><td>Flia. Perez</td>
+          <td><span class="chip pre">pre_reserva</span></td>
+          <td class="num">ARS&nbsp;72.000</td>
+          <td>
+            <div class="row-actions">
+              <button class="btn">Registrar pago</button>
+              <button class="btn-mp">
+                <svg class="mpmark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#009EE3"/><path d="M6 13.2c3.6 3.4 8.4 3.4 12 0" stroke="#fff" stroke-width="2.1" fill="none" stroke-linecap="round"/></svg>
+                Cobrar con MercadoPago
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="code">LFRAGUA</td><td>Gomez</td>
+          <td><span class="chip ok">reserva</span></td>
+          <td class="num">ARS&nbsp;360.000</td>
+          <td><span class="empty">confirmada &middot; sin accion</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Mismo gate que "Registrar pago": <b>canCharge</b> (encargado/dueno) + <b>pre_reserva</b> + hold no vencido. El acento es <b>copper</b> con profundidad (no la franja lateral del v1, que impeccable marca como ban). El marcador MP (circulo azul) lo identifica de un vistazo sin gritar.</p>
+
+  <h2>2 &middot; El modal de cobro (estado normal, cargando, error)</h2>
+  <div class="stage anim" style="animation-delay:.1s">
+    <div class="modal">
+      <div class="mphead"><span class="mpbadge">
+        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#009EE3"/><path d="M6 13.2c3.6 3.4 8.4 3.4 12 0" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+        MercadoPago &middot; Checkout Pro</span></div>
+      <h3>Cobrar reserva V64UPY</h3>
+      <p class="ctx">Flia. Perez &middot; total ARS&nbsp;72.000</p>
+      <div class="amount-wrap">
+        <p class="amount-lbl">Monto a cobrar</p>
+        <div class="amount"><span class="cur">ARS</span><input value="72.000" /></div>
+      </div>
+      <p class="amount-help">Pre-cargado con el total. Editable para cobrar una sena/parcial. El servidor rechaza si supera el saldo.</p>
+      <div class="foot">
+        <button class="btn btn-ghost">Cancelar</button>
+        <button class="btn-mp">Generar link de pago</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px" class="anim">
+    <div class="stage" style="padding:24px 14px">
+      <div class="modal" style="max-width:none">
+        <div class="mphead"><span class="mpbadge">MercadoPago &middot; Checkout Pro</span></div>
+        <h3>Generando el link...</h3>
+        <p class="ctx">Estamos creando el cobro en MercadoPago.</p>
+        <div class="loadbar"><i></i></div>
+        <p class="loadtxt">Abriendo Checkout Pro, no cierres esta pestana</p>
+      </div>
+    </div>
+    <div class="stage" style="padding:24px 14px">
+      <div class="modal" style="max-width:none">
+        <div class="mphead"><span class="mpbadge">MercadoPago &middot; Checkout Pro</span></div>
+        <h3>Cobrar reserva V64UPY</h3>
+        <p class="ctx">Flia. Perez &middot; total ARS&nbsp;72.000</p>
+        <div class="amount-wrap" style="border-color:rgba(210,112,106,.4)">
+          <p class="amount-lbl">Monto a cobrar</p>
+          <div class="amount"><span class="cur">ARS</span><input value="72.000" /></div>
+        </div>
+        <div class="err">
+          <svg width="16" height="16" viewBox="0 0 24 24" style="flex:0 0 auto;margin-top:1px"><circle cx="12" cy="12" r="10" fill="none" stroke="#D2706A" stroke-width="2"/><path d="M12 7v6M12 16.5v.01" stroke="#D2706A" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>Esta cuenta no tiene MercadoPago conectado. Anda a <b style="color:#f0c9c4">Cobros</b> y conecta la cuenta del dueno primero. <code style="color:#eab3ae">MP_NO_CONECTADO</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">El monto en <b>Cinzel</b> (un unico momento display; labels y botones en Hanken sans, por la regla de impeccable). Estados completos: normal / cargando (barra copper) / error mapeado. Mapa de errores intacto: MP_NO_CONECTADO 409 &middot; MP_PREFERENCE_FAILED 502 &middot; MONTO_EXCEDE_SALDO / HOLD_VENCIDO / ESTADO_INVALIDO 409 &middot; 403s.</p>
+
+  <h2>3 &middot; El retorno post-checkout: el "Momento PV" (claro, marca de PV)</h2>
+  <div class="return-stage panel anim" style="padding:0">
+    <div class="grid3">
+      <div class="ret reveal">
+        <div class="seal ok">
+          <svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10" stroke="#F0E6D2" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Pago iniciado</h3>
+        <p>Estamos confirmando con MercadoPago. La reserva se confirma sola apenas nos avisa, en segundos.</p>
+        <a class="pill">Volver a reservas</a>
+        <p class="micro">V64UPY &middot; ARS 72.000</p>
+      </div>
+      <div class="ret reveal">
+        <div class="seal warn">
+          <svg viewBox="0 0 24 24"><path d="M12 7v6" stroke="#10242a" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="12" cy="17" r="1.3" fill="#10242a"/></svg>
+        </div>
+        <h3>Pago pendiente</h3>
+        <p>MercadoPago lo dejo en revision. Cuando se apruebe, la reserva se confirma automaticamente.</p>
+        <a class="pill ghost-pill">Volver a reservas</a>
+        <p class="micro">Te avisamos por el panel</p>
+      </div>
+      <div class="ret reveal">
+        <div class="seal bad">
+          <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" stroke="#F0E6D2" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Pago no completado</h3>
+        <p>Se cancelo o fue rechazado. La pre-reserva sigue activa hasta que venza el hold.</p>
+        <a class="pill">Reintentar cobro</a>
+        <p class="micro">Sin cargo a la cuenta</p>
+      </div>
+    </div>
+  </div>
+  <p class="note"><b>Arregla un defecto VIVO:</b> hoy el retorno es <code>/app?mp=return</code> = <b>404 en patagoniaviva.ar</b>. El nuevo vive en <code>/pagos/return</code> (app host) y <code>/admin/pagos/return</code> (.ar), host-aware. <b>Byte-identidad Hakuna intacta:</b> el restyle agrega clases admin nuevas + cablea Cinzel/Hanken en el layout del admin (aditivo); CERO edicion a las reglas <code>.pv-*</code> existentes ni a <code>templates/eventos</code> que rinde la pagina publica. Canary 9364a04c lo prueba por corte.</p>
+
+  <p class="note" style="margin-top:30px;border-top:1px solid #2c2c2c;padding-top:16px">
+    <b>Dir. A vs B:</b> A mantiene los 3 (boton+modal+retorno) en oscuro premium = maxima consistencia con el admin. B (este) deja el retorno como momento claro de PV = mas memorable donde el dueno aterriza. La mecanica, estados y mapa de errores son identicos en ambas. Si preferis A (retorno tambien oscuro), es cambiar solo la piel de la vista 3.
+  </p>
+</div>
+</body>
+</html>
