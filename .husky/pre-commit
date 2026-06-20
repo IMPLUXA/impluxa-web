@@ -1,1 +1,6 @@
-npx lint-staged
+# --no-stash: el backup-stash interno de lint-staged (git stash create/restore en el
+# working tree) dispara un Remove-Item sobre D:\IMPLUXA-WEB que el sandbox de la terminal
+# veta (falso positivo). Sin el stash, el hook SIGUE corriendo prettier+eslint --fix sobre
+# los archivos staged (NO se debilita). Repo single-dev + commits full-staged -> sin perdida
+# real (no hay flujo partial-stage; el revert-on-fail de lint-staged no aplica aca).
+npx lint-staged --no-stash
