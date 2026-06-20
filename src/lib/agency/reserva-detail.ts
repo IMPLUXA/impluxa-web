@@ -1,24 +1,18 @@
-import type { AgencyRole } from "@/lib/agency/role";
 import type { ReservaStatus } from "@/lib/agency/schemas";
 
 // DETALLE-DE-RESERVA (s59) — logica pura del detalle de reserva. SIN "server-only":
 // la importan el server component (page) Y el test unit. La autoridad de datos es la
 // RLS (cliente autenticado); esto es seleccion de columnas + calculo de cobranza display.
 
-// canSeeMargin: SOLO encargado/dueno ven costo de proveedor / neto / comision-dueno.
-// Mismo criterio que canCharge del listado (fuente: getAgencyRole). El vendedor NO.
-export function canSeeMargin(role: AgencyRole): boolean {
-  return role === "encargado" || role === "dueno_admin";
-}
-
-// Columnas NO sensibles de `reservas` (todo rol con acceso a la fila por RLS).
-// snapshot_gross = total (el listado ya lo muestra a todos); fx_rate inocuo.
-export const RESERVA_BASE_COLUMNS = [
+// Columnas que trae el detalle. Costo de proveedor / neto / comisiones NO se traen
+// para NINGUN rol (ni el dueno): van al dashboard de Finanzas, fuera de las vistas de
+// reserva (regla CEO s59). Data minimization: la columna que no se pide no entra al
+// HTML/flight -> no se filtra. snapshot_gross (total) si, lo muestran todas las vistas.
+export const RESERVA_DETAIL_COLUMNS = [
   "id",
   "tenant_id",
   "departure_id",
   "seller_staff_id",
-  "commission_ruleset_id",
   "holder_name",
   "holder_email",
   "holder_phone",
@@ -34,19 +28,8 @@ export const RESERVA_BASE_COLUMNS = [
   "cancelled_at",
 ] as const;
 
-// Columnas de MARGEN (sensibles): se agregan al SELECT SOLO cuando canSeeMargin.
-// Mecanismo de no-leak RSC: si no se piden, no se traen -> no entran al HTML/flight
-// de una sesion de vendedor (defensa en profundidad ademas del render condicional).
-export const RESERVA_MARGIN_COLUMNS = [
-  "snapshot_provider_cost",
-  "snapshot_net",
-] as const;
-
-export function reservaSelectColumns(seeMargin: boolean): string {
-  const cols = seeMargin
-    ? [...RESERVA_BASE_COLUMNS, ...RESERVA_MARGIN_COLUMNS]
-    : RESERVA_BASE_COLUMNS;
-  return cols.join(",");
+export function reservaSelectColumns(): string {
+  return RESERVA_DETAIL_COLUMNS.join(",");
 }
 
 // PLATA display: snapshot_* y amount llegan number|string (PostgREST numeric, lesson
@@ -73,14 +56,13 @@ export function computeCobranza(
   return { cobrado, saldo: gross - cobrado };
 }
 
-// ---- tipos de fila (cast del cliente Supabase; margen presente SOLO si canSeeMargin) ----
+// ---- tipos de fila (cast del cliente Supabase) ----
 
 export type ReservaDetailRow = {
   id: string;
   tenant_id: string;
   departure_id: string;
   seller_staff_id: string | null;
-  commission_ruleset_id: string | null;
   holder_name: string;
   holder_email: string | null;
   holder_phone: string | null;
@@ -94,9 +76,6 @@ export type ReservaDetailRow = {
   created_at: string;
   confirmed_at: string | null;
   cancelled_at: string | null;
-  // margen — presentes SOLO cuando canSeeMargin (no se seleccionan si no):
-  snapshot_provider_cost?: number | string;
-  snapshot_net?: number | string;
 };
 
 export type PaxRow = {
@@ -122,24 +101,4 @@ export type DepartureInfo = {
   capacity: number;
   status: string;
   excursions: { name: string; category: string } | null;
-};
-
-export type SplitRow = {
-  role_at_sale: string;
-  pct_applied: number | string | null;
-  amount: number | string | null;
-  agency_staff: { display_name: string } | null;
-};
-
-export type RulesetInfo = {
-  net_commission_pct: number | string | null;
-  split_vendedor_pct: number | string | null;
-  split_dueno_pct: number | string | null;
-  split_encargado_pct: number | string | null;
-  is_provisional: boolean | null;
-};
-
-export type MarginInfo = {
-  splits: SplitRow[];
-  ruleset: RulesetInfo | null;
 };
