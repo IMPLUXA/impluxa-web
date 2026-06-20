@@ -7,6 +7,8 @@ import {
   type PassengerCategoryRow,
   type ReservaRow,
 } from "@/lib/agency/schemas";
+import { MpChargeModal } from "./MpChargeModal";
+import styles from "./mp-cobro.module.css";
 
 // R3 reservas. La ÚNICA escritura es POST /api/agency/reservas → RPC
 // agency_crear_reserva (#24): jamás INSERT directo (contrato del ancla).
@@ -92,6 +94,9 @@ export function ReservasManager({
   const [payBusy, setPayBusy] = useState(false);
   const [payStatus, setPayStatus] = useState<string | null>(null);
   const [payIdemKey, setPayIdemKey] = useState("");
+
+  // C2 — cobro MercadoPago (Checkout Pro): qué reserva tiene el modal MP abierto.
+  const [mpRes, setMpRes] = useState<ReservaRow | null>(null);
 
   const [formDep, setFormDep] = useState("");
   const [holderName, setHolderName] = useState("");
@@ -368,12 +373,34 @@ export function ReservasManager({
                     {canCharge && (
                       <td className="px-3 py-2">
                         {r.status === "pre_reserva" && !vencido ? (
-                          <button
-                            onClick={() => openPay(r)}
-                            className="bg-onyx text-bone rounded px-3 py-1 text-xs hover:opacity-90"
-                          >
-                            Registrar pago
-                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => openPay(r)}
+                              className="bg-onyx text-bone rounded px-3 py-1 text-xs hover:opacity-90"
+                            >
+                              Registrar pago
+                            </button>
+                            <button
+                              onClick={() => setMpRes(r)}
+                              className={styles.rowCta}
+                            >
+                              <svg
+                                className={styles.rowMark}
+                                viewBox="0 0 24 24"
+                                aria-hidden
+                              >
+                                <circle cx="12" cy="12" r="12" fill="#009EE3" />
+                                <path
+                                  d="M6 13.2c3.6 3.4 8.4 3.4 12 0"
+                                  stroke="#fff"
+                                  strokeWidth="2.1"
+                                  fill="none"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              Cobrar con MercadoPago
+                            </button>
+                          </div>
                         ) : null}
                       </td>
                     )}
@@ -549,6 +576,10 @@ export function ReservasManager({
             </div>
           </div>
         </div>
+      )}
+
+      {mpRes && (
+        <MpChargeModal reserva={mpRes} onClose={() => setMpRes(null)} />
       )}
     </div>
   );
