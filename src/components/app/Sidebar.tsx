@@ -17,6 +17,7 @@ import {
   SquaresFour,
   CreditCard,
   LockSimple,
+  Money,
 } from "@phosphor-icons/react/dist/ssr";
 import type { AgencyRole } from "@/lib/agency/role";
 import { isAgencyOwner } from "@/lib/agency/role";
@@ -102,6 +103,9 @@ const NAV_BRANDED: BrandedNavItem[] = [
 // guard e10 en la page base (Finanzas C3, Módulos C4).
 const NAV_BRANDED_OWNER: BrandedNavItem[] = [
   { href: "/finanzas", label: "Finanzas", Icon: Wallet, ownerOnly: true },
+  // UI-connect MP (s57): conectar la cuenta de cobro es acción de dueño. La page
+  // base /app/pagos tiene guard requireAgencyOwner (la visibilidad NO es autoridad).
+  { href: "/pagos", label: "Cobros", Icon: Money, ownerOnly: true },
   { href: "/modulos", label: "Módulos", Icon: SquaresFour, ownerOnly: true },
 ];
 

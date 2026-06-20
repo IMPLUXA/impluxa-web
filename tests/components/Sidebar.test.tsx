@@ -39,6 +39,7 @@ const BRANDING: TenantBranding = {
 
 const OWNER_ITEMS = [
   "Finanzas",
+  "Cobros", // UI-connect MP (s57): nuevo item dueño-only
   "Módulos",
   "Tu cuenta Impluxa",
   "Plan y facturación",
@@ -144,7 +145,8 @@ describe("Sidebar branded — MATRIZ DE ROLES (corte 3)", () => {
     expect(finanzas?.getAttribute("href")).toBe("/admin/finanzas");
     const modulos = screen.getByText("Módulos").closest("a");
     expect(modulos?.getAttribute("href")).toBe("/admin/modulos"); // C4: link real
-    expect(screen.getAllByText("solo dueño").length).toBe(2);
+    // Finanzas + Cobros + Módulos = 3 items dueño-only con badge (UI-connect s57).
+    expect(screen.getAllByText("solo dueño").length).toBe(3);
     // C4: el dueño tiene el 6º slot "Más" del bottom-nav móvil
     expect(screen.getByText("Más")).toBeTruthy();
   });

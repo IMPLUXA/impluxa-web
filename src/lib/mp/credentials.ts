@@ -89,6 +89,35 @@ export async function getMpAccessToken(tenantId: string): Promise<{
   };
 }
 
+/** Resuelve el tenant a partir del collector/seller id (mp_user_id) de un payment.
+ *  F4b: el webhook invierte el mapeo (hoy solo existe tenantId->token). SOLO identidad —
+ *  NO descifra el token. Usa el índice tenant_mp_credentials_mp_user_idx (where mp_user_id
+ *  is not null) + filtra status='connected'. `.limit(1)`: defensivo — el índice unique
+ *  parcial tenant_mp_credentials_mp_user_connected_uk (v030_009, where status='connected')
+ *  ya garantiza ≤1 fila conectada por mp_user_id; limit(1) queda como cinturón+tirantes. */
+export async function getTenantByMpUserId(
+  mpUserId: string,
+): Promise<{ tenantId: string; mpUserId: string } | null> {
+  if (!mpUserId || mpUserId.trim().length < 1) return null;
+  const sb = getSupabaseServiceClient();
+  const { data, error } = await sb
+    .from(TABLE)
+    .select("tenant_id, mp_user_id")
+    .eq("mp_user_id", mpUserId)
+    .eq("status", "connected")
+    .limit(1)
+    .maybeSingle();
+  if (error)
+    throw new Error(
+      `mp-credentials: getTenantByMpUserId falló (${error.message})`,
+    );
+  if (!data) return null;
+  return {
+    tenantId: data.tenant_id as string,
+    mpUserId: data.mp_user_id as string,
+  };
+}
+
 /** Devuelve el refresh_token descifrado (para el flujo de renovación). server-side only. */
 export async function getMpRefreshToken(
   tenantId: string,
@@ -123,7 +152,11 @@ export async function setMpStatus(
   const { error } = await sb
     .from(TABLE)
     .update({ status, updated_at: new Date().toISOString() })
-    .eq("tenant_id", tenantId);
+    .eq("tenant_id", tenantId)
+    // Idempotente en la dirección correcta (Two-Pass cold S1): solo transiciona
+    // DESDE 'connected'. Re-revocar/re-expirar una fila ya no-conectada = no-op
+    // (evita el state-transition ambiguo bajo retry/replay del POST disconnect).
+    .eq("status", "connected");
   if (error)
     throw new Error(`mp-credentials: setStatus falló (${error.message})`);
 }

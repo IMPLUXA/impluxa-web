@@ -61,6 +61,16 @@ export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  // Guard SIGNAL-14: pago-mp crea fila pagos pendiente (prod) + llama a la API de MP con
+  // el token del vendedor. En preview/dev (el env apunta a prod, sin preview-DB) NO debe
+  // mutar. 403 antes del RPC y del POST a MP. VERCEL_ENV ausente local = permitido.
+  if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production") {
+    return NextResponse.json(
+      { ok: false, error: "forbidden", code: "E_NON_PROD" },
+      { status: 403 },
+    );
+  }
+
   const guard = await requireActiveTenantOrResponse();
   if (!guard.ok) return guard.response;
 

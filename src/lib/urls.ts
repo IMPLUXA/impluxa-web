@@ -105,3 +105,19 @@ export function tenantSlugFromHostValue(rawHost: string | null): string | null {
 export async function tenantSlugFromHost(): Promise<string | null> {
   return tenantSlugFromHostValue((await headers()).get("host"));
 }
+
+/**
+ * Path de retorno del connect OAuth MercadoPago, HOST-AWARE (UI-connect s57).
+ * Función PURA (testeable sin headers). El callback aterriza en la sección Cobros
+ * del panel correcto con ?mp=<result>:
+ *   - basePath "" (app.impluxa.com)     → /pagos?mp=connected
+ *   - basePath "/admin" (dominio custom) → /admin/pagos?mp=connected (el middleware
+ *     lo rewritea a /tenant/{slug}/admin/pagos). Cierra el 404 cosmético del connect.
+ * DISPLAY/NAV-ONLY: la autoridad sigue en claim JWT + RLS.
+ */
+export function mpConnectReturnPath(
+  basePath: "" | "/admin",
+  result: "connected" | "error",
+): string {
+  return `${basePath}/pagos?mp=${result}`;
+}
