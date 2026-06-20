@@ -121,3 +121,21 @@ export function mpConnectReturnPath(
 ): string {
   return `${basePath}/pagos?mp=${result}`;
 }
+
+/**
+ * Path de retorno del Checkout Pro de MercadoPago tras el pago, HOST-AWARE
+ * (C-COBRO-MP C1). Función PURA (testeable sin headers). El dueño/pasajero vuelve a la
+ * página de retorno del panel correcto con ?r=<outcome>:
+ *   - basePath "" (app.impluxa.com)      → /pagos/return?r=approved
+ *   - basePath "/admin" (dominio custom) → /admin/pagos/return?r=approved (el middleware
+ *     lo rewritea a /tenant/{slug}/admin/pagos/return). Cierra el 404 VIVO de
+ *     /app?mp=return en patagoniaviva.ar (/app no existe en el dominio custom).
+ * `r` es un HINT de display (la confirmación real es asíncrona vía webhook); la página
+ * defaultea a "en confirmación" si falta o es desconocido. DISPLAY/NAV-ONLY.
+ */
+export function mpCheckoutReturnPath(
+  basePath: "" | "/admin",
+  r: "approved" | "pending" | "failure",
+): string {
+  return `${basePath}/pagos/return?r=${r}`;
+}
