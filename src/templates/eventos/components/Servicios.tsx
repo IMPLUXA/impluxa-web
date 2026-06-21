@@ -2,6 +2,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { EventosContent, EventosDesign } from "../schema";
 import { resolveStructure } from "../structure";
+import type { PublicDia } from "@/lib/public/availability";
 
 const arsPrice = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -30,6 +31,13 @@ const ServicioDetalle = dynamic(
 // un tenant sin categorías (Hakuna / stack) nunca baja este chunk.
 const ExcFilterChips = dynamic(
   () => import("./ExcFilterChips").then((m) => ({ default: m.ExcFilterChips })),
+  { ssr: true },
+);
+
+// s59 F2 — modal de disponibilidad pública (overlay-only). Lazy dynamic: el branch stack
+// (Hakuna) NUNCA importa este chunk -> byte-idéntico + sin JS extra.
+const ReservaModal = dynamic(
+  () => import("./ReservaModal").then((m) => ({ default: m.ReservaModal })),
   { ssr: true },
 );
 
@@ -74,10 +82,14 @@ export function Servicios({
   items,
   design,
   contacto,
+  availability,
 }: {
   items: EventosContent["servicios"];
   design: EventosDesign;
   contacto?: EventosContent["contacto"];
+  // s59 F2 — disponibilidad pública per-excursion (server-rendered, keyed by excursion_id).
+  // SOLO la consume el branch overlay (turismo); el stack (Hakuna) la ignora -> byte-idéntico.
+  availability?: Record<string, PublicDia[]>;
 }) {
   const sc = resolveStructure(design.structure);
   // WhatsApp "Consultar" CTA is OPT-IN via contacto.whatsapp_cta (NOT derived
@@ -341,7 +353,30 @@ export function Servicios({
                           design={design}
                         />
                       )}
-                      {ctaLink(s)}
+                      {(() => {
+                        // F2: si la excursión tiene disponibilidad fetcheada -> Reservar abre el
+                        // modal (con la excursión fijada); si no -> el CTA WhatsApp de siempre.
+                        const avail = s.excursion_id
+                          ? availability?.[s.excursion_id]
+                          : undefined;
+                        if (avail === undefined) return ctaLink(s);
+                        const waHref = waCta
+                          ? `https://wa.me/${waCta}?text=${encodeURIComponent(
+                              `Hola! Quiero reservar ${s.title}.`,
+                            )}`
+                          : null;
+                        return (
+                          <ReservaModal
+                            excursion={{
+                              title: s.title,
+                              meta: s.detalle?.duracion,
+                            }}
+                            availability={avail}
+                            waHref={waHref}
+                            design={design}
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                 </article>

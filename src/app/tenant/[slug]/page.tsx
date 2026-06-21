@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/tenants/resolve";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { applyCurrentRates, getPublicCurrentRates } from "@/lib/public/rates";
+import {
+  getPublicAvailability,
+  type PublicDia,
+} from "@/lib/public/availability";
 import { getTemplate } from "@/templates/registry";
 
 export const revalidate = 60;
@@ -59,6 +63,35 @@ export default async function TenantPage({
   const design = template.designSchema.parse(site.design_json);
   const media = template.mediaSchema.parse(site.media_json);
 
+  // F2 — disponibilidad PÚBLICA per-excursion (server-side, ISR). Tenant del HOST (tenant.id),
+  // NUNCA del cliente. Fail-closed: getPublicAvailability nunca lanza. Hakuna: servicios sin
+  // excursion_id -> sin fetch -> availability {} -> el branch stack lo ignora (byte-idéntico).
+  const pad2 = (n: number) => String(n).padStart(2, "0");
+  const isoOf = (d: Date) =>
+    `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const fromDate = new Date();
+  const toDate = new Date(fromDate);
+  toDate.setDate(toDate.getDate() + 62);
+  const servicios: Array<{ excursion_id?: string }> = content.servicios ?? [];
+  const availPairs = await Promise.all(
+    servicios
+      .filter((s) => s.excursion_id)
+      .map(
+        async (s) =>
+          [
+            s.excursion_id as string,
+            await getPublicAvailability(
+              tenant.id,
+              s.excursion_id as string,
+              isoOf(fromDate),
+              isoOf(toDate),
+            ),
+          ] as const,
+      ),
+  );
+  const availability: Record<string, PublicDia[]> =
+    Object.fromEntries(availPairs);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Site = template.Site as React.ComponentType<any>;
   return (
@@ -68,6 +101,7 @@ export default async function TenantPage({
       media={media}
       tenantId={tenant.id}
       tenantName={tenant.name}
+      availability={availability}
     />
   );
 }
