@@ -4,7 +4,6 @@ import {
   DOW,
   buildMonthCells,
   monthLabel,
-  monthRange,
   todayIso,
 } from "@/lib/agency/calendar-dates";
 import type { PublicDia } from "@/lib/public/availability";
@@ -46,7 +45,6 @@ export function ReservaModal({
 }) {
   const pine = design.colors.primary;
   const copper = design.colors.accent;
-  const sand = design.colors.background;
   const heading = design.fonts.heading;
 
   const [open, setOpen] = useState(false);
