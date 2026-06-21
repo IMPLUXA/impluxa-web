@@ -18,6 +18,13 @@
 -- las departures de la fecha (time-NULL + legacy time-NOT-NULL, CUALQUIER status de la departure: una
 -- venta sobre una departure cancelled sigue siendo venta real). Cada reserva tiene 1 departure_id ->
 -- sin doble-conteo. Sparse-on-sales: dia sin venta = ausente.
+--
+-- DETALLE.estado (s59 decreto CEO): el drill-in muestra vendidos + estado {abierta,cerrada,cancelada}
+-- por (excursion,dia), SIN "quedan" (un cupo unico por excursion-dia es mal-definido con multi-pool
+-- legacy; el quedan honesto va post-F1b.3 retiro-legacy). estado surface la venta sobre salida
+-- no-disponible (peor-gana: cancelada > cerrada > abierta) para que el dueno VEA, ej, las 3 reservas
+-- colgadas de la salida cancelled del 06-18 en vez de esconderlas. El agregado es el ledger de ventas
+-- COMPLETO; el single-excursion v030_014 (que excluye legacy cancelled) se reconcilia en F1b.3.
 
 begin;
 
@@ -63,7 +70,7 @@ begin
 
   -- taken por departure UNA vez (subquery), despues agrego por dia.
   with por_dep as (
-    select d.departure_date as fecha, d.excursion_id,
+    select d.departure_date as fecha, d.excursion_id, d.status,
            public._agency_taken(p_tenant, d.id) as taken
       from public.excursion_departures d
      where d.tenant_id = p_tenant
@@ -89,10 +96,19 @@ begin
                'fecha', pd.fecha,
                'excursion_id', pd.excursion_id,
                'excursion_nombre', e.name,
-               'pax_total', pd.pax
+               'pax_total', pd.pax,
+               'estado', pd.estado
              ) order by pd.fecha, e.name)
         from (
-          select fecha, excursion_id, sum(taken)::int as pax
+          select fecha, excursion_id, sum(taken)::int as pax,
+                 -- estado del dia para esa excursion SIN eje de cupo (el "quedan" honesto = post-F1b.3,
+                 -- multi-pool). Surface la venta sobre salida no-disponible (decreto CEO 06-18 s59):
+                 -- cancelada > cerrada > abierta (peor gana). Solo mira departures CON venta.
+                 case
+                   when bool_or(taken > 0 and status = 'cancelled') then 'cancelada'
+                   when bool_or(taken > 0 and status = 'closed')    then 'cerrada'
+                   else 'abierta'
+                 end as estado
             from por_dep
            group by fecha, excursion_id
           having sum(taken) > 0

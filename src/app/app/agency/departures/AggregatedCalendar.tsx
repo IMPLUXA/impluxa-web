@@ -23,6 +23,9 @@ type DetalleAgg = {
   excursion_id: string;
   excursion_nombre: string;
   pax_total: number;
+  // F1d s59: estado de la venta de ese dia para esa excursion (sin "quedan" — el cupo unico por
+  // excursion-dia es mal-definido con multi-pool legacy; el quedan honesto va post-F1b.3).
+  estado?: "abierta" | "cerrada" | "cancelada";
 };
 type AggResponse = {
   ok?: boolean;
@@ -229,8 +232,18 @@ export function AggregatedCalendar({
                         key={d.excursion_id}
                         className="flex items-center justify-between rounded-lg border border-[#ece0c8] bg-[#fbf6ea] px-3 py-2 text-[13px]"
                       >
-                        <span className="font-medium text-[#143038]">
+                        <span className="flex items-center gap-1.5 font-medium text-[#143038]">
                           {d.excursion_nombre}
+                          {d.estado === "cancelada" && (
+                            <span className="rounded bg-[#f3d9d3] px-1.5 py-0.5 text-[10px] font-semibold text-[#9a3412]">
+                              salida cancelada
+                            </span>
+                          )}
+                          {d.estado === "cerrada" && (
+                            <span className="rounded bg-[#ece4d2] px-1.5 py-0.5 text-[10px] font-semibold text-[#7a5527]">
+                              cerrada
+                            </span>
+                          )}
                         </span>
                         <span className="font-bold text-[#143038]">
                           {d.pax_total}
