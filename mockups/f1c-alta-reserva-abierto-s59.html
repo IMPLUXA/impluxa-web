@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup F1c - Nueva reserva sobre modelo abierto (Patagonia Viva)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:#fbf6ea; --sand2:#f2e9d6; --sand3:#ece0c8;
+    --pine:#143038; --pine2:#1f4a54; --pineSoft:#3d6b73;
+    --copper:#b48448; --copperSoft:#d8b384;
+    --ink:#2a2a26; --muted:#7d7768; --line:rgba(20,48,56,.14);
+    --marble:#ffffff; --ok:#2f6d4f; --warn:#9a4b32;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#efe7d4,#e7dcc5);color:var(--ink);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:14px;line-height:1.45;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+  .pagehead{max-width:900px;width:100%;margin-bottom:18px}
+  .pagehead h1{font-family:"Cinzel",serif;font-size:18px;color:var(--pine);margin:0 0 4px}
+  .pagehead p{color:var(--muted);font-size:12.5px;margin:0}
+  .stage{display:grid;grid-template-columns:minmax(0,520px) 320px;gap:22px;align-items:start;max-width:900px;width:100%}
+  @media(max-width:880px){.stage{grid-template-columns:1fr}}
+
+  /* Modal */
+  .modal{background:var(--marble);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 24px 60px rgba(20,48,56,.18);overflow:hidden}
+  .mhead{padding:18px 22px 12px}
+  .mhead h2{font-family:"Cinzel",serif;font-size:19px;color:var(--pine);margin:0}
+  .mhead .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .mbody{padding:4px 22px 20px;display:flex;flex-direction:column;gap:13px}
+  label.fld{display:block;font-size:12.5px;color:var(--pine);font-weight:600}
+  .fld .ctl{margin-top:5px;width:100%;border:1px solid var(--sand3);border-radius:9px;
+    padding:9px 11px;font:inherit;font-size:13.5px;color:var(--ink);background:#fffdf8}
+  select.ctl{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--pineSoft) 50%),linear-gradient(135deg,var(--pineSoft) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 16px,calc(100% - 11px) 16px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .ctl.disabled{background:var(--sand2);color:#a8a08e;cursor:not-allowed}
+  .row2{display:flex;gap:11px}.row2>*{flex:1}
+
+  /* Availability line */
+  .avail{display:flex;align-items:center;gap:9px;border-radius:9px;padding:9px 12px;font-size:13px;font-weight:600;margin-top:-2px}
+  .avail .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .avail .sub{font-weight:400;color:var(--muted);font-size:11.5px}
+  .avail.open{background:rgba(31,74,84,.07);color:var(--pine)} .avail.open .dot{background:var(--copper)}
+  .avail.limited{background:rgba(180,132,72,.12);color:var(--copper)} .avail.limited .dot{background:var(--copper)}
+  .avail.closed{background:rgba(154,75,50,.08);color:var(--warn)} .avail.closed .dot{background:transparent;border:2px solid var(--warn)}
+
+  fieldset.pax{border:1px solid var(--sand3);border-radius:10px;padding:11px 13px;margin:0}
+  fieldset.pax legend{padding:0 6px;font-size:12px;font-weight:600;color:var(--pine)}
+  .paxgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .paxgrid label{font-size:12px;color:var(--muted)}
+  .paxgrid input{margin-top:4px;width:100%;border:1px solid var(--sand3);border-radius:8px;padding:7px 9px;font:inherit}
+  .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px}
+  .btn{border:0;font:inherit;font-weight:600;font-size:13px;padding:10px 16px;border-radius:9px;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn.cta{background:var(--copper);color:#fff}
+  .btn.cta:disabled{opacity:.45;cursor:not-allowed}
+
+  /* Side: the 3 states + notes */
+  .side{display:flex;flex-direction:column;gap:14px}
+  .panel{background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .panel h3{font-family:"Cinzel",serif;font-size:13px;color:var(--pine);margin:0 0 10px}
+  .panel .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0 4px}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.5}
+  .note b{color:var(--pine)}
+  .tag{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--pineSoft);padding:1px 7px;border-radius:99px;margin-right:5px}
+  .foot{max-width:900px;width:100%;margin-top:22px;font-size:11.5px;color:#9a917f}
+  .foot b{color:var(--copper)}
+</style>
+</head>
+<body>
+  <div class="pagehead">
+    <h1>F1c - Nueva reserva sobre el modelo abierto-por-defecto</h1>
+    <p>El selector pasa de "elegi una salida ya sembrada" a "elegi excursion + cualquier dia abierto". Mockup no funcional, datos ilustrativos.</p>
+  </div>
+
+  <div class="stage">
+    <!-- MODAL -->
+    <div class="modal">
+      <div class="mhead">
+        <h2>Nueva reserva</h2>
+        <div class="sub">Todas las excursiones estan abiertas todos los dias (cupo 50). Elegi cual y que dia.</div>
+      </div>
+      <div class="mbody">
+        <label class="fld">Excursion
+          <select class="ctl">
+            <option>Cerro Tronador</option>
+            <option>Cerro Catedral</option>
+            <option>Circuito Chico</option>
+            <option>Bautismo de Ski</option>
+            <option>... (las 19 activas)</option>
+          </select>
+        </label>
+
+        <label class="fld">Fecha
+          <input class="ctl" type="date" value="2026-08-15" min="2026-06-21" max="2027-06-21" />
+        </label>
+
+        <!-- linea de disponibilidad: estado vivo = ABIERTO -->
+        <div class="avail open">
+          <span class="dot"></span>Abierto<span class="sub">- cupo 50 - quedan 48</span>
+        </div>
+
+        <label class="fld">Titular
+          <input class="ctl" value="Familia Gomez" />
+        </label>
+        <div class="row2">
+          <label class="fld">Email (opcional)<input class="ctl" placeholder="" /></label>
+          <label class="fld">Telefono (opcional)<input class="ctl" placeholder="" /></label>
+        </div>
+        <label class="fld">Alojamiento (opcional)<input class="ctl" placeholder="" /></label>
+
+        <fieldset class="pax">
+          <legend>Pasajeros</legend>
+          <div class="paxgrid">
+            <label>Adulto<input type="number" value="2" /></label>
+            <label>Menor<input type="number" value="0" /></label>
+            <label>Jubilado<input type="number" value="0" /></label>
+            <label>Infante<input type="number" value="0" /></label>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button class="btn ghost">Cancelar</button>
+          <button class="btn cta">Crear reserva</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDE: los 3 estados de la linea + notas -->
+    <div class="side">
+      <div class="panel">
+        <h3>La linea de disponibilidad</h3>
+        <div class="note">Aparece debajo de Fecha. Al cambiar la fecha (o la excursion) consulta el read-model
+          compartido y muestra el estado. Es pre-aviso de UX; el motor es la autoridad final al crear.</div>
+
+        <div class="lbl">Dia abierto (lo comun)</div>
+        <div class="avail open"><span class="dot"></span>Abierto<span class="sub">- cupo 50 - quedan 48</span></div>
+
+        <div class="lbl">Dia con cupo limitado</div>
+        <div class="avail limited"><span class="dot"></span>Cupo limitado a 20<span class="sub">- quedan 12</span></div>
+
+        <div class="lbl">Dia cerrado (bloquea el submit)</div>
+        <div class="avail closed"><span class="dot"></span>Dia cerrado - elegi otro</div>
+      </div>
+
+      <div class="panel">
+        <h3>Reglas</h3>
+        <div class="note">
+          <p><span class="tag">UI</span>Fecha deshabilitada hasta elegir excursion.</p>
+          <p><span class="tag">UI</span><b>Cerrado</b> o <b>quedan 0</b> -> "Crear reserva" bloqueado.</p>
+          <p><span class="tag">UI</span><b>Limitado</b> -> deja crear, muestra cuanto queda.</p>
+          <p><span class="tag">Motor</span>El motor re-chequea al crear (si el dueno cerro el dia entre el aviso y el submit, rechaza). Sin oversell.</p>
+          <p><span class="tag">Reuso</span>Misma fuente de cupo que el calendario de Salidas. Sin DDL, sin RPC nueva.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Mockup <b>F1c</b> (s59) - alta de reservas sobre el modelo abierto. El submit ya manda (excursion, fecha)
+    desde F1a; lo que cambia es COMO se elige. El calendario completo dentro de Reservas (clic en un dia -> cuantas reservas)
+    es <b>F1d</b>, fase aparte. No funcional - para walk del CEO antes de construir.</p>
+</body>
+</html>
