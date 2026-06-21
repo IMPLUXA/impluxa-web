@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>F2 · Reservá tu excursión — disponibilidad pública (mockup s59 v2)</title>
+<title>F2 · Modal de reserva desde "Reservar" — disponibilidad (mockup s59 v3)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -11,228 +11,243 @@
   :root{
     --sand:#F4EDDC; --pine:#143038; --copper:#B48448; --text:#1E2B2C;
     --teal:#3E7C95; --wa:#25D366; --cream:#FBF7EE; --line:#E6DCC4;
-    --green:#3F7D5A; --green-bg:#E7F0E8;
-    --pocos-tx:#9A5B12; --pocos-bd:#D9A24A; --pocos-bg:#FBEAD0;
+    --green:#3F7D5A; --pocos-tx:#9A5B12; --pocos-bd:#D9A24A;
     --sel:#B48448; --ago-bg:#ECE8E0; --ago-tx:#A8A192; --grey:#B7B0A1;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--sand);color:var(--text);
     font-family:"Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
-  .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px}
 
   .mk{background:var(--pine);color:#EBE2CE;font-size:12.5px;letter-spacing:.01em;text-align:center;padding:9px 16px}
   .mk b{color:#fff}
 
-  header.sec{text-align:center;padding:54px 20px 6px}
-  header.sec h1{font-family:"Cinzel",serif;color:var(--pine);font-weight:700;font-size:clamp(28px,5vw,46px);margin:0 0 12px}
-  header.sec p{max-width:560px;margin:0 auto;color:#46514f;font-size:16px}
+  header.sec{text-align:center;padding:44px 20px 2px}
+  header.sec h1{font-family:"Cinzel",serif;color:var(--pine);font-weight:700;font-size:clamp(24px,4.4vw,38px);margin:0 0 8px}
+  header.sec p{max-width:600px;margin:0 auto;color:#46514f;font-size:15px}
 
-  /* excursion chips (per-excursion entry) */
-  .chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:24px 20px 8px}
-  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;font-size:13.5px;
-    font-weight:600;color:#5a635f;cursor:pointer}
-  .chip.on{background:var(--pine);color:#fff;border-color:var(--pine)}
+  /* ===== contexto: el sitio (Servicios.tsx) con su boton Reservar ===== */
+  .sitehint{margin:26px 0 0}
+  .sh-cap{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#9a8f78;font-weight:700;text-align:center;margin-bottom:12px}
+  .sh-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.sh-cards{grid-template-columns:1fr;max-width:340px;margin:0 auto}}
+  .sh-card{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;opacity:.62}
+  .sh-card.on{opacity:1;border-color:var(--copper);box-shadow:0 14px 30px -20px rgba(180,132,72,.6);position:relative}
+  .sh-img{height:78px;background:linear-gradient(135deg,#2c5560,#3E7C95 60%,#7fa6ad)}
+  .sh-card:nth-child(2) .sh-img{background:linear-gradient(135deg,#3a5a3f,#5a7d52 60%,#9bb285)}
+  .sh-card:nth-child(3) .sh-img{background:linear-gradient(135deg,#6a4a2a,#a9803f 60%,#d8b27a)}
+  .sh-b{padding:11px 13px 13px}
+  .sh-b h3{font-family:"Cinzel",serif;color:var(--pine);font-size:14.5px;margin:0 0 9px;font-weight:600}
+  .sh-res{display:inline-flex;align-items:center;gap:6px;background:var(--copper);color:#fff;border:none;
+    border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .sh-card.on .sh-res{box-shadow:0 0 0 4px rgba(180,132,72,.22)}
+  .clic{position:absolute;top:84px;right:10px;background:var(--pine);color:#fff;font-size:10.5px;font-weight:700;
+    padding:3px 9px;border-radius:999px}
 
-  /* wizard panel (the destination; F2 = step 1 only) */
-  .panel{background:var(--cream);border:1px solid var(--line);border-radius:24px;
-    box-shadow:0 26px 60px -30px rgba(20,48,56,.5);overflow:hidden;margin:14px 0 0}
-  .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 6px}
-  .ph .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
-  .ph h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:22px;margin:6px 0 2px}
-  .ph .meta{font-size:13px;color:#6b736f}
+  .flowarrow{text-align:center;color:#6b736f;font-size:13px;margin:16px 0 2px}
+  .flowarrow b{color:var(--pine)}
+  .flowarrow .ar{display:block;color:var(--copper);font-size:22px;line-height:1;margin-top:2px}
+
+  /* ===== el MODAL (se abre desde Reservar, excursion fijada) ===== */
+  .stage{margin:6px 0 0;background:rgba(20,48,56,.10);border-radius:26px;padding:22px;display:flex;justify-content:center}
+  .modal{width:100%;max-width:560px;background:var(--cream);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 34px 80px -36px rgba(20,48,56,.65);overflow:hidden}
+  .mh{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 20px 4px}
+  .mh .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
+  .mh h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:21px;margin:5px 0 3px}
+  .mh .meta{font-size:12.5px;color:#6b736f}
+  .fixed{display:inline-flex;align-items:center;gap:5px;margin-top:7px;background:#EFE7D5;border:1px solid var(--line);
+    border-radius:999px;padding:3px 10px;font-size:11px;color:#7a6a4a;font-weight:600}
   .x{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:#7b837f;
     font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 
-  /* STEPPER */
-  .stepper{display:flex;align-items:flex-start;gap:0;padding:16px 18px 6px}
+  .stepper{display:flex;align-items:flex-start;padding:14px 16px 4px}
   .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
-  .step .num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:13px;z-index:1;border:2px solid var(--line);background:#fff;color:var(--grey)}
-  .step .lbl{font-size:11px;margin-top:6px;color:var(--grey);font-weight:600;text-align:center;line-height:1.2}
-  .step::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .step .num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:12.5px;z-index:1;border:2px solid var(--line);background:#fff;color:var(--grey)}
+  .step .lbl{font-size:10.5px;margin-top:6px;color:var(--grey);font-weight:600;text-align:center;line-height:1.2}
+  .step::before{content:"";position:absolute;top:14px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
   .step:first-child::before{display:none}
   .step.active .num{background:var(--copper);border-color:var(--copper);color:#fff;box-shadow:0 0 0 4px rgba(180,132,72,.18)}
   .step.active .lbl{color:var(--pine);font-weight:700}
-  .step.done .num{background:var(--pine);border-color:var(--pine);color:#fff}
-  .stepnote{text-align:center;font-size:11.5px;color:#8a918c;padding:2px 18px 4px}
+  .stepnote{text-align:center;font-size:11px;color:#8a918c;padding:2px 16px 4px}
 
-  /* step-1 body */
-  .body{padding:8px 22px 4px}
-  .step1-h{font-family:"Cinzel",serif;color:var(--pine);font-size:17px;margin:14px 0 12px;text-align:center}
-  .navrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .navrow .mes{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:15px;text-transform:capitalize}
-  .nav{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--pine);
-    font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .body{padding:6px 20px 4px}
+  .step1-h{font-family:"Cinzel",serif;color:var(--pine);font-size:16px;margin:12px 0 10px;text-align:center}
+  .navrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .navrow .mes{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:14.5px;text-transform:capitalize}
+  .nav{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--pine);
+    font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .nav:hover{border-color:var(--copper);color:var(--copper)}
-  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
-  .dow span{text-align:center;font-size:10px;font-weight:700;letter-spacing:.05em;color:#9aa09c;text-transform:uppercase}
-  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-  .day{aspect-ratio:1/1;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    font-size:14px;font-weight:600;position:relative;border:1px solid transparent;user-select:none}
-  .day small{font-size:9px;font-weight:700;margin-top:1px;line-height:1}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
+  .dow span{text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.05em;color:#9aa09c;text-transform:uppercase}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .day{aspect-ratio:1/1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:13.5px;font-weight:600;position:relative;border:1px solid transparent;user-select:none}
+  .day small{font-size:8.5px;font-weight:700;margin-top:1px;line-height:1}
   .day.off{color:#c9c1ad;background:transparent}
-  /* Con salidas = verde */
   .day.disp{background:#fff;border-color:var(--line);color:var(--pine);cursor:pointer}
   .day.disp:hover{border-color:var(--green);box-shadow:0 0 0 2px rgba(63,125,90,.16)}
-  .day.disp::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);position:absolute;bottom:7px}
-  /* Escasez = verde con numero exacto (opcion C) */
+  .day.disp::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);position:absolute;bottom:6px}
   .day.pocos{background:#fff;border-color:var(--pocos-bd);color:var(--pine);cursor:pointer}
   .day.pocos small{color:var(--pocos-tx)}
-  .day.pocos::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);position:absolute;bottom:5px;display:none}
-  /* Seleccionado = ambar */
   .day.sel{background:var(--sel);border-color:var(--sel);color:#fff;cursor:pointer;box-shadow:0 0 0 3px rgba(180,132,72,.22)}
   .day.sel small{color:#fff8ee}
-  /* Sin disponibilidad / agotado = gris */
   .day.ago{background:var(--ago-bg);color:var(--ago-tx)}
   .day.ago small{color:var(--ago-tx)}
 
-  .legend{display:flex;flex-wrap:wrap;gap:14px 20px;justify-content:center;padding:16px 18px 4px;font-size:12.5px;color:#5a635f}
-  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend{display:flex;flex-wrap:wrap;gap:13px 18px;justify-content:center;padding:14px 16px 2px;font-size:12px;color:#5a635f}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
   .legend i{width:11px;height:11px;border-radius:50%;display:inline-block}
-  .lg-disp i{background:var(--green)}
-  .lg-sel i{background:var(--sel)}
-  .lg-ago i{background:var(--grey)}
-  .escnote{text-align:center;font-size:12px;color:#8a918c;padding:2px 18px 6px}
+  .lg-disp i{background:var(--green)} .lg-sel i{background:var(--sel)} .lg-ago i{background:var(--grey)}
+  .escnote{text-align:center;font-size:11.5px;color:#8a918c;padding:2px 16px 6px}
 
-  /* selected-day detail */
-  .detail{margin:12px 22px 0;background:var(--pine);color:#EDE4D0;border-radius:16px;padding:14px 18px;
-    display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .detail .dd{font-family:"Cinzel",serif;font-size:16px;color:#fff;text-transform:capitalize}
-  .detail .pill{background:rgba(255,255,255,.12);border-radius:999px;padding:4px 12px;font-size:12.5px}
+  .detail{margin:10px 20px 0;background:var(--pine);color:#EDE4D0;border-radius:14px;padding:13px 16px;
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .detail .dd{font-family:"Cinzel",serif;font-size:15px;color:#fff;text-transform:capitalize}
+  .detail .pill{background:rgba(255,255,255,.12);border-radius:999px;padding:4px 11px;font-size:12px}
   .detail .pill.urg{background:var(--pocos-bd);color:#3a230a;font-weight:700}
 
-  /* WhatsApp cartel (manejo de expectativa de horario) */
-  .cartel{display:flex;gap:11px;align-items:flex-start;margin:14px 22px 2px;background:#fff;
-    border:1px solid var(--line);border-left:3px solid var(--wa);border-radius:12px;padding:12px 14px}
-  .cartel svg{width:20px;height:20px;color:var(--wa);flex:none;margin-top:1px}
-  .cartel p{margin:0;font-size:12.8px;color:#4b544f}
+  .cartel{display:flex;gap:10px;align-items:flex-start;margin:13px 20px 2px;background:#fff;
+    border:1px solid var(--line);border-left:3px solid var(--wa);border-radius:11px;padding:11px 13px}
+  .cartel svg{width:19px;height:19px;color:var(--wa);flex:none;margin-top:1px}
+  .cartel p{margin:0;font-size:12.5px;color:#4b544f}
   .cartel b{color:var(--pine)}
 
-  .pfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 22px 22px;margin-top:6px}
-  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 24px;
-    font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit}
-  .btn.cont{background:var(--copper);color:#fff}
-  .btn.cont:hover{background:#9d6f38}
-  .pfoot .f2note{font-size:11.5px;color:#8a918c;flex:1;min-width:180px}
-  .wa-link{display:inline-flex;align-items:center;gap:7px;color:#0c6b34;font-weight:700;font-size:13px;text-decoration:none}
-  .wa-link svg{width:16px;height:16px}
+  .pfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 20px 20px;margin-top:4px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:11px 22px;
+    font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--copper);color:#fff}
+  .btn:hover{background:#9d6f38}
+  .pfoot .f2note{font-size:11px;color:#8a918c;flex:1;min-width:170px}
 
-  .note{font-size:12px;color:#7c847f;text-align:center;padding:22px 24px 60px;max-width:620px;margin:0 auto}
+  .note{font-size:12px;color:#7c847f;text-align:center;padding:22px 24px 60px;max-width:640px;margin:0 auto}
 </style>
 </head>
 <body>
 
-<div class="mk">MOCKUP F2 · s59 v2 — paso 1 (<b>Fecha</b>) del flujo de reserva. F2 = solo disponibilidad + elegir fecha (read-only). Pasajeros/Datos/Pago = F3/F4 (en gris). Umbral de escasez propuesto: <b>≤3</b> (afinás en el walk).</div>
+<div class="mk">MOCKUP F2 · s59 v3 — flujo corregido: el modal se abre desde el botón <b>Reservar</b> de cada excursión, con esa excursión <b>ya fijada</b> (sin selector). F2 = solo el paso 1 (Fecha, read-only). Umbral de escasez ≤3.</div>
 
 <header class="sec">
   <h1>Reservá tu excursión</h1>
-  <p>Elegí tu excursión y tu fecha. Te mostramos la disponibilidad real, y si quedan pocos lugares te avisamos cuántos.</p>
+  <p>Desde la card de cada excursión en el sitio, el botón “Reservar” abre el flujo con esa excursión ya elegida.</p>
 </header>
 
 <div class="wrap">
 
-  <!-- per-excursion: cada Servicio abre su propio flujo -->
-  <div class="chips">
-    <button class="chip on">Cerro Tronador</button>
-    <button class="chip">Circuito Chico</button>
-    <button class="chip">Cerro Catedral</button>
-    <button class="chip">Bariloche a Pampa Linda</button>
-  </div>
-
-  <!-- WIZARD (destino F2+F3+F4); en F2 solo el paso 1 funciona -->
-  <div class="panel">
-    <div class="ph">
-      <div>
-        <div class="eyebrow">Excursión de día completo · 10 h aprox.</div>
-        <h2>Cerro Tronador</h2>
-        <div class="meta">Ventisquero Negro · Pampa Linda</div>
+  <!-- contexto: el sitio (Servicios.tsx) -->
+  <div class="sitehint">
+    <div class="sh-cap">En el sitio · Servicios — cada excursión con su botón Reservar</div>
+    <div class="sh-cards">
+      <div class="sh-card on">
+        <div class="sh-img"></div>
+        <div class="sh-b"><h3>Cerro Tronador</h3><button class="sh-res">Reservar</button></div>
+        <span class="clic">← tocó acá</span>
       </div>
-      <button class="x" aria-label="Cerrar">&times;</button>
-    </div>
-
-    <!-- 1) STEPPER COMPLETO (futuros en gris) -->
-    <div class="stepper">
-      <div class="step active"><div class="num">1</div><div class="lbl">Fecha</div></div>
-      <div class="step"><div class="num">2</div><div class="lbl">Pasajeros</div></div>
-      <div class="step"><div class="num">3</div><div class="lbl">Datos</div></div>
-      <div class="step"><div class="num">4</div><div class="lbl">Pago</div></div>
-      <div class="step"><div class="num">5</div><div class="lbl">Voucher</div></div>
-    </div>
-    <div class="stepnote">Reservá en 5 pasos. En esta etapa elegís la fecha; el resto del flujo llega muy pronto.</div>
-
-    <div class="body">
-      <div class="step1-h">Elegí la fecha de tu salida</div>
-      <div class="navrow">
-        <button class="nav" aria-label="Mes anterior">&lsaquo;</button>
-        <div class="mes">julio 2026</div>
-        <button class="nav" aria-label="Mes siguiente">&rsaquo;</button>
+      <div class="sh-card">
+        <div class="sh-img"></div>
+        <div class="sh-b"><h3>Circuito Chico</h3><button class="sh-res">Reservar</button></div>
       </div>
-      <div class="dow"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
-      <div class="days">
-        <!-- julio 2026 arranca miércoles -> 2 celdas de relleno -->
-        <div class="day off"></div><div class="day off"></div>
-        <div class="day disp"><span>1</span></div>
-        <div class="day disp"><span>2</span></div>
-        <div class="day disp"><span>3</span></div>
-        <div class="day pocos"><span>4</span><small>quedan 2</small></div>
-        <div class="day ago"><span>5</span><small>Agotado</small></div>
-        <div class="day disp"><span>6</span></div>
-        <div class="day disp"><span>7</span></div>
-        <div class="day disp"><span>8</span></div>
-        <div class="day disp"><span>9</span></div>
-        <div class="day disp"><span>10</span></div>
-        <div class="day pocos"><span>11</span><small>quedan 3</small></div>
-        <div class="day ago"><span>12</span><small>Agotado</small></div>
-        <div class="day disp"><span>13</span></div>
-        <div class="day disp"><span>14</span></div>
-        <div class="day disp"><span>15</span></div>
-        <div class="day disp"><span>16</span></div>
-        <div class="day disp"><span>17</span></div>
-        <div class="day sel"><span>18</span><small>queda 1</small></div>
-        <div class="day disp"><span>19</span></div>
-        <div class="day disp"><span>20</span></div>
-        <div class="day disp"><span>21</span></div>
-        <div class="day disp"><span>22</span></div>
-        <div class="day disp"><span>23</span></div>
-        <div class="day disp"><span>24</span></div>
-        <div class="day disp"><span>25</span></div>
-        <div class="day disp"><span>26</span></div>
-        <div class="day disp"><span>27</span></div>
-        <div class="day disp"><span>28</span></div>
-        <div class="day disp"><span>29</span></div>
-        <div class="day disp"><span>30</span></div>
-        <div class="day disp"><span>31</span></div>
+      <div class="sh-card">
+        <div class="sh-img"></div>
+        <div class="sh-b"><h3>Cerro Catedral</h3><button class="sh-res">Reservar</button></div>
       </div>
-    </div>
-
-    <!-- 2) LEYENDA con dots (patron siturismo, mapeado a opcion C) -->
-    <div class="legend">
-      <span class="lg-disp"><i></i>Con salidas</span>
-      <span class="lg-sel"><i></i>Seleccionado</span>
-      <span class="lg-ago"><i></i>Sin disponibilidad</span>
-    </div>
-    <div class="escnote">Cuando quedan pocos lugares te mostramos cuántos (ej. “quedan 2”). Con cupo amplio, solo “Con salidas”.</div>
-
-    <!-- detalle del dia elegido -->
-    <div class="detail">
-      <div class="dd">Sábado 18 de julio</div>
-      <span class="pill">Cerro Tronador</span>
-      <span class="pill urg">¡Último lugar!</span>
-    </div>
-
-    <!-- 3) CARTEL de horario/punto de partida por WhatsApp -->
-    <div class="cartel">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63z"/></svg>
-      <p><b>El punto de partida y el horario exacto se confirman por WhatsApp al reservar.</b> Coordinamos con vos el encuentro según tu alojamiento en Bariloche.</p>
-    </div>
-
-    <div class="pfoot">
-      <button class="btn cont">Continuar &rsaquo;</button>
-      <span class="f2note">Pasajeros · Datos · Pago online — próximamente. Por ahora coordinás por WhatsApp.</span>
     </div>
   </div>
 
-  <p class="note">Mockup estático para validar la vista pública (F2). El número exacto solo aparece en escasez (≤ umbral); con cupo holgado el turista ve “Con salidas” sin número, y cuánto se vendió nunca sale del servidor. Reserva y pago online = F3 y F4 (referencias de siturismo anotadas en el planning).</p>
+  <div class="flowarrow">El turista mira <b>Cerro Tronador</b> y toca <b>Reservar</b> en esa card → se abre el modal con la excursión ya fijada (no la re-elige)<span class="ar">&darr;</span></div>
+
+  <!-- el MODAL (excursion fijada desde el clic) -->
+  <div class="stage">
+    <div class="modal">
+      <div class="mh">
+        <div>
+          <div class="eyebrow">Reservá tu salida</div>
+          <h2>Cerro Tronador</h2>
+          <div class="meta">Día completo · 10 h aprox. · Ventisquero Negro · Pampa Linda</div>
+          <span class="fixed">✓ Excursión elegida desde el sitio</span>
+        </div>
+        <button class="x" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="stepper">
+        <div class="step active"><div class="num">1</div><div class="lbl">Fecha</div></div>
+        <div class="step"><div class="num">2</div><div class="lbl">Pasajeros</div></div>
+        <div class="step"><div class="num">3</div><div class="lbl">Datos</div></div>
+        <div class="step"><div class="num">4</div><div class="lbl">Pago</div></div>
+        <div class="step"><div class="num">5</div><div class="lbl">Voucher</div></div>
+      </div>
+      <div class="stepnote">Reservá en 5 pasos. En esta etapa elegís la fecha; el resto del flujo llega muy pronto.</div>
+
+      <div class="body">
+        <div class="step1-h">Elegí la fecha de tu salida</div>
+        <div class="navrow">
+          <button class="nav" aria-label="Mes anterior">&lsaquo;</button>
+          <div class="mes">julio 2026</div>
+          <button class="nav" aria-label="Mes siguiente">&rsaquo;</button>
+        </div>
+        <div class="dow"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+        <div class="days">
+          <div class="day off"></div><div class="day off"></div>
+          <div class="day disp"><span>1</span></div>
+          <div class="day disp"><span>2</span></div>
+          <div class="day disp"><span>3</span></div>
+          <div class="day pocos"><span>4</span><small>quedan 2</small></div>
+          <div class="day ago"><span>5</span><small>Agotado</small></div>
+          <div class="day disp"><span>6</span></div>
+          <div class="day disp"><span>7</span></div>
+          <div class="day disp"><span>8</span></div>
+          <div class="day disp"><span>9</span></div>
+          <div class="day disp"><span>10</span></div>
+          <div class="day pocos"><span>11</span><small>quedan 3</small></div>
+          <div class="day ago"><span>12</span><small>Agotado</small></div>
+          <div class="day disp"><span>13</span></div>
+          <div class="day disp"><span>14</span></div>
+          <div class="day disp"><span>15</span></div>
+          <div class="day disp"><span>16</span></div>
+          <div class="day disp"><span>17</span></div>
+          <div class="day sel"><span>18</span><small>queda 1</small></div>
+          <div class="day disp"><span>19</span></div>
+          <div class="day disp"><span>20</span></div>
+          <div class="day disp"><span>21</span></div>
+          <div class="day disp"><span>22</span></div>
+          <div class="day disp"><span>23</span></div>
+          <div class="day disp"><span>24</span></div>
+          <div class="day disp"><span>25</span></div>
+          <div class="day disp"><span>26</span></div>
+          <div class="day disp"><span>27</span></div>
+          <div class="day disp"><span>28</span></div>
+          <div class="day disp"><span>29</span></div>
+          <div class="day disp"><span>30</span></div>
+          <div class="day disp"><span>31</span></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="lg-disp"><i></i>Con salidas</span>
+        <span class="lg-sel"><i></i>Seleccionado</span>
+        <span class="lg-ago"><i></i>Sin disponibilidad</span>
+      </div>
+      <div class="escnote">Cuando quedan pocos lugares te mostramos cuántos (ej. “quedan 2”). Con cupo amplio, solo “Con salidas”.</div>
+
+      <div class="detail">
+        <div class="dd">Sábado 18 de julio</div>
+        <span class="pill">Cerro Tronador</span>
+        <span class="pill urg">¡Último lugar!</span>
+      </div>
+
+      <div class="cartel">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63z"/></svg>
+        <p><b>El punto de partida y el horario exacto se confirman por WhatsApp al reservar.</b> Coordinamos con vos el encuentro según tu alojamiento en Bariloche.</p>
+      </div>
+
+      <div class="pfoot">
+        <button class="btn">Continuar &rsaquo;</button>
+        <span class="f2note">Pasajeros · Datos · Pago online — próximamente. Por ahora coordinás por WhatsApp.</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">Mockup estático del flujo F2: el botón “Reservar” de cada card (hoy va a WhatsApp) abrirá este modal con la excursión fijada; el read-model público se llama per-excursión (la que el turista clickeó). El número exacto solo aparece en escasez (≤ umbral); con cupo holgado el turista ve “Con salidas” sin número, y cuánto se vendió nunca sale del servidor. Reserva y pago online = F3 y F4.</p>
 </div>
 
 </body>
