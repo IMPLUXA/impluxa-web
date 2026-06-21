@@ -11,6 +11,7 @@ import { Footer } from "./components/Footer";
 import { TenantNav } from "./components/TenantNav";
 import { Nosotros } from "./components/Nosotros";
 import type { EventosContent, EventosDesign, EventosMedia } from "./schema";
+import type { PublicDia } from "@/lib/public/availability";
 
 // Dynamic import — Pautas is a "use client" accordion below the fold.
 // Defers its JS from the initial bundle, reducing TBT on mobile.
@@ -25,6 +26,9 @@ export interface EventosSiteProps {
   media: EventosMedia;
   tenantId: string;
   tenantName: string;
+  // s59 F2 — disponibilidad pública per-excursion (server-rendered). Opcional: ausente/vacío
+  // (Hakuna) -> Servicios stack la ignora -> byte-idéntico.
+  availability?: Record<string, PublicDia[]>;
 }
 
 export function EventosSite({
@@ -33,6 +37,7 @@ export function EventosSite({
   media,
   tenantId,
   tenantName,
+  availability,
 }: EventosSiteProps) {
   return (
     <div
@@ -74,6 +79,7 @@ export function EventosSite({
           items={content.servicios}
           design={design}
           contacto={content.contacto}
+          availability={availability}
         />
         <Combos items={content.combos} design={design} />
         <Paseos items={content.paseos} design={design} />
