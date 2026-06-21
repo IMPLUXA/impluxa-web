@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F2 · Calendario de disponibilidad público — Patagonia Viva (mockup s59)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --sand:#F4EDDC; --pine:#143038; --copper:#B48448; --text:#1E2B2C;
+    --teal:#3E7C95; --wa:#25D366; --cream:#FBF7EE; --line:#E6DcC4;
+    --pocos-bg:#FBEAD0; --pocos-bd:#D9A24A; --pocos-tx:#9A5B12;
+    --ago-bg:#ECE8E0; --ago-tx:#A29B8C;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--sand);color:var(--text);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  /* mockup banner */
+  .mk{background:var(--pine);color:#EBE2CE;font-size:12.5px;letter-spacing:.02em;text-align:center;
+    padding:9px 16px}
+  .mk b{color:#fff}
+
+  /* section header */
+  header.sec{text-align:center;padding:64px 24px 8px}
+  header.sec h1{font-family:"Cinzel",serif;color:var(--pine);font-weight:700;
+    font-size:clamp(30px,5vw,50px);margin:0 0 14px}
+  header.sec p{max-width:640px;margin:0 auto;color:#46514f;font-size:17px}
+
+  /* excursion card */
+  .grid{display:grid;gap:32px;padding:36px 0 80px}
+  @media(min-width:860px){.grid{grid-template-columns:1fr 1fr}}
+  .card{background:var(--cream);border:1px solid var(--line);border-radius:28px;
+    box-shadow:0 18px 40px -24px rgba(20,48,56,.45);overflow:hidden;display:flex;flex-direction:column}
+  .card .top{padding:22px 24px 14px;border-bottom:1px solid var(--line)}
+  .card .eyebrow{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
+  .card h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:23px;margin:6px 0 2px}
+  .card .meta{font-size:13.5px;color:#6b736f}
+
+  .calwrap{padding:18px 24px 4px}
+  .navrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .navrow .mes{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:16px;text-transform:capitalize}
+  .nav{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--pine);
+    font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .nav:hover{border-color:var(--copper);color:var(--copper)}
+
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+  .dow span{text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#9aa09c;text-transform:uppercase}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day{aspect-ratio:1/1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:14px;font-weight:600;position:relative;border:1px solid transparent;user-select:none}
+  .day .n{line-height:1}
+  .day small{font-size:9.5px;font-weight:700;margin-top:2px;line-height:1}
+
+  .day.off{color:#c4bca8;background:transparent}
+  .day.disp{background:#fff;border-color:var(--line);color:var(--pine);cursor:pointer}
+  .day.disp:hover{border-color:var(--copper);box-shadow:0 0 0 2px rgba(180,132,72,.18)}
+  .day.disp::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--copper);position:absolute;bottom:8px;opacity:.55}
+  .day.pocos{background:var(--pocos-bg);border-color:var(--pocos-bd);color:var(--pocos-tx);cursor:pointer}
+  .day.pocos:hover{box-shadow:0 0 0 2px rgba(217,162,74,.3)}
+  .day.pocos small{color:var(--pocos-tx)}
+  .day.ago{background:var(--ago-bg);color:var(--ago-tx);text-decoration:line-through}
+  .day.ago small{text-decoration:none;color:var(--ago-tx)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:16px 20px;padding:14px 24px 2px;font-size:12.5px;color:#5a635f}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:7px;border:1px solid var(--line)}
+  .lg-disp i{background:#fff}
+  .lg-disp i::after{content:"";display:block;width:4px;height:4px;border-radius:50%;background:var(--copper);margin:7px auto}
+  .lg-pocos i{background:var(--pocos-bg);border-color:var(--pocos-bd)}
+  .lg-ago i{background:var(--ago-bg)}
+
+  .foot{margin-top:auto;padding:16px 24px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .cta{display:inline-flex;align-items:center;gap:9px;background:var(--wa);color:#06351b;font-weight:700;
+    border:none;border-radius:999px;padding:11px 20px;font-size:14.5px;cursor:pointer;text-decoration:none}
+  .cta svg{width:18px;height:18px}
+  .foot .hint{font-size:12px;color:#8a918c}
+
+  /* selected-day detail (read-only F2) */
+  .detail{margin:30px 0 0;background:var(--pine);color:#EDE4D0;border-radius:20px;padding:18px 22px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .detail .dd{font-family:"Cinzel",serif;font-size:17px;color:#fff;text-transform:capitalize}
+  .detail .pill{background:rgba(255,255,255,.12);border-radius:999px;padding:5px 13px;font-size:13px}
+  .detail .pill.urg{background:var(--pocos-bd);color:#3a230a;font-weight:700}
+  .note{font-size:12.5px;color:#7c847f;text-align:center;padding:0 24px 70px;max-width:760px;margin:18px auto 0}
+</style>
+</head>
+<body>
+
+<div class="mk">MOCKUP F2 · s59 — calendario de disponibilidad <b>público</b> (read-only). El turista VE disponibilidad; reservar online es F3. Umbral de escasez propuesto: <b>≤ 3 lugares</b> (el CEO lo afina en el walk).</div>
+
+<header class="sec">
+  <h1>Disponibilidad</h1>
+  <p>Mirá los días disponibles de cada excursión en tiempo real. Cuando quedan pocos lugares te lo mostramos para que no te lo pierdas.</p>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- ===== Excursión 1: Cerro Tronador ===== -->
+    <article class="card">
+      <div class="top">
+        <div class="eyebrow">Excursión de día completo</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Ventisquero Negro · Pampa Linda — 10 h aprox.</div>
+      </div>
+      <div class="calwrap">
+        <div class="navrow">
+          <button class="nav" aria-label="Mes anterior">&lsaquo;</button>
+          <div class="mes">julio 2026</div>
+          <button class="nav" aria-label="Mes siguiente">&rsaquo;</button>
+        </div>
+        <div class="dow"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+        <div class="days">
+          <!-- jul 2026 arranca miércoles -> 2 celdas de relleno -->
+          <div class="day off"></div><div class="day off"></div>
+          <div class="day disp"><span class="n">1</span></div>
+          <div class="day disp"><span class="n">2</span></div>
+          <div class="day disp"><span class="n">3</span></div>
+          <div class="day pocos"><span class="n">4</span><small>quedan 2</small></div>
+          <div class="day ago"><span class="n">5</span><small>Agotado</small></div>
+          <div class="day disp"><span class="n">6</span></div>
+          <div class="day disp"><span class="n">7</span></div>
+          <div class="day disp"><span class="n">8</span></div>
+          <div class="day disp"><span class="n">9</span></div>
+          <div class="day disp"><span class="n">10</span></div>
+          <div class="day pocos"><span class="n">11</span><small>quedan 3</small></div>
+          <div class="day ago"><span class="n">12</span><small>Agotado</small></div>
+          <div class="day disp"><span class="n">13</span></div>
+          <div class="day disp"><span class="n">14</span></div>
+          <div class="day disp"><span class="n">15</span></div>
+          <div class="day disp"><span class="n">16</span></div>
+          <div class="day disp"><span class="n">17</span></div>
+          <div class="day pocos"><span class="n">18</span><small>queda 1</small></div>
+          <div class="day disp"><span class="n">19</span></div>
+          <div class="day disp"><span class="n">20</span></div>
+          <div class="day disp"><span class="n">21</span></div>
+          <div class="day disp"><span class="n">22</span></div>
+          <div class="day disp"><span class="n">23</span></div>
+          <div class="day disp"><span class="n">24</span></div>
+          <div class="day disp"><span class="n">25</span></div>
+          <div class="day disp"><span class="n">26</span></div>
+          <div class="day disp"><span class="n">27</span></div>
+          <div class="day disp"><span class="n">28</span></div>
+          <div class="day disp"><span class="n">29</span></div>
+          <div class="day disp"><span class="n">30</span></div>
+          <div class="day disp"><span class="n">31</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="lg-disp"><i></i>Disponible</span>
+        <span class="lg-pocos"><i></i>Quedan pocos (te mostramos cuántos)</span>
+        <span class="lg-ago"><i></i>Agotado</span>
+      </div>
+      <div class="foot">
+        <a class="cta" href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63zM17.5 14.4c-.3-.15-1.76-.87-2-.97s-.46-.15-.66.15-.76.96-.93 1.16-.34.22-.63.07a8.1 8.1 0 01-2.39-1.47 9 9 0 01-1.65-2.06c-.17-.3 0-.45.13-.6s.3-.34.44-.51a2 2 0 00.3-.5.55.55 0 000-.52c-.07-.15-.66-1.6-.9-2.18s-.48-.5-.66-.5h-.57a1.1 1.1 0 00-.79.37 3.32 3.32 0 00-1.04 2.48 5.76 5.76 0 001.21 3.06 13.2 13.2 0 005.06 4.47 17 17 0 001.69.62 4.07 4.07 0 001.87.12 3.05 3.05 0 002-1.41 2.47 2.47 0 00.17-1.41c-.07-.12-.27-.2-.57-.34z"/></svg> Reservar por WhatsApp</a>
+        <span class="hint">F3 hará la reserva online directa desde acá.</span>
+      </div>
+    </article>
+
+    <!-- ===== Excursión 2: Circuito Chico ===== -->
+    <article class="card">
+      <div class="top">
+        <div class="eyebrow">Medio día</div>
+        <h2>Circuito Chico</h2>
+        <div class="meta">Llao Llao · Bahía López · Punto Panorámico — 4 h aprox.</div>
+      </div>
+      <div class="calwrap">
+        <div class="navrow">
+          <button class="nav" aria-label="Mes anterior">&lsaquo;</button>
+          <div class="mes">julio 2026</div>
+          <button class="nav" aria-label="Mes siguiente">&rsaquo;</button>
+        </div>
+        <div class="dow"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+        <div class="days">
+          <div class="day off"></div><div class="day off"></div>
+          <div class="day disp"><span class="n">1</span></div>
+          <div class="day disp"><span class="n">2</span></div>
+          <div class="day disp"><span class="n">3</span></div>
+          <div class="day disp"><span class="n">4</span></div>
+          <div class="day disp"><span class="n">5</span></div>
+          <div class="day disp"><span class="n">6</span></div>
+          <div class="day disp"><span class="n">7</span></div>
+          <div class="day disp"><span class="n">8</span></div>
+          <div class="day disp"><span class="n">9</span></div>
+          <div class="day pocos"><span class="n">10</span><small>quedan 2</small></div>
+          <div class="day disp"><span class="n">11</span></div>
+          <div class="day disp"><span class="n">12</span></div>
+          <div class="day disp"><span class="n">13</span></div>
+          <div class="day disp"><span class="n">14</span></div>
+          <div class="day disp"><span class="n">15</span></div>
+          <div class="day disp"><span class="n">16</span></div>
+          <div class="day disp"><span class="n">17</span></div>
+          <div class="day disp"><span class="n">18</span></div>
+          <div class="day disp"><span class="n">19</span></div>
+          <div class="day disp"><span class="n">20</span></div>
+          <div class="day disp"><span class="n">21</span></div>
+          <div class="day disp"><span class="n">22</span></div>
+          <div class="day disp"><span class="n">23</span></div>
+          <div class="day disp"><span class="n">24</span></div>
+          <div class="day pocos"><span class="n">25</span><small>quedan 3</small></div>
+          <div class="day disp"><span class="n">26</span></div>
+          <div class="day disp"><span class="n">27</span></div>
+          <div class="day disp"><span class="n">28</span></div>
+          <div class="day disp"><span class="n">29</span></div>
+          <div class="day disp"><span class="n">30</span></div>
+          <div class="day disp"><span class="n">31</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="lg-disp"><i></i>Disponible</span>
+        <span class="lg-pocos"><i></i>Quedan pocos</span>
+        <span class="lg-ago"><i></i>Agotado</span>
+      </div>
+      <div class="foot">
+        <a class="cta" href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63zM17.5 14.4c-.3-.15-1.76-.87-2-.97s-.46-.15-.66.15-.76.96-.93 1.16-.34.22-.63.07a8.1 8.1 0 01-2.39-1.47 9 9 0 01-1.65-2.06c-.17-.3 0-.45.13-.6s.3-.34.44-.51a2 2 0 00.3-.5.55.55 0 000-.52c-.07-.15-.66-1.6-.9-2.18s-.48-.5-.66-.5h-.57a1.1 1.1 0 00-.79.37 3.32 3.32 0 00-1.04 2.48 5.76 5.76 0 001.21 3.06 13.2 13.2 0 005.06 4.47 17 17 0 001.69.62 4.07 4.07 0 001.87.12 3.05 3.05 0 002-1.41 2.47 2.47 0 00.17-1.41c-.07-.12-.27-.2-.57-.34z"/></svg> Reservar por WhatsApp</a>
+        <span class="hint">F3 hará la reserva online directa desde acá.</span>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- Detalle del día elegido (read-only en F2: muestra disponibilidad, no reserva) -->
+  <div class="detail">
+    <div class="dd">Sábado 4 de julio</div>
+    <span class="pill">Cerro Tronador</span>
+    <span class="pill urg">¡Quedan 2 lugares!</span>
+    <span class="pill" style="margin-left:auto">Reservá por WhatsApp para asegurar tu lugar</span>
+  </div>
+
+  <p class="note">Esto es un mockup estático para validar la vista pública. El número exacto solo aparece en escasez (≤ umbral); con cupo holgado el turista ve “Disponible” sin número, y el dato de cuánto se vendió nunca sale del servidor. La reserva y el pago online son F3 y F4.</p>
+</div>
+
+</body>
+</html>
