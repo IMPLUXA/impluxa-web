@@ -62,6 +62,7 @@ type DayCell = {
 
 export function SalidasCalendar({
   excursions,
+  canEdit,
 }: {
   excursions: ExcursionRow[];
   canEdit: boolean;
@@ -80,6 +81,11 @@ export function SalidasCalendar({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [version, setVersion] = useState(0); // bump -> refetch del mes tras una accion
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [limitMode, setLimitMode] = useState(false);
+  const [limitValue, setLimitValue] = useState("");
 
   const today = todayIso();
 
@@ -119,7 +125,7 @@ export function SalidasCalendar({
     return () => {
       alive = false;
     };
-  }, [excursionId, year, month0]);
+  }, [excursionId, year, month0, version]);
 
   const capDefault = data?.capacity_default ?? 50;
   const diasMap = useMemo(() => {
@@ -161,15 +167,69 @@ export function SalidasCalendar({
 
   function stepMonth(delta: number) {
     setSelected(null);
+    setLimitMode(false);
+    setActionError(null);
     const d = new Date(Date.UTC(year, month0 + delta, 1));
     setYear(d.getUTCFullYear());
     setMonth0(d.getUTCMonth());
+  }
+
+  function selectDay(iso: string) {
+    setSelected(iso);
+    setLimitMode(false);
+    setActionError(null);
+    setLimitValue("");
+  }
+
+  async function doAction(
+    accion: "cerrar" | "limitar" | "reabrir",
+    capacity?: number,
+  ) {
+    if (!selected || busy) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/agency/departures/dia", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          excursion_id: excursionId,
+          departure_date: selected,
+          accion,
+          ...(accion === "limitar" ? { capacity } : {}),
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error_code?: string;
+        details?: { tomado?: number };
+      };
+      if (!res.ok || !body.ok) {
+        setActionError(
+          body.error_code === "CUPO_MENOR_A_RESERVADO"
+            ? `El cupo no puede ser menor a lo ya reservado (${body.details?.tomado ?? "?"})`
+            : res.status === 403
+              ? "Sin permiso para esta acción"
+              : "No se pudo aplicar el cambio",
+        );
+        return;
+      }
+      setLimitMode(false);
+      setLimitValue("");
+      setVersion((v) => v + 1); // refetch del mes -> repinta la celda
+    } catch {
+      setActionError("No se pudo aplicar el cambio");
+    } finally {
+      setBusy(false);
+    }
   }
 
   const selectedDay = selected ? diasMap.get(selected) : undefined;
   const selectedLegacy = selected ? (legacyByDate.get(selected) ?? []) : [];
   const selExcursionName =
     excursions.find((e) => e.id === excursionId)?.name ?? "";
+  const effEstado: "open" | "limited" | "closed" =
+    selectedDay?.estado ?? "open";
 
   function cellClasses(c: DayCell): string {
     const base =
@@ -246,8 +306,8 @@ export function SalidasCalendar({
       </div>
 
       <p className="text-ash text-xs">
-        Todo abierto todos los días, cupo {capDefault} por defecto. La pantalla
-        es de lectura: cerrar o limitar un día llega en la próxima fase.
+        Todo abierto todos los días, cupo {capDefault} por defecto. Tocá un día
+        para cerrarlo, limitar el cupo o volver a abrirlo.
       </p>
 
       {error && <div className="text-sm text-red-700">{error}</div>}
@@ -272,7 +332,7 @@ export function SalidasCalendar({
               ) : (
                 <button
                   key={c.iso}
-                  onClick={() => setSelected(c.iso)}
+                  onClick={() => selectDay(c.iso)}
                   className={cellClasses(c)}
                 >
                   <span className="text-[12px] font-semibold text-[#143038] opacity-80">
@@ -410,10 +470,92 @@ export function SalidasCalendar({
                   </div>
                 )}
 
-                <p className="text-ash mt-4 border-t border-[#ece0c8] pt-3 text-[11px]">
-                  Cerrar / limitar / reabrir un día llegan en la próxima fase
-                  (F1b.2).
-                </p>
+                {canEdit && (
+                  <div className="mt-4 border-t border-[#ece0c8] pt-3">
+                    {actionError && (
+                      <div className="mb-2 rounded-md bg-[#9a4b32]/10 px-3 py-2 text-[12px] text-[#9a4b32]">
+                        {actionError}
+                      </div>
+                    )}
+                    {!limitMode ? (
+                      <div className="flex flex-wrap gap-2">
+                        {effEstado !== "closed" && (
+                          <button
+                            disabled={busy}
+                            onClick={() => {
+                              setLimitMode(true);
+                              setLimitValue(
+                                String(selectedDay?.eff_cap ?? capDefault),
+                              );
+                              setActionError(null);
+                            }}
+                            className="rounded-lg bg-[#b48448] px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                          >
+                            {effEstado === "limited"
+                              ? "Cambiar cupo"
+                              : "Limitar cupo"}
+                          </button>
+                        )}
+                        {effEstado !== "closed" && (
+                          <button
+                            disabled={busy}
+                            onClick={() => doAction("cerrar")}
+                            className="rounded-lg bg-[#f2e9d6] px-3 py-2 text-[12px] font-semibold text-[#143038] disabled:opacity-50"
+                          >
+                            Cerrar este día
+                          </button>
+                        )}
+                        {effEstado !== "open" && (
+                          <button
+                            disabled={busy}
+                            onClick={() => doAction("reabrir")}
+                            className="rounded-lg border border-[#ece0c8] bg-white px-3 py-2 text-[12px] font-semibold text-[#143038] disabled:opacity-50"
+                          >
+                            {effEstado === "closed"
+                              ? "Reabrir"
+                              : "Volver a abierto por defecto"}
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-end gap-2">
+                        <label className="text-[12px] text-[#7d7768]">
+                          Cupo
+                          <input
+                            type="number"
+                            min={0}
+                            max={999}
+                            value={limitValue}
+                            onChange={(e) => setLimitValue(e.target.value)}
+                            className="mt-1 block w-24 rounded border border-[#ece0c8] px-2 py-1.5 text-[#143038]"
+                          />
+                        </label>
+                        <button
+                          disabled={busy || limitValue.trim() === ""}
+                          onClick={() =>
+                            doAction("limitar", Math.trunc(Number(limitValue)))
+                          }
+                          className="rounded-lg bg-[#b48448] px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                        >
+                          {busy ? "…" : "Aplicar"}
+                        </button>
+                        <button
+                          disabled={busy}
+                          onClick={() => {
+                            setLimitMode(false);
+                            setActionError(null);
+                          }}
+                          className="rounded-lg px-3 py-2 text-[12px] text-[#7d7768]"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-ash mt-2 text-[11px]">
+                      El cupo no puede bajar de lo ya reservado ese día.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
