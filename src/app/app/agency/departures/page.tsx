@@ -3,7 +3,7 @@ import { getActiveTenant } from "@/lib/tenants/membership";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getAgencyRole } from "@/lib/agency/role";
 import { redirect } from "next/navigation";
-import { DeparturesManager } from "./DeparturesManager";
+import { SalidasView } from "./SalidasView";
 import type { DepartureRow, ExcursionRow } from "@/lib/agency/schemas";
 
 // R1 salidas/cupo — área interna (back-office). NO toca el template público.
@@ -53,7 +53,7 @@ export default async function DeparturesPage() {
   ]);
 
   return (
-    <DeparturesManager
+    <SalidasView
       initialDepartures={(departures ?? []) as DepartureRow[]}
       excursions={(excursions ?? []) as ExcursionRow[]}
       canEdit={canEdit}

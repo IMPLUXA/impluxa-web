@@ -106,6 +106,42 @@ export type DepartureRow = {
   created_at: string;
 };
 
+// ---- F1b.1 read-model del calendario abierto-por-defecto ----
+// Espeja el contrato de la RPC `agency_calendario_salidas` (read-model COMPARTIDO
+// F1b + futuro F2). `dias` es SPARSE: solo anclas time-NULL que EXISTEN en la ventana;
+// los dias sin entrada se pintan abierto cap=capacity_default (no se materializan).
+export type CalendarDayState = "open" | "limited" | "closed";
+
+export type CalendarDay = {
+  departure_id: string;
+  fecha: string;
+  eff_cap: number;
+  taken: number;
+  restante: number;
+  estado: CalendarDayState;
+  status_raw: DepartureStatus;
+};
+
+export type CalendarLegacySlot = {
+  departure_id: string;
+  fecha: string;
+  hora: string;
+  eff_cap: number;
+  taken: number;
+  restante: number;
+  estado: "open" | "closed";
+  status_raw: DepartureStatus;
+};
+
+export type CalendarResponse = {
+  ok: boolean;
+  capacity_default?: number;
+  dias?: CalendarDay[];
+  horarios_legacy?: CalendarLegacySlot[];
+  error_code?: string;
+  message?: string;
+};
+
 // ---- R3 reservas (UI interna del panel) ----
 // La ÚNICA vía de escritura es la RPC agency_crear_reserva (#24): la UI
 // jamás INSERTa directo a reservas (contrato del ancla: todo writer pasa
