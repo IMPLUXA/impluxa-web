@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F2 · modal protagonista (overlay grande centrado / mobile full-screen) — mockup s59</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{ --sand:#F4EDDC; --pine:#143038; --copper:#B48448; --text:#1E2B2C; --cream:#FBF7EE; --line:#E6DCC4;
+    --green:#3F7D5A; --pocos-tx:#9A5B12; --pocos-bd:#D9A24A; --sel:#B48448; --ago-bg:#ECE8E0; --ago-tx:#A8A192; --grey:#B7B0A1; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Hanken Grotesk",system-ui,sans-serif;color:var(--text);background:var(--sand)}
+  .mk{background:var(--pine);color:#EBE2CE;font-size:12.5px;text-align:center;padding:9px 16px}
+  .mk b{color:#fff}
+
+  /* sitio atenuado detras */
+  .site{filter:blur(2px) brightness(.96);opacity:.85;pointer-events:none;padding:40px 24px}
+  .site h1{font-family:"Cinzel",serif;color:var(--pine);text-align:center;font-size:30px;margin:0 0 22px}
+  .site .cards{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .site .card{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;height:220px}
+  .site .card .ph{height:120px}
+  .site .card:nth-child(1) .ph{background:linear-gradient(135deg,#2c5560,#3E7C95)}
+  .site .card:nth-child(2) .ph{background:linear-gradient(135deg,#3a5a3f,#5a7d52)}
+  .site .card:nth-child(3) .ph{background:linear-gradient(135deg,#6a4a2a,#a9803f)}
+  .site .card .b{padding:12px 14px}
+  .site .card h3{font-family:"Cinzel",serif;color:var(--pine);font-size:15px;margin:0 0 10px}
+  .site .card .res{background:var(--copper);color:#fff;border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:700;display:inline-block}
+
+  /* scrim + modal centrado (DESKTOP) */
+  .scrim{position:fixed;inset:0;background:rgba(20,48,56,.62);display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;z-index:10}
+  .modal{width:100%;max-width:640px;background:var(--cream);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 40px 90px -28px rgba(20,48,56,.72);overflow:hidden}
+  .mh{display:flex;justify-content:space-between;gap:12px;padding:20px 24px 6px}
+  .mh .eye{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
+  .mh h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:23px;margin:6px 0 3px}
+  .mh .meta{font-size:13px;color:#6b736f}
+  .mh .fixed{display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:#EFE7D5;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11px;color:#7a6a4a;font-weight:600}
+  .x{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;color:#7b837f;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+  .stepper{display:flex;padding:18px 20px 4px}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+  .step .n{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;z-index:1;border:2px solid var(--line);background:#fff;color:var(--grey)}
+  .step .l{font-size:11px;margin-top:6px;color:var(--grey);font-weight:600}
+  .step::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line)}
+  .step:first-child::before{display:none}
+  .step.on .n{background:var(--copper);border-color:var(--copper);color:#fff;box-shadow:0 0 0 4px rgba(180,132,72,.18)}
+  .step.on .l{color:var(--pine);font-weight:700}
+  .body{padding:8px 24px 4px}
+  .body h3{font-family:"Cinzel",serif;color:var(--pine);font-size:17px;text-align:center;margin:14px 0 12px}
+  .nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .nav .mes{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:15px}
+  .nav button{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--pine);font-size:16px}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+  .dow span{text-align:center;font-size:10px;font-weight:700;color:#9aa09c;text-transform:uppercase}
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .d{aspect-ratio:1/1;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:600;border:1px solid transparent;position:relative}
+  .d small{font-size:9px;font-weight:700;margin-top:1px}
+  .d.off{color:#c9c1ad}
+  .d.disp{background:#fff;border-color:var(--line);color:var(--pine)}
+  .d.disp::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);position:absolute;bottom:7px}
+  .d.pocos{background:#fff;border-color:var(--pocos-bd);color:var(--pine)}
+  .d.pocos small{color:var(--pocos-tx)}
+  .d.sel{background:var(--sel);border-color:var(--sel);color:#fff;box-shadow:0 0 0 3px rgba(180,132,72,.22)}
+  .d.ago{background:var(--ago-bg);color:var(--ago-tx)}
+  .lg{display:flex;flex-wrap:wrap;gap:14px 20px;justify-content:center;padding:16px 20px 2px;font-size:12.5px;color:#5a635f}
+  .lg span{display:inline-flex;align-items:center;gap:7px}
+  .lg i{width:12px;height:12px;border-radius:50%}
+  .cartel{display:flex;gap:11px;align-items:flex-start;margin:14px 24px 2px;background:#fff;border:1px solid var(--line);border-left:3px solid #25D366;border-radius:12px;padding:12px 14px;font-size:13px;color:#4b544f}
+  .cartel b{color:var(--pine)}
+  .foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 24px 22px}
+  .foot .cta{background:var(--copper);color:#fff;border-radius:999px;padding:12px 24px;font-size:14px;font-weight:700}
+  .foot .nt{font-size:11.5px;color:#8a918c;flex:1;min-width:180px}
+
+  .cap{position:fixed;left:0;right:0;bottom:0;background:var(--pine);color:#EBE2CE;text-align:center;font-size:12.5px;padding:10px 16px;z-index:20}
+  .cap b{color:#fff}
+</style>
+</head>
+<body>
+<div class="mk">MOCKUP F2 (ajuste presentación) · s59 — el modal ahora es <b>protagonista</b>: <b>desktop</b> grande y centrado sobre el sitio atenuado · <b>mobile</b> pantalla completa. El contenido (calendario/stepper/cartel) no cambia.</div>
+
+<!-- sitio atenuado detras -->
+<div class="site">
+  <h1>Nuestras excursiones</h1>
+  <div class="cards">
+    <div class="card"><div class="ph"></div><div class="b"><h3>Cerro Tronador</h3><span class="res">Reservar</span></div></div>
+    <div class="card"><div class="ph"></div><div class="b"><h3>Circuito Chico</h3><span class="res">Reservar</span></div></div>
+    <div class="card"><div class="ph"></div><div class="b"><h3>Cerro Catedral</h3><span class="res">Reservar</span></div></div>
+  </div>
+</div>
+
+<!-- modal centrado grande (desktop) -->
+<div class="scrim">
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eye">Reservá tu salida</div>
+        <h2>Circuito Chico</h2>
+        <div class="meta">Medio día · 4 h aprox. · Llao Llao · Bahía López</div>
+        <span class="fixed">✓ Excursión elegida desde el sitio</span>
+      </div>
+      <div class="x">×</div>
+    </div>
+    <div class="stepper">
+      <div class="step on"><div class="n">1</div><div class="l">Fecha</div></div>
+      <div class="step"><div class="n">2</div><div class="l">Pasajeros</div></div>
+      <div class="step"><div class="n">3</div><div class="l">Datos</div></div>
+      <div class="step"><div class="n">4</div><div class="l">Pago</div></div>
+      <div class="step"><div class="n">5</div><div class="l">Voucher</div></div>
+    </div>
+    <div class="body">
+      <h3>Elegí la fecha de tu salida</h3>
+      <div class="nav"><button>‹</button><div class="mes">julio 2026</div><button>›</button></div>
+      <div class="dow"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+      <div class="days">
+        <div class="d off"></div><div class="d off"></div>
+        <div class="d disp"><span>1</span></div><div class="d disp"><span>2</span></div><div class="d disp"><span>3</span></div>
+        <div class="d pocos"><span>4</span><small>quedan 2</small></div><div class="d ago"><span>5</span><small>Agotado</small></div>
+        <div class="d disp"><span>6</span></div><div class="d disp"><span>7</span></div><div class="d disp"><span>8</span></div>
+        <div class="d disp"><span>9</span></div><div class="d disp"><span>10</span></div>
+        <div class="d pocos"><span>11</span><small>quedan 3</small></div><div class="d ago"><span>12</span><small>Agotado</small></div>
+        <div class="d disp"><span>13</span></div><div class="d disp"><span>14</span></div><div class="d disp"><span>15</span></div>
+        <div class="d disp"><span>16</span></div><div class="d disp"><span>17</span></div>
+        <div class="d sel"><span>18</span><small>queda 1</small></div>
+        <div class="d disp"><span>19</span></div><div class="d disp"><span>20</span></div><div class="d disp"><span>21</span></div>
+        <div class="d disp"><span>22</span></div><div class="d disp"><span>23</span></div><div class="d disp"><span>24</span></div>
+        <div class="d disp"><span>25</span></div><div class="d disp"><span>26</span></div><div class="d disp"><span>27</span></div>
+        <div class="d disp"><span>28</span></div><div class="d disp"><span>29</span></div><div class="d disp"><span>30</span></div><div class="d disp"><span>31</span></div>
+      </div>
+    </div>
+    <div class="lg">
+      <span><i style="background:var(--green)"></i>Con salidas</span>
+      <span><i style="background:var(--sel)"></i>Seleccionado</span>
+      <span><i style="background:var(--grey)"></i>Sin disponibilidad</span>
+    </div>
+    <div class="cartel">
+      <span style="color:#25D366;font-size:18px">✆</span>
+      <p style="margin:0"><b>El punto de partida y el horario exacto se confirman por WhatsApp al reservar.</b> Coordinamos el encuentro según tu alojamiento.</p>
+    </div>
+    <div class="foot">
+      <span class="cta">Coordinar por WhatsApp ›</span>
+      <span class="nt">Pasajeros · Datos · Pago online — próximamente. Por ahora coordinás por WhatsApp.</span>
+    </div>
+  </div>
+</div>
+
+<div class="cap"><b>Desktop</b>: modal 640px centrado sobre el sitio atenuado (backdrop oscuro, scroll interno). &nbsp;·&nbsp; <b>Mobile</b>: el mismo modal ocupa <b>toda la pantalla</b> (100vw × 100dvh, sin bordes, scroll interno). Cierra con la X, click en el fondo o ESC.</div>
+
+</body>
+</html>
