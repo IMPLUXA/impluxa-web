@@ -15,6 +15,7 @@ import {
   availLabel,
 } from "@/lib/agency/alta-availability";
 import { MpChargeModal } from "./MpChargeModal";
+import { AggregatedCalendar } from "../departures/AggregatedCalendar";
 import styles from "./mp-cobro.module.css";
 
 // R3 reservas. La ÚNICA escritura es POST /api/agency/reservas → RPC
@@ -89,6 +90,7 @@ export function ReservasManager({
   isVendedor: boolean;
 }) {
   const [reservas, setReservas] = useState<ReservaRow[]>(initialReservas);
+  const [view, setView] = useState<"lista" | "calendario">("lista");
   const [filterDep, setFilterDep] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -305,168 +307,199 @@ export function ReservasManager({
     <div className="max-w-6xl space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Reservas</h1>
-        {canCreate ? (
-          <button
-            onClick={startCreate}
-            className="bg-bone text-onyx rounded px-4 py-2 text-sm font-medium hover:opacity-90"
-          >
-            + Nueva reserva
-          </button>
-        ) : (
-          <span className="bg-stone/40 rounded-full px-3 py-1 text-xs">
-            Solo lectura
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="border-stone/50 inline-flex rounded-lg border p-0.5 text-sm">
+            {(["lista", "calendario"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`rounded-md px-3 py-1 capitalize ${
+                  view === v ? "bg-bone text-onyx font-medium" : "text-ash"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          {canCreate ? (
+            <button
+              onClick={startCreate}
+              className="bg-bone text-onyx rounded px-4 py-2 text-sm font-medium hover:opacity-90"
+            >
+              + Nueva reserva
+            </button>
+          ) : (
+            <span className="bg-stone/40 rounded-full px-3 py-1 text-xs">
+              Solo lectura
+            </span>
+          )}
+        </div>
       </header>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={filterDep}
-          onChange={(ev) => setFilterDep(ev.target.value)}
-          className="border-stone rounded border px-3 py-1.5 text-sm"
-        >
-          <option value="all">Todas las salidas</option>
-          {departures.map((d) => (
-            <option key={d.id} value={d.id}>
-              {excursionName(d.excursion_id)} · {fmtDate(d.departure_date)}
-            </option>
-          ))}
-        </select>
-        {isVendedor && (
-          <span className="bg-stone/40 text-ash ml-auto rounded-full px-3 py-1 text-xs">
-            Viendo solo tus reservas
-          </span>
-        )}
-      </div>
-
-      {createdCode && (
-        <div className="border-stone rounded-lg border p-4 text-sm">
-          Reserva creada. Código:{" "}
-          <span className="bg-bone text-onyx rounded px-2 py-0.5 font-mono text-base font-bold">
-            {createdCode}
-          </span>
-        </div>
-      )}
-
-      {!open && status && <div className="text-ash text-sm">{status}</div>}
-
-      {visible.length === 0 ? (
-        <p className="text-ash text-sm">
-          No hay reservas{filterDep !== "all" ? " de esta salida" : ""}.
-          {canCreate ? " Creá la primera con “+ Nueva reserva”." : ""}
-        </p>
+      {view === "calendario" ? (
+        <AggregatedCalendar mode="sales" />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-ash border-stone/50 border-b text-left text-xs uppercase">
-                <th className="px-3 py-2">Código</th>
-                <th className="px-3 py-2">Excursión / salida</th>
-                <th className="px-3 py-2">Titular</th>
-                <th className="px-3 py-2">Total</th>
-                <th className="px-3 py-2">Estado</th>
-                <th className="px-3 py-2">Hold hasta</th>
-                {canCharge && <th className="px-3 py-2">Acción</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((r) => {
-                const dep = depById.get(r.departure_id);
-                const vencido = holdVencido(r);
-                return (
-                  <tr
-                    key={r.id}
-                    className={`border-stone/30 border-b ${r.status === "cancelada" ? "opacity-50" : ""}`}
-                  >
-                    <td className="px-3 py-2 font-mono font-semibold">
-                      <Link
-                        href={`${adminBase}/agency/reservas/${r.id}`}
-                        className="hover:underline"
-                      >
-                        {r.reservation_code}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">
-                      {dep ? (
-                        <>
-                          {excursionName(dep.excursion_id)}
-                          <span className="text-ash">
-                            {" "}
-                            · {fmtDate(dep.departure_date)} ·{" "}
-                            {fmtTime(dep.departure_time)}
-                          </span>
-                        </>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-3 py-2">{r.holder_name}</td>
-                    <td className="px-3 py-2">{fmtMoney(r.snapshot_gross)}</td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          r.status === "reserva"
-                            ? "bg-bone text-onyx font-medium"
-                            : vencido
-                              ? "bg-stone/20 text-ash line-through"
-                              : "bg-stone/40 text-ash"
-                        }`}
-                      >
-                        {vencido
-                          ? "Hold vencido"
-                          : RESERVA_STATUS_LABELS[r.status]}
-                      </span>
-                    </td>
-                    <td className="text-ash px-3 py-2 text-xs">
-                      {r.hold_expires_at && r.status === "pre_reserva"
-                        ? new Date(r.hold_expires_at).toLocaleString("es-AR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "—"}
-                    </td>
-                    {canCharge && (
-                      <td className="px-3 py-2">
-                        {r.status === "pre_reserva" && !vencido ? (
-                          <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              onClick={() => openPay(r)}
-                              className="bg-onyx text-bone rounded px-3 py-1 text-xs hover:opacity-90"
-                            >
-                              Registrar pago
-                            </button>
-                            <button
-                              onClick={() => setMpRes(r)}
-                              className={styles.rowCta}
-                            >
-                              <svg
-                                className={styles.rowMark}
-                                viewBox="0 0 24 24"
-                                aria-hidden
-                              >
-                                <circle cx="12" cy="12" r="12" fill="#009EE3" />
-                                <path
-                                  d="M6 13.2c3.6 3.4 8.4 3.4 12 0"
-                                  stroke="#fff"
-                                  strokeWidth="2.1"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              Cobrar con MercadoPago
-                            </button>
-                          </div>
-                        ) : null}
-                      </td>
-                    )}
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={filterDep}
+              onChange={(ev) => setFilterDep(ev.target.value)}
+              className="border-stone rounded border px-3 py-1.5 text-sm"
+            >
+              <option value="all">Todas las salidas</option>
+              {departures.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {excursionName(d.excursion_id)} · {fmtDate(d.departure_date)}
+                </option>
+              ))}
+            </select>
+            {isVendedor && (
+              <span className="bg-stone/40 text-ash ml-auto rounded-full px-3 py-1 text-xs">
+                Viendo solo tus reservas
+              </span>
+            )}
+          </div>
+
+          {createdCode && (
+            <div className="border-stone rounded-lg border p-4 text-sm">
+              Reserva creada. Código:{" "}
+              <span className="bg-bone text-onyx rounded px-2 py-0.5 font-mono text-base font-bold">
+                {createdCode}
+              </span>
+            </div>
+          )}
+
+          {!open && status && <div className="text-ash text-sm">{status}</div>}
+
+          {visible.length === 0 ? (
+            <p className="text-ash text-sm">
+              No hay reservas{filterDep !== "all" ? " de esta salida" : ""}.
+              {canCreate ? " Creá la primera con “+ Nueva reserva”." : ""}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-ash border-stone/50 border-b text-left text-xs uppercase">
+                    <th className="px-3 py-2">Código</th>
+                    <th className="px-3 py-2">Excursión / salida</th>
+                    <th className="px-3 py-2">Titular</th>
+                    <th className="px-3 py-2">Total</th>
+                    <th className="px-3 py-2">Estado</th>
+                    <th className="px-3 py-2">Hold hasta</th>
+                    {canCharge && <th className="px-3 py-2">Acción</th>}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {visible.map((r) => {
+                    const dep = depById.get(r.departure_id);
+                    const vencido = holdVencido(r);
+                    return (
+                      <tr
+                        key={r.id}
+                        className={`border-stone/30 border-b ${r.status === "cancelada" ? "opacity-50" : ""}`}
+                      >
+                        <td className="px-3 py-2 font-mono font-semibold">
+                          <Link
+                            href={`${adminBase}/agency/reservas/${r.id}`}
+                            className="hover:underline"
+                          >
+                            {r.reservation_code}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2">
+                          {dep ? (
+                            <>
+                              {excursionName(dep.excursion_id)}
+                              <span className="text-ash">
+                                {" "}
+                                · {fmtDate(dep.departure_date)} ·{" "}
+                                {fmtTime(dep.departure_time)}
+                              </span>
+                            </>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-3 py-2">{r.holder_name}</td>
+                        <td className="px-3 py-2">
+                          {fmtMoney(r.snapshot_gross)}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs ${
+                              r.status === "reserva"
+                                ? "bg-bone text-onyx font-medium"
+                                : vencido
+                                  ? "bg-stone/20 text-ash line-through"
+                                  : "bg-stone/40 text-ash"
+                            }`}
+                          >
+                            {vencido
+                              ? "Hold vencido"
+                              : RESERVA_STATUS_LABELS[r.status]}
+                          </span>
+                        </td>
+                        <td className="text-ash px-3 py-2 text-xs">
+                          {r.hold_expires_at && r.status === "pre_reserva"
+                            ? new Date(r.hold_expires_at).toLocaleString(
+                                "es-AR",
+                                {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
+                            : "—"}
+                        </td>
+                        {canCharge && (
+                          <td className="px-3 py-2">
+                            {r.status === "pre_reserva" && !vencido ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  onClick={() => openPay(r)}
+                                  className="bg-onyx text-bone rounded px-3 py-1 text-xs hover:opacity-90"
+                                >
+                                  Registrar pago
+                                </button>
+                                <button
+                                  onClick={() => setMpRes(r)}
+                                  className={styles.rowCta}
+                                >
+                                  <svg
+                                    className={styles.rowMark}
+                                    viewBox="0 0 24 24"
+                                    aria-hidden
+                                  >
+                                    <circle
+                                      cx="12"
+                                      cy="12"
+                                      r="12"
+                                      fill="#009EE3"
+                                    />
+                                    <path
+                                      d="M6 13.2c3.6 3.4 8.4 3.4 12 0"
+                                      stroke="#fff"
+                                      strokeWidth="2.1"
+                                      fill="none"
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                  Cobrar con MercadoPago
+                                </button>
+                              </div>
+                            ) : null}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
       {open && (
