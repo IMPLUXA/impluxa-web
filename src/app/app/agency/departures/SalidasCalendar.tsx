@@ -6,6 +6,7 @@ import type {
   CalendarResponse,
   ExcursionRow,
 } from "@/lib/agency/schemas";
+import { AggregatedCalendar } from "./AggregatedCalendar";
 
 // F1b.1 — calendario read-only del modelo abierto-por-defecto. Scopeado a UNA excursion,
 // vista mensual navegable (no pinta 365 filas). El dia virgen (sin fila) se muestra abierto
@@ -49,6 +50,10 @@ function dayLabel(iso: string): string {
   return dayLongFmt.format(new Date(`${iso}T00:00:00Z`));
 }
 
+// Centinela del picker: vista agregada "Todas las excursiones" (F1d). Default de la pantalla
+// para no obligar al dueno a elegir una; elige una excursion -> vuelve a la vista per-excursion.
+const ALL = "__ALL__";
+
 type DayCell = {
   iso: string;
   day: number;
@@ -67,13 +72,7 @@ export function SalidasCalendar({
   excursions: ExcursionRow[];
   canEdit: boolean;
 }) {
-  const activeExcursions = useMemo(
-    () => excursions.filter((e) => e.active),
-    [excursions],
-  );
-  const [excursionId, setExcursionId] = useState<string>(
-    activeExcursions[0]?.id ?? excursions[0]?.id ?? "",
-  );
+  const [excursionId, setExcursionId] = useState<string>(ALL);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month0, setMonth0] = useState(now.getMonth());
@@ -90,7 +89,7 @@ export function SalidasCalendar({
   const today = todayIso();
 
   useEffect(() => {
-    if (!excursionId) return;
+    if (!excursionId || excursionId === ALL) return;
     const from = `${year}-${pad2(month0 + 1)}-01`;
     const to = `${year}-${pad2(month0 + 1)}-${pad2(daysInMonth(year, month0))}`;
     let alive = true;
@@ -245,6 +244,34 @@ export function SalidasCalendar({
     return `${base} border-[#ece0c8] bg-[#fbf6ea]${sel}${todayRing}${past}`;
   }
 
+  // F1d — "Todas las excursiones": vista agregada de ventas (AggregatedCalendar trae su propia
+  // navegacion de mes). Se mantiene el picker para volver a una excursion.
+  if (excursionId === ALL) {
+    return (
+      <div className="space-y-4 text-[#2a2a26]">
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={excursionId}
+            onChange={(e) => {
+              setExcursionId(e.target.value);
+              setSelected(null);
+            }}
+            className="border-stone rounded border px-3 py-1.5 text-sm"
+          >
+            <option value={ALL}>Todas las excursiones</option>
+            {excursions.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+                {e.active ? "" : " (archivada)"}
+              </option>
+            ))}
+          </select>
+        </div>
+        <AggregatedCalendar mode="availability" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 text-[#2a2a26]">
       {/* Controls */}
@@ -257,6 +284,7 @@ export function SalidasCalendar({
           }}
           className="border-stone rounded border px-3 py-1.5 text-sm"
         >
+          <option value={ALL}>Todas las excursiones</option>
           {excursions.map((e) => (
             <option key={e.id} value={e.id}>
               {e.name}
