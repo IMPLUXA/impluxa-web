@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   RESERVA_STATUS_LABELS,
   type DepartureRow,
@@ -8,6 +8,12 @@ import {
   type PassengerCategoryRow,
   type ReservaRow,
 } from "@/lib/agency/schemas";
+import {
+  type Avail,
+  availBlocks,
+  availFromResponse,
+  availLabel,
+} from "@/lib/agency/alta-availability";
 import { MpChargeModal } from "./MpChargeModal";
 import styles from "./mp-cobro.module.css";
 
@@ -101,7 +107,9 @@ export function ReservasManager({
   // C2 — cobro MercadoPago (Checkout Pro): qué reserva tiene el modal MP abierto.
   const [mpRes, setMpRes] = useState<ReservaRow | null>(null);
 
-  const [formDep, setFormDep] = useState("");
+  const [formExcursion, setFormExcursion] = useState("");
+  const [formFecha, setFormFecha] = useState("");
+  const [avail, setAvail] = useState<Avail>({ state: "idle" });
   const [holderName, setHolderName] = useState("");
   const [holderEmail, setHolderEmail] = useState("");
   const [holderPhone, setHolderPhone] = useState("");
@@ -119,11 +127,43 @@ export function ReservasManager({
   );
 
   const today = todayIso();
-  // Solo salidas reservables en el alta: abiertas y no pasadas (la RPC
-  // igual rechaza — esto es UX; la autoridad es #24).
-  const openDepartures = departures.filter(
-    (d) => d.status === "open" && d.departure_date >= today,
+  const maxDate = useMemo(() => {
+    const d = new Date(`${today}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 365);
+    return d.toISOString().slice(0, 10);
+  }, [today]);
+  const activeExcursions = useMemo(
+    () => excursions.filter((e) => e.active),
+    [excursions],
   );
+
+  // F1c — disponibilidad del (excursion, fecha) elegido: UNA sola fuente, el
+  // read-model compartido (single-day). Pre-aviso de UX; el motor #24 es la
+  // autoridad final (re-chequea bajo su advisory-lock al crear).
+  useEffect(() => {
+    if (!open || !formExcursion || !formFecha) {
+      setAvail({ state: "idle" });
+      return;
+    }
+    let alive = true;
+    setAvail({ state: "loading" });
+    fetch(
+      `/api/agency/departures/calendario?excursion_id=${formExcursion}&from=${formFecha}&to=${formFecha}`,
+    )
+      .then(async (r) => {
+        const body = await r.json().catch(() => ({}));
+        if (alive) setAvail(availFromResponse(body, formFecha, r.ok));
+      })
+      .catch(() => {
+        if (alive) setAvail({ state: "error" });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open, formExcursion, formFecha]);
+
+  const availInfo = availLabel(avail);
+  const availBlocked = availBlocks(avail);
 
   const visible = reservas.filter(
     (r) => filterDep === "all" || r.departure_id === filterDep,
@@ -135,7 +175,9 @@ export function ReservasManager({
   );
 
   function startCreate() {
-    setFormDep("");
+    setFormExcursion("");
+    setFormFecha("");
+    setAvail({ state: "idle" });
     setHolderName("");
     setHolderEmail("");
     setHolderPhone("");
@@ -151,11 +193,15 @@ export function ReservasManager({
     httpStatus: number,
   ): string {
     if (body.error_code === "CUPO_INSUFICIENTE")
-      return "Cupo insuficiente para esa salida";
+      return "Cupo insuficiente para esa fecha";
     if (body.error_code === "SALIDA_NO_DISPONIBLE")
-      return "La salida no admite reservas";
+      return "Ese día no admite reservas (cerrado o sin cupo)";
+    if (body.error_code === "SALIDA_INEXISTENTE")
+      return "La excursión no está disponible";
     if (body.error_code === "TARIFA_NO_VIGENTE")
       return "La excursión no tiene tarifa vigente";
+    if (body.error_code === "CATEGORIA_INVALIDA")
+      return "Categoría de pasajero inválida";
     if (httpStatus === 403) return "Sin permiso para esta acción";
     return body.message ?? "Error al crear la reserva";
   }
@@ -166,15 +212,14 @@ export function ReservasManager({
     const pasajeros = categories
       .map((c) => ({ categoria: c.code, qty: Number(pax[c.code] || 0) }))
       .filter((p) => p.qty > 0);
-    // Cutover dual-signature s59: el alta llama la RPC nueva por (excursion, fecha),
-    // derivadas de la salida elegida. Sin cambio visible: mismo selector de salida.
-    const dep = depById.get(formDep);
+    // F1c: el alta elige (excursion, fecha) DIRECTO sobre el modelo abierto-por-
+    // defecto. El motor #24 materializa el ancla del dia y es la autoridad del cupo.
     const res = await fetch("/api/agency/reservas", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        excursion_id: dep?.excursion_id,
-        departure_date: dep?.departure_date,
+        excursion_id: formExcursion,
+        departure_date: formFecha,
         holder_name: holderName,
         holder_email: holderEmail.trim() || undefined,
         holder_phone: holderPhone.trim() || undefined,
@@ -430,22 +475,47 @@ export function ReservasManager({
           <div className="bg-marble max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-lg p-6">
             <h2 className="text-lg font-bold">Nueva reserva</h2>
             <label className="block text-sm">
-              Salida
+              Excursión
               <select
-                value={formDep}
-                onChange={(e) => setFormDep(e.target.value)}
+                value={formExcursion}
+                onChange={(e) => setFormExcursion(e.target.value)}
                 className="border-stone mt-1 w-full rounded border px-3 py-2"
               >
-                <option value="">— Elegí una salida —</option>
-                {openDepartures.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {excursionName(d.excursion_id)} ·{" "}
-                    {fmtDate(d.departure_date)} · {fmtTime(d.departure_time)} ·
-                    cupo {d.capacity}
+                <option value="">— Elegí una excursión —</option>
+                {activeExcursions.map((ex) => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.name}
                   </option>
                 ))}
               </select>
             </label>
+            <label className="block text-sm">
+              Fecha
+              <input
+                type="date"
+                value={formFecha}
+                min={today}
+                max={maxDate}
+                disabled={formExcursion === ""}
+                onChange={(e) => setFormFecha(e.target.value)}
+                className="border-stone mt-1 w-full rounded border px-3 py-2 disabled:opacity-50"
+              />
+            </label>
+            {formExcursion !== "" && (
+              <div
+                className={`rounded-md px-3 py-2 text-[13px] ${
+                  availInfo.tone === "open"
+                    ? "bg-bone/30 text-onyx font-medium"
+                    : availInfo.tone === "limited"
+                      ? "font-medium text-[#b48448]"
+                      : availInfo.tone === "closed"
+                        ? "bg-stone/20 text-ash"
+                        : "text-ash"
+                }`}
+              >
+                {availInfo.text}
+              </div>
+            )}
             <label className="block text-sm">
               Titular
               <input
@@ -514,7 +584,9 @@ export function ReservasManager({
                 onClick={submit}
                 disabled={
                   busy ||
-                  formDep === "" ||
+                  formExcursion === "" ||
+                  formFecha === "" ||
+                  availBlocked ||
                   holderName.trim() === "" ||
                   totalPax < 1
                 }
