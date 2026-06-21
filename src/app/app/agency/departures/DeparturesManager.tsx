@@ -51,10 +51,14 @@ export function DeparturesManager({
   initialDepartures,
   excursions,
   canEdit,
+  embedded = false,
 }: {
   initialDepartures: DepartureRow[];
   excursions: ExcursionRow[];
   canEdit: boolean;
+  // embedded: renderizado dentro de SalidasView (tab "Lista") -> sin titulo propio
+  // (el titulo + toggle los pone SalidasView), conserva el boton "+ Nueva salida".
+  embedded?: boolean;
 }) {
   const [departures, setDepartures] =
     useState<DepartureRow[]>(initialDepartures);
@@ -165,9 +169,13 @@ export function DeparturesManager({
   const activeExcursions = excursions.filter((e) => e.active);
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className={embedded ? "space-y-6" : "max-w-5xl space-y-6"}>
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Salidas y cupo</h1>
+        {embedded ? (
+          <span />
+        ) : (
+          <h1 className="text-xl font-bold">Salidas y cupo</h1>
+        )}
         {canEdit ? (
           <button
             onClick={startCreate}
