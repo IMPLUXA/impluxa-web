@@ -81,10 +81,62 @@
   .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 24px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--copper);color:#fff;text-decoration:none}
   .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--pine)}
   .btn.wa{background:var(--wa);color:#fff}
+
+  /* ===== Voucher premium — panel de diseño: ganadora A + injertos B/C + fixes del jurado ===== */
+  .vch-card{position:relative;width:100%;max-width:540px;margin:0 auto;background:#FBF7EE;border:1.5px dashed #B48448;border-radius:18px;padding:26px 26px 20px;color:#1E2B2C;font-family:"Hanken Grotesk",sans-serif}
+  .vch-card *{box-sizing:border-box}
+  .vch-perf{position:absolute;top:46%;width:22px;height:22px;background:#FBF7EE;border:1.5px dashed #B48448;border-radius:50%;transform:translateY(-50%)}
+  .vch-perf-l{left:-12px}.vch-perf-r{right:-12px}
+  .vch-receipt-bar{display:flex;align-items:center;justify-content:space-between;margin:-2px -2px 14px}
+  .vch-receipt-tag{font-family:"Cinzel",serif;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#B48448}
+  .vch-receipt-no{font-family:"Cinzel",serif;font-size:12px;letter-spacing:.08em;color:#143038;border:1px solid #E6DCC4;border-radius:6px;padding:3px 9px;background:#F4EDDC}
+  .vch-brand{text-align:center}
+  .vch-logo{height:54px;width:auto;object-fit:contain;margin:2px auto 7px;display:block}
+  .vch-addr{font-size:11px;color:#8A8276;letter-spacing:.02em}
+  .vch-troquel{height:2px;margin:15px 0;background:repeating-linear-gradient(90deg,#D9CDB1 0 7px,transparent 7px 14px)}
+  .vch-head{text-align:center}
+  .vch-check{width:46px;height:46px;border-radius:50%;background:#3F7D5A;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 0 0 6px rgba(63,125,90,.14)}
+  .vch-check svg{width:24px;height:24px}
+  .vch-title{font-family:"Cinzel",serif;font-size:22px;font-weight:600;color:#143038;margin:0 0 4px}
+  .vch-excursion{font-size:14px;color:#B48448;font-weight:600;letter-spacing:.04em;margin:0}
+  .vch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin:18px 0}
+  .vch-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .vch-field-wide{grid-column:1 / -1}
+  .vch-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#9A917E;font-weight:600}
+  .vch-value{font-size:14.5px;color:#1E2B2C;font-weight:500;line-height:1.35}
+  .vch-value-sub{font-weight:400;color:#7C766A;font-size:13px}
+  .vch-code-box{text-align:center;background:#143038;border-radius:12px;padding:15px 12px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(180,132,72,.4)}
+  .vch-code-box::before,.vch-code-box::after{content:"";position:absolute;top:50%;width:14px;height:14px;background:#FBF7EE;border-radius:50%;transform:translateY(-50%)}
+  .vch-code-box::before{left:-7px}.vch-code-box::after{right:-7px}
+  .vch-code-label{display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#D9CDB1;margin-bottom:5px}
+  .vch-code{display:block;font-family:"Cinzel",serif;font-size:30px;font-weight:700;letter-spacing:.22em;color:#F4EDDC;padding-left:.22em}
+  .vch-code-hint{display:block;font-size:10px;color:#B7A989;letter-spacing:.04em;margin-top:7px}
+  .vch-pay{border:1px solid #E6DCC4;border-radius:12px;padding:12px 15px;margin-bottom:14px;background:#F8F2E4;font-variant-numeric:tabular-nums}
+  .vch-pay-row{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:4px 0}
+  .vch-pay-label{color:#5E574B}
+  .vch-pay-val{color:#143038;font-weight:500}
+  .vch-pay-saldo{border-top:1px dashed #D9CDB1;margin-top:4px;padding-top:9px}
+  .vch-pay-zero{color:#3F7D5A;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .vch-paid-tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;background:#3F7D5A;color:#FBF7EE;padding:2px 7px;border-radius:5px;font-weight:700}
+  .vch-pay-method{margin-top:7px;font-size:11.5px;color:#7C766A;display:flex;align-items:center;gap:6px}
+  .vch-pay-method svg{width:15px;height:15px;flex:none}
+  .vch-note{display:flex;gap:11px;align-items:flex-start;background:rgba(37,211,102,.09);border:1px solid rgba(37,211,102,.28);border-radius:10px;padding:11px 13px;margin-bottom:8px}
+  .vch-note svg{width:19px;height:19px;flex:none;margin-top:1px}
+  .vch-note-strong{margin:0;font-size:13px;font-weight:600;color:#143038;line-height:1.4}
+  .vch-note-soft{margin:0;font-size:12.5px;color:#5E574B;line-height:1.4}
+  .vch-email{display:flex;align-items:center;gap:7px;justify-content:center;font-size:12px;color:#7C766A;margin-bottom:18px}
+  .vch-email svg{width:15px;height:15px;flex:none}
+  .vch-actions{display:flex;gap:10px;margin-bottom:18px}
+  .vch-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:"Hanken Grotesk",sans-serif;font-size:13.5px;font-weight:600;padding:13px 12px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+  .vch-btn svg{width:17px;height:17px;flex:none}
+  .vch-btn-wa{background:#25D366;color:#0B3D1E;border-color:#25D366}
+  .vch-btn-close{background:transparent;color:#143038;border-color:#143038;flex:0 0 38%}
+  .vch-foot{text-align:center;border-top:1px solid #E6DCC4;padding-top:13px;font-family:"Cinzel",serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#143038}
+  @media(max-width:560px){.vch-grid{grid-template-columns:1fr}.vch-field-wide{grid-column:auto}.vch-card{padding:22px 16px 18px}.vch-code{font-size:26px;letter-spacing:.18em}}
 </style>
 </head>
 <body>
-<div class="mk">MOCKUP F4 · s59 v2 — Pago + Voucher. + <b>horario de salida</b> + <b>logo PV en el voucher</b> + ícono MP. Monto FIJO del servidor · hold <b>45 min</b>. (Ref siturismo-horario + voucher-impreso-PV PENDIENTES — no llegaron; el botón MP real = SDK Checkout Pro en el build.)</div>
+<div class="mk">MOCKUP F4 · s59 v3 — Pago + <b>Voucher premium</b> (panel de diseño: layout siturismo + comprobante PV con logo + Rolando 153 + N°). + horario de salida · ícono Mercado Pago. Monto FIJO server · hold <b>45 min</b>. (Botón MP real = SDK Checkout Pro en el build.)</div>
 
 <div class="lead">Tras crear la pre_reserva (F3), el turista <b>paga con MercadoPago</b> y recibe su <b>voucher</b> con el código. El último eslabón del booking.</div>
 
@@ -96,7 +148,7 @@
       <div>
         <div class="eyebrow">Reservá tu salida</div>
         <h2>Cerro Tronador</h2>
-        <div class="meta">Sábado 18 de julio · día completo</div>
+        <div class="meta">Sábado 18 de julio · Salida 08:00 hs</div>
       </div>
       <div class="x">&times;</div>
     </div>
@@ -152,7 +204,7 @@
       <div>
         <div class="eyebrow">Reservá tu salida</div>
         <h2>Cerro Tronador</h2>
-        <div class="meta">Sábado 18 de julio · día completo</div>
+        <div class="meta">Sábado 18 de julio · Salida 08:00 hs</div>
       </div>
       <div class="x">&times;</div>
     </div>
@@ -163,36 +215,68 @@
       <div class="step done"><div class="num">✓</div><div class="lbl">Pago</div></div>
       <div class="step active"><div class="num">5</div><div class="lbl">Voucher</div></div>
     </div>
-    <div class="body">
-      <div class="okwrap">
-        <img class="pvlogo" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
-        <div class="okcirc">✓</div>
-        <h3>¡Reserva confirmada!</h3>
-        <p>Tu pago se acreditó y tu lugar está confirmado para el sábado 18 de julio.</p>
-      </div>
+    <div class="body" style="padding:8px 20px 22px">
+      <div class="vch-card">
+        <span class="vch-perf vch-perf-l"></span><span class="vch-perf vch-perf-r"></span>
 
-      <div class="codecard">
-        <div class="cl">Código de reserva</div>
-        <div class="cc">GF6DQ9</div>
-      </div>
+        <div class="vch-receipt-bar">
+          <span class="vch-receipt-tag">Comprobante · Voucher</span>
+          <span class="vch-receipt-no">N° 0001</span>
+        </div>
 
-      <div class="resumen" style="margin-top:12px">
-        <div class="rrow"><span>Excursión</span><b>Cerro Tronador</b></div>
-        <div class="rrow"><span>Fecha</span><b>Sábado 18 de julio</b></div>
-        <div class="rrow"><span>Horario de salida</span><b>08:00 a 18:00 hs</b></div>
-        <div class="rrow"><span>Pasajeros</span><b>2 adultos · 1 niño</b></div>
-        <div class="rtot"><span class="lab">Pagado</span><span class="amt">$157.500</span></div>
-      </div>
+        <div class="vch-brand">
+          <img class="vch-logo" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+          <div class="vch-addr">Rolando 153, Bariloche · Tel +54 9 294499-7465</div>
+        </div>
 
-      <div class="wabar">
-        <svg viewBox="0 0 24 24" fill="var(--wa)"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63z"/></svg>
-        <span><b style="color:var(--pine)">El equipo de Patagonia Viva se va a comunicar con vos por WhatsApp</b> para coordinar el punto de encuentro y el horario exacto.</span>
+        <div class="vch-troquel"></div>
+
+        <div class="vch-head">
+          <div class="vch-check"><svg viewBox="0 0 24 24" fill="none" stroke="#FBF7EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h2 class="vch-title">¡Reserva confirmada!</h2>
+          <p class="vch-excursion">Cerro Tronador</p>
+        </div>
+
+        <div class="vch-grid">
+          <div class="vch-field"><span class="vch-label">Pasajero titular</span><span class="vch-value">Juan Pérez</span></div>
+          <div class="vch-field"><span class="vch-label">Fecha de salida</span><span class="vch-value">Sábado 18 de julio de 2026</span></div>
+          <div class="vch-field"><span class="vch-label">Horario de salida</span><span class="vch-value">08:00 a 18:00 hs</span></div>
+          <div class="vch-field"><span class="vch-label">Pasajeros</span><span class="vch-value">2 adultos · 1 niño</span></div>
+          <div class="vch-field vch-field-wide"><span class="vch-label">Punto de partida</span><span class="vch-value">Tu alojamiento en Bariloche <span class="vch-value-sub">— lo coordinan por WhatsApp</span></span></div>
+        </div>
+
+        <div class="vch-code-box">
+          <span class="vch-code-label">Código de reserva</span>
+          <span class="vch-code">GF6DQ9</span>
+          <span class="vch-code-hint">Presentalo el día de la salida</span>
+        </div>
+
+        <div class="vch-pay">
+          <div class="vch-pay-row"><span class="vch-pay-label">Total</span><span class="vch-pay-val">$157.500</span></div>
+          <div class="vch-pay-row"><span class="vch-pay-label">Reserva abonada</span><span class="vch-pay-val">$157.500</span></div>
+          <div class="vch-pay-row vch-pay-saldo"><span class="vch-pay-label">Saldo</span><span class="vch-pay-zero">$0 <span class="vch-paid-tag">Pagado</span></span></div>
+          <div class="vch-pay-method"><svg viewBox="0 0 24 24" fill="none" stroke="#7C766A" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Abonado con Mercado Pago</div>
+        </div>
+
+        <div class="vch-note">
+          <svg viewBox="0 0 24 24" fill="#25D366"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63z"/></svg>
+          <div>
+            <p class="vch-note-strong">Nuestro equipo se comunicará por WhatsApp</p>
+            <p class="vch-note-soft">para confirmar el punto de encuentro exacto.</p>
+          </div>
+        </div>
+        <div class="vch-email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#B48448" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          Voucher enviado a tu email
+        </div>
+
+        <div class="vch-actions">
+          <button class="vch-btn vch-btn-wa" type="button"><svg viewBox="0 0 24 24" fill="#0B3D1E"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63z"/></svg> Coordinar por WhatsApp</button>
+          <button class="vch-btn vch-btn-close" type="button">Cerrar</button>
+        </div>
+
+        <div class="vch-foot">Patagonia Viva · ¡Gracias por tu reserva!</div>
       </div>
-      <div class="mailnote">Te enviamos el voucher con tu código a tu email.</div>
-    </div>
-    <div class="pfoot" style="padding-bottom:0">
-      <a class="btn wa" href="#">Coordinar por WhatsApp ›</a>
-      <button class="btn ghost" style="margin-left:auto">Cerrar</button>
     </div>
   </div>
 
