@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F3 · Wizard pasos Pasajeros + Datos — reserva anon (mockup s59)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --sand:#F4EDDC; --pine:#143038; --copper:#B48448; --text:#1E2B2C;
+    --teal:#3E7C95; --wa:#25D366; --cream:#FBF7EE; --line:#E6DCC4; --green:#3F7D5A; --grey:#B7B0A1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:rgba(20,48,56,.62);color:var(--text);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;padding:28px 16px}
+  .mk{position:fixed;top:0;left:0;right:0;background:var(--pine);color:#EBE2CE;font-size:12px;text-align:center;padding:8px 14px;z-index:50}
+  .mk b{color:#fff}
+  .lead{max-width:560px;margin:34px auto 16px;text-align:center;color:#EDE4D0;font-size:13.5px}
+  .lead b{color:#fff}
+  .stack{display:flex;flex-direction:column;gap:30px;align-items:center;padding-bottom:60px}
+
+  .modal{width:100%;max-width:560px;background:var(--cream);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 40px 90px -28px rgba(0,0,0,.6);overflow:hidden;color:var(--text)}
+  .mh{display:flex;justify-content:space-between;gap:12px;padding:18px 22px 4px}
+  .mh .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
+  .mh h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:21px;margin:5px 0 3px}
+  .mh .meta{font-size:12.5px;color:#6b736f}
+  .x{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:#7b837f;font-size:16px;display:flex;align-items:center;justify-content:center;flex:none}
+
+  .stepper{display:flex;align-items:flex-start;padding:14px 16px 4px}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+  .step .num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;z-index:1;border:2px solid var(--line);background:#fff;color:var(--grey)}
+  .step .lbl{font-size:10.5px;margin-top:6px;color:var(--grey);font-weight:600;text-align:center}
+  .step::before{content:"";position:absolute;top:14px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .step:first-child::before{display:none}
+  .step.done .num{background:var(--pine);border-color:var(--pine);color:#fff}
+  .step.done::before{background:var(--pine)}
+  .step.active .num{background:var(--copper);border-color:var(--copper);color:#fff;box-shadow:0 0 0 4px rgba(180,132,72,.18)}
+  .step.active .lbl{color:var(--pine);font-weight:700}
+  .step.active::before{background:var(--pine)}
+
+  .body{padding:8px 22px 4px}
+  .h{font-family:"Cinzel",serif;color:var(--pine);font-size:17px;margin:14px 0 4px}
+  .sub{font-size:12.5px;color:#6b736f;margin-bottom:12px}
+
+  /* pasajeros */
+  .pax{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .pax:last-of-type{border-bottom:none}
+  .pax .lbl b{font-family:"Hanken Grotesk";font-weight:700;color:var(--pine);font-size:14.5px;display:block}
+  .pax .lbl small{font-size:12px;color:#6b736f}
+  .stepc{display:flex;align-items:center;gap:12px}
+  .stepc button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--copper);background:#fff;color:var(--copper);font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .stepc button:disabled{opacity:.35;cursor:default;border-color:var(--line);color:var(--grey)}
+  .stepc .n{min-width:20px;text-align:center;font-weight:700;color:var(--pine);font-size:15px}
+
+  .totalbar{display:flex;align-items:center;justify-content:space-between;margin:14px 0 4px;background:var(--pine);color:#fff;border-radius:14px;padding:14px 18px}
+  .totalbar .lab{font-size:13px;color:#cfe0dd}
+  .totalbar .amt{font-family:"Cinzel",serif;font-size:23px;font-weight:700}
+  .pricenote{font-size:11.5px;color:#8a918c;text-align:center;padding:2px 4px 6px}
+
+  /* datos */
+  .field{margin:10px 0}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--pine);margin-bottom:5px}
+  .field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:14px;font-family:inherit;background:#fff;color:var(--text)}
+  .field input::placeholder{color:#b3ab99}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .summary{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#F1E7D2;border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:12px 0 4px;font-size:12.5px;color:var(--pine)}
+  .summary b{font-family:"Cinzel",serif}
+  .priv{display:flex;gap:9px;align-items:flex-start;margin:14px 0 2px;font-size:11.8px;color:#5a635f}
+  .priv svg{width:16px;height:16px;color:var(--teal);flex:none;margin-top:1px}
+  .turnstile{margin:14px 0 2px;border:1px dashed #b9c4c2;border-radius:11px;background:#fff;padding:13px 15px;display:flex;align-items:center;gap:11px;font-size:12.5px;color:#4b544f}
+  .turnstile .box{width:26px;height:26px;border-radius:6px;background:#eef3f2;display:flex;align-items:center;justify-content:center}
+
+  .pfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 22px 22px;margin-top:8px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 24px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--copper);color:#fff}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--pine)}
+  .pfoot .note{font-size:11px;color:#8a918c;flex:1;min-width:150px}
+</style>
+</head>
+<body>
+<div class="mk">MOCKUP F3 · s59 — wizard pasos <b>2 Pasajeros</b> + <b>3 Datos</b> (reserva anon). El precio sale del SERVIDOR (tarifa real); el cliente nunca lo manda. Hold 30 min. <b>focus-trap obligatorio en el build</b> (no se ve acá). Pago = F4.</div>
+
+<div class="lead">Así sigue el flujo después de elegir la fecha (paso 1, ya LIVE): el turista carga <b>quiénes viajan</b> y <b>sus datos</b>, y recién después paga (F4).</div>
+
+<div class="stack">
+
+  <!-- ===== PASO 2: PASAJEROS ===== -->
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eyebrow">Reservá tu salida</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Sábado 18 de julio · día completo</div>
+      </div>
+      <div class="x">&times;</div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><div class="num">✓</div><div class="lbl">Fecha</div></div>
+      <div class="step active"><div class="num">2</div><div class="lbl">Pasajeros</div></div>
+      <div class="step"><div class="num">3</div><div class="lbl">Datos</div></div>
+      <div class="step"><div class="num">4</div><div class="lbl">Pago</div></div>
+      <div class="step"><div class="num">5</div><div class="lbl">Voucher</div></div>
+    </div>
+    <div class="body">
+      <div class="h">¿Quiénes viajan?</div>
+      <div class="sub">Elegí la cantidad por tipo de pasajero. El total se actualiza al instante.</div>
+
+      <div class="pax">
+        <div class="lbl"><b>Adulto</b><small>Precio completo · $45.000</small></div>
+        <div class="stepc"><button data-cat="adulto" data-d="-1">−</button><span class="n" id="n-adulto">2</span><button data-cat="adulto" data-d="1">+</button></div>
+      </div>
+      <div class="pax">
+        <div class="lbl"><b>3ra edad</b><small>Precio completo · $45.000</small></div>
+        <div class="stepc"><button data-cat="tercera" data-d="-1">−</button><span class="n" id="n-tercera">0</span><button data-cat="tercera" data-d="1">+</button></div>
+      </div>
+      <div class="pax">
+        <div class="lbl"><b>Niño</b><small>2 a 11 años · 50% · $22.500</small></div>
+        <div class="stepc"><button data-cat="nino" data-d="-1">−</button><span class="n" id="n-nino">1</span><button data-cat="nino" data-d="1">+</button></div>
+      </div>
+      <div class="pax">
+        <div class="lbl"><b>Infante</b><small>0 a 1 año · Gratis · ocupa lugar</small></div>
+        <div class="stepc"><button data-cat="infante" data-d="-1">−</button><span class="n" id="n-infante">0</span><button data-cat="infante" data-d="1">+</button></div>
+      </div>
+
+      <div class="totalbar">
+        <span class="lab"><span id="paxcount">3</span> pasajeros · quedan <b id="quedan">9</b> lugares</span>
+        <span class="amt" id="total">$112.500</span>
+      </div>
+      <div class="pricenote">Total estimado. El precio se calcula en el servidor con la tarifa vigente — el monto final se confirma en el pago.</div>
+    </div>
+    <div class="pfoot">
+      <button class="btn ghost">‹ Volver</button>
+      <button class="btn" style="margin-left:auto">Continuar ›</button>
+    </div>
+  </div>
+
+  <!-- ===== PASO 3: DATOS ===== -->
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eyebrow">Reservá tu salida</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Sábado 18 de julio · día completo</div>
+      </div>
+      <div class="x">&times;</div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><div class="num">✓</div><div class="lbl">Fecha</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pasajeros</div></div>
+      <div class="step active"><div class="num">3</div><div class="lbl">Datos</div></div>
+      <div class="step"><div class="num">4</div><div class="lbl">Pago</div></div>
+      <div class="step"><div class="num">5</div><div class="lbl">Voucher</div></div>
+    </div>
+    <div class="body">
+      <div class="summary"><b>Sábado 18 jul</b> · 2 adultos + 1 niño · <b>$112.500</b></div>
+      <div class="h">Tus datos</div>
+      <div class="sub">Para gestionar la reserva y coordinar el encuentro por WhatsApp.</div>
+
+      <div class="row2">
+        <div class="field"><label>Nombre</label><input placeholder="Juan" /></div>
+        <div class="field"><label>Apellido</label><input placeholder="Pérez" /></div>
+      </div>
+      <div class="field"><label>WhatsApp</label><input placeholder="+54 9 294 ..." inputmode="tel" /></div>
+      <div class="field"><label>Email</label><input placeholder="juan@email.com" inputmode="email" /></div>
+      <div class="field"><label>Alojamiento en Bariloche <span style="font-weight:400;color:#8a918c">(opcional)</span></label><input placeholder="Hotel / hostel / dirección" /></div>
+
+      <div class="priv">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Usamos tus datos <b>solo</b> para gestionar tu reserva y contactarte por WhatsApp. No los compartimos con terceros.</span>
+      </div>
+
+      <div class="turnstile">
+        <span class="box">🛡</span>
+        <span>Verificación de seguridad (Cloudflare Turnstile) — confirma que no sos un robot. <span style="color:#8a918c">Se valida en el servidor.</span></span>
+      </div>
+    </div>
+    <div class="pfoot">
+      <button class="btn ghost">‹ Volver</button>
+      <button class="btn" style="margin-left:auto">Continuar al pago ›</button>
+      <span class="note">El pago online (MercadoPago) es el último paso — F4.</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Total EN VIVO (demo del paso 2): precio del SERVIDOR simulado; en prod sale de excursion_rates.
+  var BASE = 45000;                                  // adulto (tarifa real vendría del server)
+  var FACTOR = { adulto:1, tercera:1, nino:0.5, infante:0 };
+  var OCUPA = { adulto:1, tercera:1, nino:1, infante:1 };  // infante ocupa lugar (regla del motor)
+  var CUPO = 12;
+  var qty = { adulto:2, tercera:0, nino:1, infante:0 };
+  var fmt = new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0});
+  function render(){
+    var total=0, seats=0;
+    for(var k in qty){ total += qty[k]*BASE*FACTOR[k]; seats += qty[k]*OCUPA[k]; document.getElementById("n-"+k).textContent = qty[k]; }
+    document.getElementById("total").textContent = fmt.format(total);
+    document.getElementById("paxcount").textContent = seats;
+    document.getElementById("quedan").textContent = Math.max(CUPO - seats, 0);
+    document.querySelectorAll(".stepc button[data-d='-1']").forEach(function(b){ b.disabled = qty[b.dataset.cat] <= 0; });
+    document.querySelectorAll(".stepc button[data-d='1']").forEach(function(b){ b.disabled = seats >= CUPO; });
+  }
+  document.querySelectorAll(".stepc button").forEach(function(b){
+    b.addEventListener("click", function(){
+      var cat=b.dataset.cat, d=parseInt(b.dataset.d,10);
+      var seats=0; for(var k in qty) seats += qty[k]*OCUPA[k];
+      if(d>0 && seats>=CUPO) return;
+      qty[cat]=Math.max(0, qty[cat]+d); render();
+    });
+  });
+  render();
+</script>
+</body>
+</html>
