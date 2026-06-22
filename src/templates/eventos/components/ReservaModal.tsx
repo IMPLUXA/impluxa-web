@@ -191,20 +191,29 @@ export function ReservaModal({
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // Foco inicial dentro del modal (a11y).
-    const t = window.setTimeout(() => {
-      const root = modalRef.current;
-      const firstEl = root?.querySelector<HTMLElement>(FOCUSABLE);
-      firstEl?.focus();
-    }, 0);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
-      window.clearTimeout(t);
       // Restaura el foco al boton que abrio el modal (a11y).
       triggerRef.current?.focus();
     };
   }, [open]);
+
+  // Foco inicial + reposicion al cambiar de paso (a11y: el foco no debe "morir" cuando se desmonta el
+  // boton del paso anterior). setTimeout 0 espera el commit del DOM del nuevo paso.
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      modalRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open, step]);
+
+  // Cambiar de fecha re-arranca la seleccion de pasajeros (evita arrastrar un qty mayor al cupo de la
+  // nueva fecha). El flujo normal es fecha->pasajeros, asi que solo afecta el ir-y-volver.
+  useEffect(() => {
+    setQty({});
+  }, [selected]);
 
   function stepMonth(delta: number) {
     const next = curIdx + delta;
@@ -220,8 +229,11 @@ export function ReservaModal({
       const cur = prev[code] ?? 0;
       const nextVal = cur + delta;
       if (nextVal < 0) return prev;
-      if (delta > 0 && totalSeats >= seatCap) return prev;
-      return { ...prev, [code]: nextVal };
+      // Total calculado DENTRO del updater (no del closure stale) -> el cap no se pasa por carrera.
+      const draft = { ...prev, [code]: nextVal };
+      const newTotal = Object.values(draft).reduce((a, b) => a + b, 0);
+      if (delta > 0 && newTotal > seatCap) return prev;
+      return draft;
     });
   }
 
@@ -239,22 +251,32 @@ export function ReservaModal({
     const pasajeros = categorias
       .filter((c) => (qty[c.code] ?? 0) > 0)
       .map((c) => ({ categoria: c.code, qty: qty[c.code] }));
-    const res = await submitReserva({
-      excursion_id: excursionId,
-      departure_date: selected,
-      nombre: form.nombre.trim(),
-      apellido: form.apellido.trim(),
-      whatsapp: form.whatsapp.trim(),
-      email: form.email.trim(),
-      alojamiento: form.alojamiento.trim(),
-      pasajeros,
-      idempotency_key: idemRef.current,
-      turnstileToken: token,
-      empresa: form.empresa,
-    });
-    setResult(res);
-    if (res.ok) setStep(4);
-    setSubmitting(false);
+    try {
+      const res = await submitReserva({
+        excursion_id: excursionId,
+        departure_date: selected,
+        nombre: form.nombre.trim(),
+        apellido: form.apellido.trim(),
+        whatsapp: form.whatsapp.trim(),
+        email: form.email.trim(),
+        alojamiento: form.alojamiento.trim(),
+        pasajeros,
+        idempotency_key: idemRef.current,
+        turnstileToken: token,
+        empresa: form.empresa,
+      });
+      setResult(res);
+      if (res.ok) setStep(4);
+    } catch {
+      // Si la red corta, el boton no debe quedar colgado. La idempotency_key se reusa: un reintento
+      // hace replay de la reserva ya creada si el server llego a crearla (no duplica).
+      setResult({
+        ok: false,
+        error: "No pudimos conectar. Revisá tu conexión y probá de nuevo.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const STEPS = ["Fecha", "Pasajeros", "Datos", "Pago", "Voucher"];
