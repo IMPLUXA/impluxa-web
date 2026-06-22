@@ -10,23 +10,53 @@ export async function sendLeadNotification(lead: {
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.LEAD_NOTIFICATION_TO;
-  if (!apiKey || !to) return;
+  if (!apiKey || !to) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "lead_email_skipped",
+        reason: !apiKey ? "no_api_key" : "no_recipient",
+      }),
+    );
+    return;
+  }
   const resend = new Resend(apiKey);
-  await resend.emails.send({
+  // El SDK de Resend NO tira en errores de API (4xx): los devuelve en `error`. Hay que chequearlo
+  // o el fallo queda SILENCIOSO (causa raíz del voucher s59). Logueamos rubro + id (sin PII del lead).
+  const { data, error } = await resend.emails.send({
     from: "Impluxa <hola@impluxa.com>",
     to,
     subject: `Nuevo lead — ${lead.industry} — ${lead.name}`,
     text: `Nombre: ${lead.name}\nEmail: ${lead.email}\nWhatsApp: ${lead.whatsapp ?? "-"}\nRubro: ${lead.industry}\nMensaje: ${lead.message ?? "-"}`,
   });
+  if (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "lead_email_rejected",
+        industry: lead.industry,
+        resend_error: error.message ?? "resend_api_error",
+      }),
+    );
+    return;
+  }
+  console.log(
+    JSON.stringify({
+      level: "info",
+      event: "lead_email_sent",
+      resend_id: data?.id,
+    }),
+  );
 }
 
 // ============================================================================
 // F4 — Voucher de confirmación por email (Resend). Disparado por el webhook al confirmar el
 // pago de una reserva ANÓNIMA. 100% datos del tenant (ver loadVoucherData): cero dato de terceros.
 //
-// from: el dominio verificado de la plataforma (impluxa.com, el mismo que ya manda leads) con
-// el NOMBRE del tenant como display. Un from por-dominio-de-tenant es un follow-up (necesita
-// verificar el dominio del tenant en Resend) — BACKLOG. Deliverability OK con impluxa.com.
+// from: dominio de la plataforma impluxa.com (mismo mailbox que los leads) con el NOMBRE del
+// tenant como display. ⚠️ impluxa.com DEBE estar verificado en Resend (SPF+DKIM publicados en DNS)
+// para que el mail llegue a destinatarios externos; si no, Resend lo rechaza con 4xx (causa raíz
+// s59). El from por-dominio-de-tenant (reservas@<tenant>) es follow-up BACKLOG (verifica cada dominio).
 // ============================================================================
 
 function esc(s: string): string {
@@ -165,21 +195,53 @@ function renderVoucherText(d: VoucherData): string {
 }
 
 /**
- * Envía el voucher de confirmación de reserva al email del titular. Best-effort: si falta el
- * API key, no-op silencioso (igual que sendLeadNotification). El caller (webhook) ya envuelve
- * en try/catch para que un fallo de email JAMÁS rompa el ack del webhook.
+ * Envía el voucher de confirmación de reserva al email del titular. Best-effort: nunca tira
+ * (chequea el {error} de Resend y lo LOGUEA — no queda silencioso); el caller (webhook) igual lo
+ * envuelve en try/catch para que un fallo de email JAMÁS rompa el ack del webhook.
  */
 export async function sendReservationConfirmation(
   d: VoucherData,
 ): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey || !d.holderEmail) return;
+  if (!apiKey || !d.holderEmail) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "voucher_email_skipped",
+        reason: !apiKey ? "no_api_key" : "no_holder_email",
+        code: d.code,
+      }),
+    );
+    return;
+  }
   const resend = new Resend(apiKey);
-  await resend.emails.send({
+  // El SDK de Resend NO tira en errores de API (4xx): los devuelve en `error`. Si no se chequea, el
+  // fallo queda SILENCIOSO — fue la causa raíz del voucher que no llegó (s59). Logueamos el código
+  // de reserva (correlacionable, sin PII del turista) + el id/error de Resend.
+  const { data, error } = await resend.emails.send({
     from: `${safeFromName(d.tenantName)} <hola@impluxa.com>`,
     to: d.holderEmail,
     subject: `Tu reserva en ${d.tenantName} — ${d.code}`,
     html: renderVoucherHtml(d),
     text: renderVoucherText(d),
   });
+  if (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "voucher_email_rejected",
+        code: d.code,
+        resend_error: error.message ?? "resend_api_error",
+      }),
+    );
+    return;
+  }
+  console.log(
+    JSON.stringify({
+      level: "info",
+      event: "voucher_email_sent",
+      code: d.code,
+      resend_id: data?.id,
+    }),
+  );
 }
