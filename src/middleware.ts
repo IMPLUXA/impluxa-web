@@ -69,6 +69,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // PREVIEW-ONLY escape hatch: en un preview de Vercel el host es *.vercel.app (sin dominio custom de
+  // tenant), así que el routing por Host de abajo no puede servir un tenant -> 404. Para poder CAMINAR
+  // un tenant antes del merge, en previews dejamos pasar /tenant/[slug] directo a la slug-route.
+  // INERTE en producción: VERCEL_ENV es "production" en prod -> esta rama NO corre -> los tenants se
+  // sirven SOLO por su dominio custom (comportamiento de prod intacto, byte-id preservado). Las
+  // rutas /tenant/[slug]/admin siguen detrás de los guards e07/e08/e09 + RLS (sin exposición extra).
+  if (
+    process.env["VERCEL_ENV"] === "preview" &&
+    host.endsWith(".vercel.app") &&
+    url.pathname.startsWith("/tenant/")
+  ) {
+    return NextResponse.next();
+  }
+
   if (host === APP_HOST) {
     url.pathname = `/app${url.pathname}`;
     return NextResponse.rewrite(url);

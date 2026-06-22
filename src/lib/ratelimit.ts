@@ -3,6 +3,7 @@ import { Redis } from "@upstash/redis";
 
 let leadLimiter: Ratelimit | null = null;
 let monitoringLimiter: Ratelimit | null = null;
+let reservaLimiter: Ratelimit | null = null;
 
 function makeRedis(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -39,4 +40,22 @@ export function getMonitoringLimiter() {
     prefix: "ratelimit:monitoring",
   });
   return monitoringLimiter;
+}
+
+/**
+ * Rate-limit for the PUBLIC reservation endpoint (F3, anonymous write to prod).
+ * 5 req / 10 min per IP — un turista legítimo hace 1 reserva (los reintentos van por
+ * idempotency_key, no consumen cupo), un bot que spammea holds queda cortado. Backstop
+ * detrás de Turnstile. Fail-OPEN si Upstash no está (Turnstile sigue gateando).
+ */
+export function getReservaLimiter() {
+  if (reservaLimiter) return reservaLimiter;
+  const redis = makeRedis();
+  if (!redis) return null;
+  reservaLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, "10 m"),
+    prefix: "ratelimit:reserva",
+  });
+  return reservaLimiter;
 }

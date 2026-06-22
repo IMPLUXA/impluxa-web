@@ -82,3 +82,58 @@ export async function getPublicAvailability(
     return [];
   }
 }
+
+// F3 — categorias de pasajero del tenant (code/label/factor) para el desglose + total EN VIVO del
+// modal de reserva. Dato PUBLICO-safe (labels + factores; los precios ya se muestran en las cards).
+// El total client-side es solo DISPLAY: el RPC `public_crear_reserva` recalcula el precio server-side
+// de forma autoritativa (el cliente nunca manda monto). Lectura via SERVICE-ROLE (no afectada por el
+// revoke de grants anon C-3). FAIL-CLOSED: cualquier problema -> [] (el modal degrada el total a "—").
+export type PublicCategoria = { code: string; label: string; factor: number };
+
+export async function getPublicReservaCategorias(
+  tenantId: string,
+): Promise<PublicCategoria[]> {
+  try {
+    const sb = getSupabaseServiceClient();
+    const query = sb
+      .from("passenger_categories")
+      .select("code,label,price_factor")
+      .eq("tenant_id", tenantId)
+      .order("price_factor", { ascending: false })
+      .order("code", { ascending: true });
+
+    const timeout = new Promise<"timeout">((resolve) =>
+      setTimeout(() => resolve("timeout"), FETCH_TIMEOUT_MS),
+    );
+    const result = await Promise.race([query, timeout]);
+    if (result === "timeout") {
+      logEvent("public_cat_timeout", { tenant_id: tenantId });
+      return [];
+    }
+    if (result.error || !Array.isArray(result.data)) {
+      logEvent("public_cat_failed", { code: result.error?.code ?? null });
+      return [];
+    }
+    return result.data
+      .filter(
+        (
+          r,
+        ): r is {
+          code: string;
+          label: string;
+          price_factor: number | string;
+        } => typeof r.code === "string" && typeof r.label === "string",
+      )
+      .map((r) => ({
+        code: r.code,
+        label: r.label,
+        factor: Number(r.price_factor),
+      }))
+      .filter((c) => Number.isFinite(c.factor));
+  } catch (err) {
+    logEvent("public_cat_threw", {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}
