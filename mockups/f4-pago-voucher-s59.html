@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F4 · wizard pasos Pago + Voucher (MercadoPago) — mockup s59</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --sand:#F4EDDC; --pine:#143038; --copper:#B48448; --text:#1E2B2C;
+    --teal:#3E7C95; --wa:#25D366; --cream:#FBF7EE; --line:#E6DCC4; --green:#3F7D5A; --grey:#B7B0A1; --mp:#009EE3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:rgba(20,48,56,.62);color:var(--text);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;padding:28px 16px}
+  .mk{position:fixed;top:0;left:0;right:0;background:var(--pine);color:#EBE2CE;font-size:12px;text-align:center;padding:8px 14px;z-index:50}
+  .mk b{color:#fff}
+  .lead{max-width:580px;margin:34px auto 16px;text-align:center;color:#EDE4D0;font-size:13.5px}
+  .lead b{color:#fff}
+  .stack{display:flex;flex-direction:column;gap:30px;align-items:center;padding-bottom:60px}
+
+  .modal{width:100%;max-width:560px;background:var(--cream);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 40px 90px -28px rgba(0,0,0,.6);overflow:hidden;color:var(--text)}
+  .mh{display:flex;justify-content:space-between;gap:12px;padding:18px 22px 4px}
+  .mh .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
+  .mh h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:21px;margin:5px 0 3px}
+  .mh .meta{font-size:12.5px;color:#6b736f}
+  .x{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:#7b837f;font-size:16px;display:flex;align-items:center;justify-content:center;flex:none}
+
+  .stepper{display:flex;align-items:flex-start;padding:14px 16px 4px}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+  .step .num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;z-index:1;border:2px solid var(--line);background:#fff;color:var(--grey)}
+  .step .lbl{font-size:10.5px;margin-top:6px;color:var(--grey);font-weight:600;text-align:center}
+  .step::before{content:"";position:absolute;top:14px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .step:first-child::before{display:none}
+  .step.done .num{background:var(--pine);border-color:var(--pine);color:#fff}
+  .step.done::before{background:var(--pine)}
+  .step.active .num{background:var(--copper);border-color:var(--copper);color:#fff;box-shadow:0 0 0 4px rgba(180,132,72,.18)}
+  .step.active .lbl{color:var(--pine);font-weight:700}
+  .step.active::before{background:var(--pine)}
+
+  .body{padding:8px 22px 4px}
+  .h{font-family:"Cinzel",serif;color:var(--pine);font-size:17px;margin:14px 0 4px}
+  .sub{font-size:12.5px;color:#6b736f;margin-bottom:12px}
+
+  /* resumen de la reserva */
+  .resumen{background:#F1E7D2;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0 4px}
+  .resumen .rt{font-family:"Cinzel",serif;color:var(--pine);font-size:15px;margin-bottom:8px}
+  .rrow{display:flex;justify-content:space-between;font-size:13px;color:#4b544f;padding:3px 0}
+  .rrow b{color:var(--pine)}
+  .rtot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #cdbf9d;margin-top:8px;padding-top:9px}
+  .rtot .lab{font-size:13px;color:#6b736f}
+  .rtot .amt{font-family:"Cinzel",serif;font-size:23px;font-weight:700;color:var(--pine)}
+
+  .timer{display:flex;gap:9px;align-items:center;margin:13px 0 2px;font-size:12.5px;color:#8a5b12;background:#FBF1DC;border:1px solid #E7D3A6;border-radius:11px;padding:10px 13px}
+  .timer svg{width:17px;height:17px;flex:none;stroke:#B4842;}
+
+  .mpbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--mp);color:#fff;border:none;
+    border-radius:12px;padding:14px 18px;font-size:15.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px}
+  .mpbtn svg{width:22px;height:22px}
+  .securenote{display:flex;gap:8px;align-items:flex-start;margin:11px 2px 2px;font-size:11.5px;color:#5a635f}
+  .securenote svg{width:15px;height:15px;color:var(--teal);flex:none;margin-top:1px}
+
+  /* voucher */
+  .okwrap{text-align:center;padding:20px 0 4px}
+  .okcirc{width:58px;height:58px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px}
+  .okwrap h3{font-family:"Cinzel",serif;color:var(--pine);font-size:22px;font-weight:600;margin:0}
+  .okwrap p{font-size:13px;color:#5a635f;margin:6px auto 0;max-width:380px}
+  .codecard{background:#F1E7D2;border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-align:center;margin:14px 0 4px}
+  .codecard .cl{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#8a7b55;font-weight:700}
+  .codecard .cc{font-family:"Cinzel",serif;font-size:32px;font-weight:700;color:var(--pine);letter-spacing:.08em;margin-top:4px}
+  .wabar{display:flex;gap:10px;align-items:flex-start;margin:13px 0 2px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--wa);border-radius:11px;padding:11px 13px;font-size:12.5px;color:#4b544f}
+  .wabar svg{width:19px;height:19px;flex:none;margin-top:1px}
+  .mailnote{font-size:11.8px;color:#8a918c;text-align:center;padding:6px 4px 2px}
+
+  .pfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 22px 22px;margin-top:8px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 24px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--copper);color:#fff;text-decoration:none}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--pine)}
+  .btn.wa{background:var(--wa);color:#fff}
+</style>
+</head>
+<body>
+<div class="mk">MOCKUP F4 · s59 — wizard pasos <b>4 Pago</b> + <b>5 Voucher</b> (MercadoPago). Monto FIJO del servidor (el anon no edita). Plata directo a la agencia. Hold <b>45 min</b>. Webhook D4c confirma sin tocar nada.</div>
+
+<div class="lead">Tras crear la pre_reserva (F3), el turista <b>paga con MercadoPago</b> y recibe su <b>voucher</b> con el código. El último eslabón del booking.</div>
+
+<div class="stack">
+
+  <!-- ===== PASO 4: PAGO ===== -->
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eyebrow">Reservá tu salida</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Sábado 18 de julio · día completo</div>
+      </div>
+      <div class="x">&times;</div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><div class="num">✓</div><div class="lbl">Fecha</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pasajeros</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Datos</div></div>
+      <div class="step active"><div class="num">4</div><div class="lbl">Pago</div></div>
+      <div class="step"><div class="num">5</div><div class="lbl">Voucher</div></div>
+    </div>
+    <div class="body">
+      <div class="h">Confirmá y pagá</div>
+      <div class="sub">Revisá tu reserva y pagá para confirmar tu lugar.</div>
+
+      <div class="resumen">
+        <div class="rt">Cerro Tronador</div>
+        <div class="rrow"><span>Fecha</span><b>Sábado 18 de julio</b></div>
+        <div class="rrow"><span>Pasajeros</span><b>2 adultos · 1 niño</b></div>
+        <div class="rrow"><span>Titular</span><b>Juan Pérez</b></div>
+        <div class="rtot"><span class="lab">Total a pagar</span><span class="amt">$157.500</span></div>
+      </div>
+
+      <div class="timer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8a5b12" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>Tenés <b>45 minutos</b> para completar el pago y confirmar tu lugar. Pasado ese tiempo, el cupo se libera.</span>
+      </div>
+
+      <button class="mpbtn">
+        <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.04 2 11.02c0 2.8 1.42 5.3 3.66 6.95.18.13.3.34.31.57l.06 2.02c.02.64.68 1.06 1.27.8l2.25-.99c.18-.08.38-.09.56-.04.97.27 2 .41 3.06.41 5.52 0 10-4.04 10-9.02C22.4 6.04 17.52 2 12 2z"/></svg>
+        Pagar con MercadoPago
+      </button>
+
+      <div class="securenote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Pago seguro vía MercadoPago (Checkout Pro). El cobro va <b>directo a Patagonia Viva</b>. El monto lo calcula el servidor — no se puede modificar.</span>
+      </div>
+    </div>
+    <div class="pfoot">
+      <button class="btn ghost">‹ Volver</button>
+      <span style="font-size:11px;color:#8a918c;flex:1;min-width:150px">Al pagar te llevamos a MercadoPago y volvés con tu voucher.</span>
+    </div>
+  </div>
+
+  <!-- ===== PASO 5: VOUCHER ===== -->
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eyebrow">Reservá tu salida</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Sábado 18 de julio · día completo</div>
+      </div>
+      <div class="x">&times;</div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><div class="num">✓</div><div class="lbl">Fecha</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pasajeros</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Datos</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pago</div></div>
+      <div class="step active"><div class="num">5</div><div class="lbl">Voucher</div></div>
+    </div>
+    <div class="body">
+      <div class="okwrap">
+        <div class="okcirc">✓</div>
+        <h3>¡Reserva confirmada!</h3>
+        <p>Tu pago se acreditó y tu lugar está confirmado para el sábado 18 de julio.</p>
+      </div>
+
+      <div class="codecard">
+        <div class="cl">Código de reserva</div>
+        <div class="cc">GF6DQ9</div>
+      </div>
+
+      <div class="resumen" style="margin-top:12px">
+        <div class="rrow"><span>Excursión</span><b>Cerro Tronador</b></div>
+        <div class="rrow"><span>Fecha</span><b>Sábado 18 de julio</b></div>
+        <div class="rrow"><span>Pasajeros</span><b>2 adultos · 1 niño</b></div>
+        <div class="rtot"><span class="lab">Pagado</span><span class="amt">$157.500</span></div>
+      </div>
+
+      <div class="wabar">
+        <svg viewBox="0 0 24 24" fill="var(--wa)"><path d="M.06 24l1.68-6.13A11.86 11.86 0 010 12 12 12 0 1112 24a11.9 11.9 0 01-5.74-1.46zM6.6 20.13l.36.21A9.9 9.9 0 1012 21.92 9.93 9.93 0 002.08 12a9.83 9.83 0 001.52 5.26l.23.37-1 3.63z"/></svg>
+        <span><b style="color:var(--pine)">El equipo de Patagonia Viva se va a comunicar con vos por WhatsApp</b> para coordinar el punto de encuentro y el horario exacto.</span>
+      </div>
+      <div class="mailnote">Te enviamos el voucher con tu código a tu email.</div>
+    </div>
+    <div class="pfoot" style="padding-bottom:0">
+      <a class="btn wa" href="#">Coordinar por WhatsApp ›</a>
+      <button class="btn ghost" style="margin-left:auto">Cerrar</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
