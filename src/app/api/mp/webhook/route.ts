@@ -15,6 +15,8 @@ import {
 } from "@/lib/mp/dead-letter";
 import { sendMpWebhookAlert } from "@/lib/mp/alert";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { loadVoucherData } from "@/lib/public/voucher";
+import { sendReservationConfirmation } from "@/lib/resend";
 
 // Nombre de env por join (evita el falso-positivo *_SECRET$ del Sentinel).
 const ENV_WEBHOOK_SECRET = ["MP", "WEBHOOK", "SECRET"].join("_");
@@ -353,6 +355,26 @@ export async function POST(req: NextRequest) {
         rpc_status: cls.rpcStatus,
       }),
     );
+    // F4 — voucher por email (ADITIVO; NO toca el confirm ni la RPC v030_007). Solo en la PRIMERA
+    // confirmación 'approved' (no en replays → evita emails duplicados por los reintentos de MP).
+    // loadVoucherData gatea anon (seller_staff_id null) + holder_email + status 'reserva'; un fallo
+    // de email se loguea y JAMÁS voltea el ack (si fallara y 200-ackeáramos, MP no reintenta — el
+    // voucher se reenvía manual; el código ya quedó en el panel y en el retorno on-site).
+    if (cls.rpcStatus === "approved" && !env.idempotent_replay) {
+      try {
+        const voucher = await loadVoucherData(er.reservaId, authTenantId);
+        if (voucher) await sendReservationConfirmation(voucher);
+      } catch (e) {
+        console.error(
+          JSON.stringify({
+            level: "error",
+            event: "mp_webhook_voucher_email_failed",
+            data_id: dataId,
+            message: e instanceof Error ? e.message : "unknown",
+          }),
+        );
+      }
+    }
     return ack({ processed: true });
   }
 

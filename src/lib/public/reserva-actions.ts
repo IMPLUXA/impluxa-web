@@ -129,6 +129,7 @@ export async function submitReserva(
   const res = rpcData as {
     ok: boolean;
     error_code?: string;
+    reserva_id?: string;
     reservation_code?: string;
     hold_expires_at?: string;
     gross_cents?: number;
@@ -146,6 +147,9 @@ export async function submitReserva(
 
   return {
     ok: true,
+    // F4: reserva_id (UUID) — el paso Pago lo usa para iniciar el pago MP. El RPC lo devuelve
+    // tanto en alta nueva como en replay idempotente.
+    reserva_id: res.reserva_id!,
     reservation_code: res.reservation_code!,
     hold_expires_at: res.hold_expires_at!,
     gross_cents: res.gross_cents ?? 0,
