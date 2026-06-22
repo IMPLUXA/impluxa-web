@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F4 · wizard pasos Pago + Voucher (MercadoPago) — mockup s59</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --sand:#F4EDDC; --pine:#143038; --copper:#B48448; --text:#1E2B2C;
+    --teal:#3E7C95; --wa:#25D366; --cream:#FBF7EE; --line:#E6DCC4; --green:#3F7D5A; --grey:#B7B0A1; --mp:#009EE3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:rgba(20,48,56,.62);color:var(--text);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;padding:28px 16px}
+  .mk{position:fixed;top:0;left:0;right:0;background:var(--pine);color:#EBE2CE;font-size:12px;text-align:center;padding:8px 14px;z-index:50}
+  .mk b{color:#fff}
+  .lead{max-width:580px;margin:34px auto 16px;text-align:center;color:#EDE4D0;font-size:13.5px}
+  .lead b{color:#fff}
+  .stack{display:flex;flex-direction:column;gap:30px;align-items:center;padding-bottom:60px}
+
+  .modal{width:100%;max-width:560px;background:var(--cream);border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 40px 90px -28px rgba(0,0,0,.6);overflow:hidden;color:var(--text)}
+  .mh{display:flex;justify-content:space-between;gap:12px;padding:18px 22px 4px}
+  .mh .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--copper);font-weight:700}
+  .mh h2{font-family:"Cinzel",serif;color:var(--pine);font-weight:600;font-size:21px;margin:5px 0 3px}
+  .mh .meta{font-size:12.5px;color:#6b736f}
+  .x{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:#7b837f;font-size:16px;display:flex;align-items:center;justify-content:center;flex:none}
+
+  .stepper{display:flex;align-items:flex-start;padding:14px 16px 4px}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+  .step .num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;z-index:1;border:2px solid var(--line);background:#fff;color:var(--grey)}
+  .step .lbl{font-size:10.5px;margin-top:6px;color:var(--grey);font-weight:600;text-align:center}
+  .step::before{content:"";position:absolute;top:14px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .step:first-child::before{display:none}
+  .step.done .num{background:var(--pine);border-color:var(--pine);color:#fff}
+  .step.done::before{background:var(--pine)}
+  .step.active .num{background:var(--copper);border-color:var(--copper);color:#fff;box-shadow:0 0 0 4px rgba(180,132,72,.18)}
+  .step.active .lbl{color:var(--pine);font-weight:700}
+  .step.active::before{background:var(--pine)}
+
+  .body{padding:8px 22px 4px}
+  .h{font-family:"Cinzel",serif;color:var(--pine);font-size:17px;margin:14px 0 4px}
+  .sub{font-size:12.5px;color:#6b736f;margin-bottom:12px}
+
+  /* resumen de la reserva */
+  .resumen{background:#F1E7D2;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0 4px}
+  .resumen .rt{font-family:"Cinzel",serif;color:var(--pine);font-size:15px;margin-bottom:8px}
+  .rrow{display:flex;justify-content:space-between;font-size:13px;color:#4b544f;padding:3px 0}
+  .rrow b{color:var(--pine)}
+  .rtot{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #cdbf9d;margin-top:8px;padding-top:9px}
+  .rtot .lab{font-size:13px;color:#6b736f}
+  .rtot .amt{font-family:"Cinzel",serif;font-size:23px;font-weight:700;color:var(--pine)}
+
+  .timer{display:flex;gap:9px;align-items:center;margin:13px 0 2px;font-size:12.5px;color:#8a5b12;background:#FBF1DC;border:1px solid #E7D3A6;border-radius:11px;padding:10px 13px}
+  .timer svg{width:17px;height:17px;flex:none;stroke:#B4842;}
+
+  .mpbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--mp);color:#fff;border:none;
+    border-radius:12px;padding:13px 18px;font-size:15.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px}
+  .mpbtn .mpico{display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:7px;width:46px;height:32px}
+  .mpbtn .mpico svg{width:34px;height:32px;display:block}
+  .pvlogo{height:30px;display:block;margin:0 auto 14px;object-fit:contain}
+  .securenote{display:flex;gap:8px;align-items:flex-start;margin:11px 2px 2px;font-size:11.5px;color:#5a635f}
+  .securenote svg{width:15px;height:15px;color:var(--teal);flex:none;margin-top:1px}
+
+  /* voucher */
+  .okwrap{text-align:center;padding:20px 0 4px}
+  .okcirc{width:58px;height:58px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px}
+  .okwrap h3{font-family:"Cinzel",serif;color:var(--pine);font-size:22px;font-weight:600;margin:0}
+  .okwrap p{font-size:13px;color:#5a635f;margin:6px auto 0;max-width:380px}
+  .codecard{background:#F1E7D2;border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-align:center;margin:14px 0 4px}
+  .codecard .cl{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#8a7b55;font-weight:700}
+  .codecard .cc{font-family:"Cinzel",serif;font-size:32px;font-weight:700;color:var(--pine);letter-spacing:.08em;margin-top:4px}
+  .wabar{display:flex;gap:10px;align-items:flex-start;margin:13px 0 2px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--wa);border-radius:11px;padding:11px 13px;font-size:12.5px;color:#4b544f}
+  .wabar svg{width:19px;height:19px;flex:none;margin-top:1px}
+  .mailnote{font-size:11.8px;color:#8a918c;text-align:center;padding:6px 4px 2px}
+
+  .pfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 22px 22px;margin-top:8px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 24px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--copper);color:#fff;text-decoration:none}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--pine)}
+  .btn.wa{background:var(--wa);color:#fff}
+
+  /* ===== Voucher premium — panel de diseño: ganadora A + injertos B/C + fixes del jurado ===== */
+  .vch-card{position:relative;width:100%;max-width:540px;margin:0 auto;background:#FBF7EE;border:1.5px dashed #B48448;border-radius:18px;padding:26px 26px 20px;color:#1E2B2C;font-family:"Hanken Grotesk",sans-serif}
+  .vch-card *{box-sizing:border-box}
+  .vch-perf{position:absolute;top:46%;width:22px;height:22px;background:#FBF7EE;border:1.5px dashed #B48448;border-radius:50%;transform:translateY(-50%)}
+  .vch-perf-l{left:-12px}.vch-perf-r{right:-12px}
+  .vch-receipt-bar{display:flex;align-items:center;justify-content:space-between;margin:-2px -2px 14px}
+  .vch-receipt-tag{font-family:"Cinzel",serif;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#B48448}
+  .vch-receipt-no{font-family:"Cinzel",serif;font-size:12px;letter-spacing:.08em;color:#143038;border:1px solid #E6DCC4;border-radius:6px;padding:3px 9px;background:#F4EDDC}
+  .vch-letterhead{position:relative;background:linear-gradient(160deg,#1A3A43 0%,#143038 60%,#0E2429 100%);border-radius:15px;padding:20px 18px 15px;text-align:center;margin-bottom:15px;box-shadow:0 14px 30px -14px rgba(20,48,56,.6),inset 0 0 0 1px rgba(180,132,72,.22)}
+  .vch-logo{height:72px;width:auto;object-fit:contain;margin:0 auto 9px;display:block;filter:drop-shadow(0 3px 8px rgba(0,0,0,.45))}
+  .vch-addr{font-size:11px;color:#BAD0CC;letter-spacing:.02em}
+  .vch-troquel{height:2px;margin:15px 0;background:repeating-linear-gradient(90deg,#D9CDB1 0 7px,transparent 7px 14px)}
+  .vch-head{text-align:center}
+  .vch-check{width:46px;height:46px;border-radius:50%;background:#3F7D5A;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 0 0 6px rgba(63,125,90,.14)}
+  .vch-check svg{width:24px;height:24px}
+  .vch-title{font-family:"Cinzel",serif;font-size:22px;font-weight:600;color:#143038;margin:0 0 4px}
+  .vch-excursion{font-size:14px;color:#B48448;font-weight:600;letter-spacing:.04em;margin:0}
+  .vch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin:18px 0}
+  .vch-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .vch-field-wide{grid-column:1 / -1}
+  .vch-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#9A917E;font-weight:600}
+  .vch-value{font-size:14.5px;color:#1E2B2C;font-weight:500;line-height:1.35}
+  .vch-value-sub{font-weight:400;color:#7C766A;font-size:13px}
+  .vch-code-box{text-align:center;background:#143038;border-radius:12px;padding:15px 12px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(180,132,72,.4)}
+  .vch-code-box::before,.vch-code-box::after{content:"";position:absolute;top:50%;width:14px;height:14px;background:#FBF7EE;border-radius:50%;transform:translateY(-50%)}
+  .vch-code-box::before{left:-7px}.vch-code-box::after{right:-7px}
+  .vch-code-label{display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#D9CDB1;margin-bottom:5px}
+  .vch-code{display:block;font-family:"Cinzel",serif;font-size:30px;font-weight:700;letter-spacing:.22em;color:#F4EDDC;padding-left:.22em}
+  .vch-code-hint{display:block;font-size:10px;color:#B7A989;letter-spacing:.04em;margin-top:7px}
+  .vch-pay{border:1px solid #E6DCC4;border-radius:12px;padding:12px 15px;margin-bottom:14px;background:#F8F2E4;font-variant-numeric:tabular-nums}
+  .vch-pay-row{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:4px 0}
+  .vch-pay-label{color:#5E574B}
+  .vch-pay-val{color:#143038;font-weight:500}
+  .vch-pay-saldo{border-top:1px dashed #D9CDB1;margin-top:4px;padding-top:9px}
+  .vch-pay-zero{color:#3F7D5A;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .vch-paid-tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;background:#3F7D5A;color:#FBF7EE;padding:2px 7px;border-radius:5px;font-weight:700}
+  .vch-pay-method{margin-top:7px;font-size:11.5px;color:#7C766A;display:flex;align-items:center;gap:6px}
+  .vch-pay-method svg{width:15px;height:15px;flex:none}
+  .vch-note{display:flex;gap:11px;align-items:flex-start;background:rgba(37,211,102,.09);border:1px solid rgba(37,211,102,.28);border-radius:10px;padding:11px 13px;margin-bottom:8px}
+  .vch-note svg{width:19px;height:19px;flex:none;margin-top:1px}
+  .vch-note-strong{margin:0;font-size:13px;font-weight:600;color:#143038;line-height:1.4}
+  .vch-note-soft{margin:0;font-size:12.5px;color:#5E574B;line-height:1.4}
+  .vch-email{display:flex;align-items:center;gap:7px;justify-content:center;font-size:12px;color:#7C766A;margin-bottom:18px}
+  .vch-email svg{width:15px;height:15px;flex:none}
+  .vch-actions{display:flex;gap:10px;margin-bottom:18px}
+  .vch-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:"Hanken Grotesk",sans-serif;font-size:13.5px;font-weight:600;padding:13px 12px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+  .vch-btn svg{width:17px;height:17px;flex:none}
+  .vch-btn-wa{background:#25D366;color:#0B3D1E;border-color:#25D366}
+  .vch-btn-close{background:transparent;color:#143038;border-color:#143038;flex:0 0 38%}
+  .vch-foot{text-align:center;border-top:1px solid #E6DCC4;padding-top:13px;font-family:"Cinzel",serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#143038}
+  @media(max-width:560px){.vch-grid{grid-template-columns:1fr}.vch-field-wide{grid-column:auto}.vch-card{padding:22px 16px 18px}.vch-code{font-size:26px;letter-spacing:.18em}}
+</style>
+</head>
+<body>
+<div class="mk">MOCKUP F4 · s59 v5 — Pago + <b>Voucher premium</b>. <b>Isotipo OFICIAL de Mercado Pago</b> (SimpleIcons) · logo PV más grande sobre banda oscura · ícono WhatsApp real. Email del voucher = REAL vía Resend. Botón MP real = SDK Checkout Pro en el build.</div>
+
+<div class="lead">Tras crear la pre_reserva (F3), el turista <b>paga con MercadoPago</b> y recibe su <b>voucher</b> con el código. El último eslabón del booking.</div>
+
+<div class="stack">
+
+  <!-- ===== PASO 4: PAGO ===== -->
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eyebrow">Reservá tu salida</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Sábado 18 de julio · Salida 08:00 hs</div>
+      </div>
+      <div class="x">&times;</div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><div class="num">✓</div><div class="lbl">Fecha</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pasajeros</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Datos</div></div>
+      <div class="step active"><div class="num">4</div><div class="lbl">Pago</div></div>
+      <div class="step"><div class="num">5</div><div class="lbl">Voucher</div></div>
+    </div>
+    <div class="body">
+      <div class="h">Confirmá y pagá</div>
+      <div class="sub">Revisá tu reserva y pagá para confirmar tu lugar.</div>
+
+      <div class="resumen">
+        <div class="rt">Cerro Tronador</div>
+        <div class="rrow"><span>Fecha</span><b>Sábado 18 de julio</b></div>
+        <div class="rrow"><span>Horario de salida</span><b>08:00 a 18:00 hs</b></div>
+        <div class="rrow"><span>Pasajeros</span><b>2 adultos · 1 niño</b></div>
+        <div class="rrow"><span>Titular</span><b>Juan Pérez</b></div>
+        <div class="rtot"><span class="lab">Total a pagar</span><span class="amt">$157.500</span></div>
+      </div>
+
+      <div class="timer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8a5b12" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>Tenés <b>45 minutos</b> para completar el pago y confirmar tu lugar. Pasado ese tiempo, el cupo se libera.</span>
+      </div>
+
+      <button class="mpbtn">
+        <span class="mpico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="#009EE3"><path d="M11.115 16.479a.93.927 0 0 1-.939-.886c-.002-.042-.006-.155-.103-.155-.04 0-.074.023-.113.059-.112.103-.254.206-.46.206a.816.814 0 0 1-.305-.066c-.535-.214-.542-.578-.521-.725.006-.038.007-.08-.02-.11l-.032-.03h-.034c-.027 0-.055.012-.093.039a.788.786 0 0 1-.454.16.7.699 0 0 1-.253-.05c-.708-.27-.65-.928-.617-1.126.005-.041-.005-.072-.03-.092l-.05-.04-.047.043a.728.726 0 0 1-.505.203.73.728 0 0 1-.732-.725c0-.4.328-.722.732-.722.364 0 .675.27.721.63l.026.195.11-.165c.01-.018.307-.46.852-.46.102 0 .21.016.316.05.434.13.508.52.519.68.008.094.075.1.09.1.037 0 .064-.024.083-.045a.746.744 0 0 1 .54-.225c.128 0 .263.03.402.09.69.293.379 1.158.374 1.167-.058.144-.061.207-.005.244l.027.013h.02c.03 0 .07-.014.134-.035.093-.032.235-.08.367-.08a.944.942 0 0 1 .94.93.936.934 0 0 1-.94.928zm7.302-4.171c-1.138-.98-3.768-3.24-4.481-3.77-.406-.302-.685-.462-.928-.533a1.559 1.554 0 0 0-.456-.07c-.182 0-.376.032-.58.095-.46.145-.918.505-1.362.854l-.023.018c-.414.324-.84.66-1.164.73a1.986 1.98 0 0 1-.43.049c-.362 0-.687-.104-.81-.258-.02-.025-.007-.066.04-.125l.008-.008 1-1.067c.783-.774 1.525-1.506 3.23-1.545h.085c1.062 0 2.12.469 2.24.524a7.03 7.03 0 0 0 3.056.724c1.076 0 2.188-.263 3.354-.795a9.135 9.11 0 0 0-.405-.317c-1.025.44-2.003.66-2.946.66-.962 0-1.925-.229-2.858-.68-.05-.022-1.22-.567-2.44-.57-.032 0-.065 0-.096.002-1.434.033-2.24.536-2.782.976-.528.013-.982.138-1.388.25-.361.1-.673.186-.979.185-.125 0-.35-.01-.37-.012-.35-.01-2.115-.437-3.518-.962-.143.1-.28.203-.415.31 1.466.593 3.25 1.053 3.812 1.089.157.01.323.027.491.027.372 0 .744-.103 1.104-.203.213-.059.446-.123.692-.17l-.196.194-1.017 1.087c-.08.08-.254.294-.14.557a.705.703 0 0 0 .268.292c.243.162.677.27 1.08.271.152 0 .297-.015.43-.044.427-.095.874-.448 1.349-.82.377-.296.913-.672 1.323-.782a1.494 1.49 0 0 1 .37-.05.611.61 0 0 1 .095.005c.27.034.533.125 1.003.472.835.62 4.531 3.815 4.566 3.846.002.002.238.203.22.537-.007.186-.11.352-.294.466a.902.9 0 0 1-.484.15.804.802 0 0 1-.428-.124c-.014-.01-1.28-1.157-1.746-1.543-.074-.06-.146-.115-.22-.115a.122.122 0 0 0-.096.045c-.073.09.01.212.105.294l1.48 1.47c.002 0 .184.17.204.395.012.244-.106.447-.35.606a.957.955 0 0 1-.526.171.766.764 0 0 1-.42-.127l-.214-.206a21.035 20.978 0 0 0-1.08-1.009c-.072-.058-.148-.112-.221-.112a.127.127 0 0 0-.094.038c-.033.037-.056.103.028.212a.698.696 0 0 0 .075.083l1.078 1.198c.01.01.222.26.024.511l-.038.048a1.18 1.178 0 0 1-.1.096c-.184.15-.43.164-.527.164a.8.798 0 0 1-.147-.012c-.106-.018-.178-.048-.212-.089l-.013-.013c-.06-.06-.602-.609-1.054-.98-.059-.05-.133-.11-.21-.11a.128.128 0 0 0-.096.042c-.09.096.044.24.1.293l.92 1.003a.204.204 0 0 1-.033.062c-.033.044-.144.155-.479.196a.91.907 0 0 1-.122.007c-.345 0-.712-.164-.902-.264a1.343 1.34 0 0 0 .13-.576 1.368 1.365 0 0 0-1.42-1.357c.024-.342-.025-.99-.697-1.274a1.455 1.452 0 0 0-.575-.125c-.146 0-.287.025-.42.075a1.153 1.15 0 0 0-.671-.564 1.52 1.515 0 0 0-.494-.085c-.28 0-.537.08-.767.242a1.168 1.165 0 0 0-.903-.43 1.173 1.17 0 0 0-.82.335c-.287-.217-1.425-.93-4.467-1.613a17.39 17.344 0 0 1-.692-.189 4.822 4.82 0 0 0-.077.494l.67.157c3.108.682 4.136 1.391 4.309 1.525a1.145 1.142 0 0 0-.09.442 1.16 1.158 0 0 0 1.378 1.132c.096.467.406.821.879 1.003a1.165 1.162 0 0 0 .415.08c.09 0 .179-.012.266-.034.086.22.282.493.722.668a1.233 1.23 0 0 0 .457.094c.122 0 .241-.022.355-.063a1.373 1.37 0 0 0 1.269.841c.37.002.726-.147.985-.41.221.121.688.341 1.163.341.06 0 .118-.002.175-.01.47-.059.689-.24.789-.382a.571.57 0 0 0 .048-.078c.11.032.234.058.373.058.255 0 .501-.086.75-.265.244-.174.418-.424.444-.637v-.01c.083.017.167.026.251.026.265 0 .527-.082.773-.242.48-.31.562-.715.554-.98a1.28 1.279 0 0 0 .978-.194 1.04 1.04 0 0 0 .502-.808 1.088 1.085 0 0 0-.16-.653c.804-.342 2.636-1.003 4.795-1.483a4.734 4.721 0 0 0-.067-.492 27.742 27.667 0 0 0-5.049 1.62zm5.123-.763c0 4.027-5.166 7.293-11.537 7.293-6.372 0-11.538-3.266-11.538-7.293 0-4.028 5.165-7.293 11.539-7.293 6.371 0 11.537 3.265 11.537 7.293zm.46.004c0-4.272-5.374-7.755-12-7.755S.002 7.277.002 11.55L0 12.004c0 4.533 4.695 8.203 11.999 8.203 7.347 0 12-3.67 12-8.204z"/></svg>
+        </span>
+        Pagar con Mercado&nbsp;Pago
+      </button>
+
+      <div class="securenote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Pago seguro vía MercadoPago (Checkout Pro). El cobro va <b>directo a Patagonia Viva</b>. El monto lo calcula el servidor — no se puede modificar.</span>
+      </div>
+    </div>
+    <div class="pfoot">
+      <button class="btn ghost">‹ Volver</button>
+      <span style="font-size:11px;color:#8a918c;flex:1;min-width:150px">Al pagar te llevamos a MercadoPago y volvés con tu voucher.</span>
+    </div>
+  </div>
+
+  <!-- ===== PASO 5: VOUCHER ===== -->
+  <div class="modal">
+    <div class="mh">
+      <div>
+        <div class="eyebrow">Reservá tu salida</div>
+        <h2>Cerro Tronador</h2>
+        <div class="meta">Sábado 18 de julio · Salida 08:00 hs</div>
+      </div>
+      <div class="x">&times;</div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><div class="num">✓</div><div class="lbl">Fecha</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pasajeros</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Datos</div></div>
+      <div class="step done"><div class="num">✓</div><div class="lbl">Pago</div></div>
+      <div class="step active"><div class="num">5</div><div class="lbl">Voucher</div></div>
+    </div>
+    <div class="body" style="padding:8px 20px 22px">
+      <div class="vch-card">
+        <span class="vch-perf vch-perf-l"></span><span class="vch-perf vch-perf-r"></span>
+
+        <div class="vch-receipt-bar">
+          <span class="vch-receipt-tag">Comprobante · Voucher</span>
+          <span class="vch-receipt-no">N° 0001</span>
+        </div>
+
+        <div class="vch-letterhead">
+          <img class="vch-logo" src="https://groeusdopucnjgqdwzjv.supabase.co/storage/v1/object/public/public-tenant-media/turismo/brand/logo-full-dark.png" alt="Patagonia Viva" />
+          <div class="vch-addr">Rolando 153, Bariloche · Tel +54 9 294499-7465</div>
+        </div>
+
+        <div class="vch-troquel"></div>
+
+        <div class="vch-head">
+          <div class="vch-check"><svg viewBox="0 0 24 24" fill="none" stroke="#FBF7EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h2 class="vch-title">¡Reserva confirmada!</h2>
+          <p class="vch-excursion">Cerro Tronador</p>
+        </div>
+
+        <div class="vch-grid">
+          <div class="vch-field"><span class="vch-label">Pasajero titular</span><span class="vch-value">Juan Pérez</span></div>
+          <div class="vch-field"><span class="vch-label">Fecha de salida</span><span class="vch-value">Sábado 18 de julio de 2026</span></div>
+          <div class="vch-field"><span class="vch-label">Horario de salida</span><span class="vch-value">08:00 a 18:00 hs</span></div>
+          <div class="vch-field"><span class="vch-label">Pasajeros</span><span class="vch-value">2 adultos · 1 niño</span></div>
+          <div class="vch-field vch-field-wide"><span class="vch-label">Punto de partida</span><span class="vch-value">Tu alojamiento en Bariloche <span class="vch-value-sub">— lo coordinan por WhatsApp</span></span></div>
+        </div>
+
+        <div class="vch-code-box">
+          <span class="vch-code-label">Código de reserva</span>
+          <span class="vch-code">GF6DQ9</span>
+          <span class="vch-code-hint">Presentalo el día de la salida</span>
+        </div>
+
+        <div class="vch-pay">
+          <div class="vch-pay-row"><span class="vch-pay-label">Total</span><span class="vch-pay-val">$157.500</span></div>
+          <div class="vch-pay-row"><span class="vch-pay-label">Reserva abonada</span><span class="vch-pay-val">$157.500</span></div>
+          <div class="vch-pay-row vch-pay-saldo"><span class="vch-pay-label">Saldo</span><span class="vch-pay-zero">$0 <span class="vch-paid-tag">Pagado</span></span></div>
+          <div class="vch-pay-method"><svg viewBox="0 0 24 24" fill="none" stroke="#7C766A" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Abonado con Mercado Pago</div>
+        </div>
+
+        <div class="vch-note">
+          <svg viewBox="0 0 32 32" fill="#25D366"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.82.74 5.46 2.03 7.76L0 32l8.46-2.22A15.9 15.9 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm9.24 22.34c-.4 1.12-2.34 2.14-3.26 2.2-.83.1-1.88.14-3.04-.19-.7-.22-1.6-.52-2.75-1.02-4.84-2.09-8-6.96-8.24-7.28-.24-.32-1.97-2.62-1.97-5s1.25-3.55 1.69-4.04c.44-.49.97-.61 1.29-.61.32 0 .65 0 .93.02.3.01.7-.11 1.1.84.4.97 1.37 3.35 1.49 3.59.12.24.2.53.04.85-.16.32-.24.53-.48.81-.24.28-.5.63-.72.84-.24.24-.49.5-.21.98.28.48 1.25 2.06 2.68 3.34 1.84 1.64 3.39 2.15 3.87 2.39.48.24.76.2 1.04-.12.28-.32 1.2-1.4 1.52-1.88.32-.48.64-.4 1.08-.24.44.16 2.82 1.33 3.3 1.57.48.24.8.36.92.56.12.2.12 1.15-.28 2.27z"/></svg>
+          <div>
+            <p class="vch-note-strong">Nuestro equipo se comunicará por WhatsApp</p>
+            <p class="vch-note-soft">para confirmar el punto de encuentro exacto.</p>
+          </div>
+        </div>
+        <div class="vch-email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#B48448" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          Voucher enviado a tu email
+        </div>
+
+        <div class="vch-actions">
+          <button class="vch-btn vch-btn-wa" type="button"><svg viewBox="0 0 32 32" fill="#0B3D1E"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.82.74 5.46 2.03 7.76L0 32l8.46-2.22A15.9 15.9 0 0 0 16 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm9.24 22.34c-.4 1.12-2.34 2.14-3.26 2.2-.83.1-1.88.14-3.04-.19-.7-.22-1.6-.52-2.75-1.02-4.84-2.09-8-6.96-8.24-7.28-.24-.32-1.97-2.62-1.97-5s1.25-3.55 1.69-4.04c.44-.49.97-.61 1.29-.61.32 0 .65 0 .93.02.3.01.7-.11 1.1.84.4.97 1.37 3.35 1.49 3.59.12.24.2.53.04.85-.16.32-.24.53-.48.81-.24.28-.5.63-.72.84-.24.24-.49.5-.21.98.28.48 1.25 2.06 2.68 3.34 1.84 1.64 3.39 2.15 3.87 2.39.48.24.76.2 1.04-.12.28-.32 1.2-1.4 1.52-1.88.32-.48.64-.4 1.08-.24.44.16 2.82 1.33 3.3 1.57.48.24.8.36.92.56.12.2.12 1.15-.28 2.27z"/></svg> Coordinar por WhatsApp</button>
+          <button class="vch-btn vch-btn-close" type="button">Cerrar</button>
+        </div>
+
+        <div class="vch-foot">Patagonia Viva · ¡Gracias por tu reserva!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

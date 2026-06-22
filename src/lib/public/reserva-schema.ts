@@ -31,6 +31,9 @@ export type ReservaInput = z.infer<typeof reservaSchema>;
 export type ReservaResult =
   | {
       ok: true;
+      // F4: reserva_id (UUID) — la capability que el paso Pago necesita para iniciar el pago MP.
+      // Alta entropía, no-guessable; el RPC ya lo devuelve, F4 lo propaga hasta el cliente.
+      reserva_id: string;
       reservation_code: string;
       hold_expires_at: string;
       gross_cents: number;
