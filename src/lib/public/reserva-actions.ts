@@ -71,12 +71,18 @@ export async function submitReserva(
 
   const limiter = getReservaLimiter();
   if (limiter) {
-    const r = await limiter.limit(ip);
-    if (!r.success)
-      return {
-        ok: false,
-        error: "Demasiados intentos. Probá en unos minutos.",
-      };
+    try {
+      const r = await limiter.limit(ip);
+      if (!r.success)
+        return {
+          ok: false,
+          error: "Demasiados intentos. Probá en unos minutos.",
+        };
+    } catch {
+      // Fail-OPEN: si Upstash no responde (red/config), NO bloqueamos la reserva — Turnstile sigue
+      // siendo la defensa primaria. Un backstop caído NO debe voltear el submit con un 500 (un `await
+      // limiter.limit()` sin guardar lanza `TypeError: fetch failed` y tumba todo el server-action).
+    }
   }
 
   // Turnstile FAIL-CLOSED: si verifyTurnstile lanza (secret ausente) o devuelve false, NO se reserva.
@@ -96,18 +102,27 @@ export async function submitReserva(
   const sb = getSupabaseServiceClient();
   const holderName = `${data.nombre} ${data.apellido}`.trim().slice(0, 200);
 
-  const { data: rpcData, error } = await sb.rpc("public_crear_reserva", {
-    p_excursion_id: data.excursion_id,
-    p_departure_date: data.departure_date,
-    p_holder_name: holderName,
-    p_pasajeros: data.pasajeros,
-    p_holder_email: data.email || null,
-    p_holder_phone: data.whatsapp || null,
-    p_holder_lodging: data.alojamiento || null,
-    p_idempotency_key: data.idempotency_key,
-  });
-
-  if (error || !rpcData) {
+  let rpcData: unknown = null;
+  try {
+    const r = await sb.rpc("public_crear_reserva", {
+      p_excursion_id: data.excursion_id,
+      p_departure_date: data.departure_date,
+      p_holder_name: holderName,
+      p_pasajeros: data.pasajeros,
+      p_holder_email: data.email || null,
+      p_holder_phone: data.whatsapp || null,
+      p_holder_lodging: data.alojamiento || null,
+      p_idempotency_key: data.idempotency_key,
+    });
+    if (r.error || !r.data) {
+      return {
+        ok: false,
+        error: "No pudimos crear la reserva. Probá de nuevo.",
+      };
+    }
+    rpcData = r.data;
+  } catch {
+    // Red caída contra Supabase mid-submit: error limpio al cliente, no un 500 sin manejar.
     return { ok: false, error: "No pudimos crear la reserva. Probá de nuevo." };
   }
 
