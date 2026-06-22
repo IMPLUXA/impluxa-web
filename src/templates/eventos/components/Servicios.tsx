@@ -2,7 +2,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { EventosContent, EventosDesign } from "../schema";
 import { resolveStructure } from "../structure";
-import type { PublicDia } from "@/lib/public/availability";
+import type { PublicDia, PublicCategoria } from "@/lib/public/availability";
 
 const arsPrice = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -83,6 +83,8 @@ export function Servicios({
   design,
   contacto,
   availability,
+  reservaCategorias,
+  turnstileSiteKey,
 }: {
   items: EventosContent["servicios"];
   design: EventosDesign;
@@ -90,6 +92,10 @@ export function Servicios({
   // s59 F2 — disponibilidad pública per-excursion (server-rendered, keyed by excursion_id).
   // SOLO la consume el branch overlay (turismo); el stack (Hakuna) la ignora -> byte-idéntico.
   availability?: Record<string, PublicDia[]>;
+  // s59 F3 — categorias de pasajero del tenant (desglose + total del modal). SOLO overlay.
+  reservaCategorias?: PublicCategoria[];
+  // s59 F3 — Turnstile site key (público) para el widget del paso Datos. SOLO overlay.
+  turnstileSiteKey?: string;
 }) {
   const sc = resolveStructure(design.structure);
   // WhatsApp "Consultar" CTA is OPT-IN via contacto.whatsapp_cta (NOT derived
@@ -371,6 +377,10 @@ export function Servicios({
                               title: s.title,
                               meta: s.detalle?.duracion,
                             }}
+                            excursionId={s.excursion_id!}
+                            basePriceArs={s.price_ars}
+                            categorias={reservaCategorias ?? []}
+                            turnstileSiteKey={turnstileSiteKey ?? ""}
                             availability={avail}
                             waHref={waHref}
                             design={design}

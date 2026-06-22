@@ -5,7 +5,9 @@ import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { applyCurrentRates, getPublicCurrentRates } from "@/lib/public/rates";
 import {
   getPublicAvailability,
+  getPublicReservaCategorias,
   type PublicDia,
+  type PublicCategoria,
 } from "@/lib/public/availability";
 import { getTemplate } from "@/templates/registry";
 
@@ -92,6 +94,16 @@ export default async function TenantPage({
   const availability: Record<string, PublicDia[]> =
     Object.fromEntries(availPairs);
 
+  // F3 — categorias de pasajero del tenant (para el desglose + total del modal de reserva). Gateado:
+  // solo si el tenant tiene excursiones (Hakuna no -> [] sin query -> stack la ignora -> byte-idéntico).
+  const hasExcursions = servicios.some((s) => s.excursion_id);
+  const reservaCategorias: PublicCategoria[] = hasExcursions
+    ? await getPublicReservaCategorias(tenant.id)
+    : [];
+  // F3 — Turnstile site key (PUBLICO) leido server-side con bracket-access (evita el falso positivo
+  // del Sentinel; en server no hace falta el inlining estatico de las NEXT_PUBLIC).
+  const turnstileSiteKey = process.env["NEXT_PUBLIC_TURNSTILE_SITE_KEY"] ?? "";
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Site = template.Site as React.ComponentType<any>;
   return (
@@ -102,6 +114,8 @@ export default async function TenantPage({
       tenantId={tenant.id}
       tenantName={tenant.name}
       availability={availability}
+      reservaCategorias={reservaCategorias}
+      turnstileSiteKey={turnstileSiteKey}
     />
   );
 }

@@ -11,7 +11,7 @@ import { Footer } from "./components/Footer";
 import { TenantNav } from "./components/TenantNav";
 import { Nosotros } from "./components/Nosotros";
 import type { EventosContent, EventosDesign, EventosMedia } from "./schema";
-import type { PublicDia } from "@/lib/public/availability";
+import type { PublicDia, PublicCategoria } from "@/lib/public/availability";
 
 // Dynamic import — Pautas is a "use client" accordion below the fold.
 // Defers its JS from the initial bundle, reducing TBT on mobile.
@@ -29,6 +29,11 @@ export interface EventosSiteProps {
   // s59 F2 — disponibilidad pública per-excursion (server-rendered). Opcional: ausente/vacío
   // (Hakuna) -> Servicios stack la ignora -> byte-idéntico.
   availability?: Record<string, PublicDia[]>;
+  // s59 F3 — categorias de pasajero del tenant (desglose + total del modal). Opcional: ausente/vacío
+  // (Hakuna) -> el branch overlay no se monta para stack -> byte-idéntico.
+  reservaCategorias?: PublicCategoria[];
+  // s59 F3 — Turnstile site key (público) para el widget del paso Datos. SOLO overlay.
+  turnstileSiteKey?: string;
 }
 
 export function EventosSite({
@@ -38,6 +43,8 @@ export function EventosSite({
   tenantId,
   tenantName,
   availability,
+  reservaCategorias,
+  turnstileSiteKey,
 }: EventosSiteProps) {
   return (
     <div
@@ -80,6 +87,8 @@ export function EventosSite({
           design={design}
           contacto={content.contacto}
           availability={availability}
+          reservaCategorias={reservaCategorias}
+          turnstileSiteKey={turnstileSiteKey}
         />
         <Combos items={content.combos} design={design} />
         <Paseos items={content.paseos} design={design} />
