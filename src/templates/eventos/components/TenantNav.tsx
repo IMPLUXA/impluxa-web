@@ -32,8 +32,9 @@ export function TenantNav({
   whatsapp?: string;
   whatsappCta?: boolean;
 }) {
-  // Barra clara constante -> wordmark oscuro; fallback al claro si no hay dark.
-  const logoSrc = logoDark ?? logoLight;
+  // Barra clara (#F4EDDC): el wordmark legible es el de fondo-claro = logo_url_light
+  // (PATAGONIA en teal #143038). logo_url_dark es blanco, para fondos oscuros. Light primero.
+  const logoSrc = logoLight ?? logoDark;
   const waDigits =
     whatsappCta === true && whatsapp ? whatsapp.replace(/[^0-9]/g, "") : null;
 
