@@ -14,8 +14,8 @@ import {
   X,
 } from "@phosphor-icons/react";
 
-// F-UI-BRANDED corte 4 + PR-3 s53 — 6º slot "Más" del bottom-nav móvil branded.
-// El bottom-nav muestra los primeros 5 operativos (NAV_BRANDED_MOBILE); este
+// F-UI-BRANDED — 5º slot "Más" del bottom-nav móvil branded (corte 2b s60).
+// El bottom-nav muestra los daily-4 operativos (NAV_BRANDED_MOBILE); este
 // sheet es el OVERFLOW del resto, en DOS secciones bajo UN solo botón "Más":
 //   - "Operativo" (TODOS los roles): Excursiones/Contenido/Proveedores — el setup
 //     no-diario que salió del bar de daily-4 (corte 2b s60). Alcanzables en móvil

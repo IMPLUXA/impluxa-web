@@ -127,10 +127,9 @@ const NAV_BRANDED_ACCOUNT: BrandedNavItem[] = [
   },
 ];
 
-// Mobile bottom-nav branded: los primeros 5 operativos vivos. El overflow
-// (Salidas/Reservas) + los dueño-only viven en el 6º slot "Más" (MoreSheet,
-// secciones "Operativo" todos-los-roles + "Solo dueño" dueño-only) — ejecutado
-// PR-3 s53 (reemplaza la PROPUESTA al CEO del corte 3).
+// Mobile bottom-nav branded (corte 2b): los daily-4 vivos. El setup no-diario
+// (Excursiones/Contenido/Proveedores) + los dueño-only viven en el 5º slot "Más"
+// (MoreSheet, secciones "Operativo" todos-los-roles + "Solo dueño" dueño-only).
 const NAV_BRANDED_MOBILE = NAV_BRANDED.filter((n) => !n.soon).slice(0, 5);
 
 // basePath (B-Fase2): "" en app.impluxa.com (árbol /app) | "/admin" en el
