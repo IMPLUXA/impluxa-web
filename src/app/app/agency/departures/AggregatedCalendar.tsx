@@ -46,8 +46,11 @@ function dayLabel(iso: string): string {
 
 export function AggregatedCalendar({
   mode,
+  onDrillToList,
 }: {
   mode: "availability" | "sales";
+  // v1.1 (solo sales): drill de una excursion-dia hacia la Lista filtrada.
+  onDrillToList?: (excursionId: string, fecha: string) => void;
 }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -102,6 +105,7 @@ export function AggregatedCalendar({
     [selected, data],
   );
   const selectedDia = selected ? diasMap.get(selected) : undefined;
+  const canDrill = mode === "sales" && typeof onDrillToList === "function";
 
   function stepMonth(delta: number) {
     setSelected(null);
@@ -227,38 +231,58 @@ export function AggregatedCalendar({
                   <div className="text-ash text-sm">Sin reservas este dia.</div>
                 ) : (
                   <div className="space-y-1.5">
-                    {selectedDetalle.map((d) => (
-                      <div
-                        key={d.excursion_id}
-                        className="flex items-center justify-between rounded-lg border border-[#ece0c8] bg-[#fbf6ea] px-3 py-2 text-[13px]"
-                      >
-                        <span className="flex items-center gap-1.5 font-medium text-[#143038]">
-                          {d.excursion_nombre}
-                          {d.estado === "cancelada" && (
-                            <span className="rounded bg-[#f3d9d3] px-1.5 py-0.5 text-[10px] font-semibold text-[#9a3412]">
-                              salida cancelada
-                            </span>
-                          )}
-                          {d.estado === "cerrada" && (
-                            <span className="rounded bg-[#ece4d2] px-1.5 py-0.5 text-[10px] font-semibold text-[#7a5527]">
-                              cerrada
-                            </span>
-                          )}
-                        </span>
-                        <span className="font-bold text-[#143038]">
-                          {d.pax_total}
-                          <span className="text-[10px] font-medium text-[#7d7768]">
-                            {" "}
-                            pax
+                    {selectedDetalle.map((d) => {
+                      const inner = (
+                        <>
+                          <span className="flex items-center gap-1.5 font-medium text-[#143038]">
+                            {d.excursion_nombre}
+                            {d.estado === "cancelada" && (
+                              <span className="rounded bg-[#f3d9d3] px-1.5 py-0.5 text-[10px] font-semibold text-[#9a3412]">
+                                salida cancelada
+                              </span>
+                            )}
+                            {d.estado === "cerrada" && (
+                              <span className="rounded bg-[#ece4d2] px-1.5 py-0.5 text-[10px] font-semibold text-[#7a5527]">
+                                cerrada
+                              </span>
+                            )}
                           </span>
-                        </span>
-                      </div>
-                    ))}
+                          <span className="font-bold text-[#143038]">
+                            {d.pax_total}
+                            <span className="text-[10px] font-medium text-[#7d7768]">
+                              {" "}
+                              pax
+                            </span>
+                          </span>
+                        </>
+                      );
+                      return canDrill ? (
+                        <button
+                          key={d.excursion_id}
+                          type="button"
+                          onClick={() =>
+                            onDrillToList!(d.excursion_id, d.fecha)
+                          }
+                          className="flex w-full items-center justify-between rounded-lg border border-[#ece0c8] bg-[#fbf6ea] px-3 py-2 text-left text-[13px] transition hover:border-[#b48448] hover:bg-[#f5ecd8]"
+                        >
+                          {inner}
+                        </button>
+                      ) : (
+                        <div
+                          key={d.excursion_id}
+                          className="flex items-center justify-between rounded-lg border border-[#ece0c8] bg-[#fbf6ea] px-3 py-2 text-[13px]"
+                        >
+                          {inner}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 <p className="text-ash mt-3 border-t border-[#ece0c8] pt-3 text-[11px]">
                   {mode === "sales"
-                    ? "Para ver las reservas, abri la lista y filtra por excursion."
+                    ? canDrill
+                      ? "Toca una excursion para ver sus reservas en la lista."
+                      : "Para ver las reservas, abri la lista y filtra por excursion."
                     : "Para cerrar o limitar el cupo de un dia, elegi esa excursion en el selector de arriba."}
                 </p>
               </div>
