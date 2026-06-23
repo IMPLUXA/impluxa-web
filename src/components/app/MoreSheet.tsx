@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   DotsThree,
-  CalendarCheck,
-  Ticket,
+  Mountains,
+  PencilSimpleLine,
+  Handshake,
   Wallet,
   SquaresFour,
   CreditCard,
@@ -13,12 +14,12 @@ import {
   X,
 } from "@phosphor-icons/react";
 
-// F-UI-BRANDED corte 4 + PR-3 s53 — 6º slot "Más" del bottom-nav móvil branded.
-// El bottom-nav muestra los primeros 5 operativos (NAV_BRANDED_MOBILE); este
+// F-UI-BRANDED — 5º slot "Más" del bottom-nav móvil branded (corte 2b s60).
+// El bottom-nav muestra los daily-4 operativos (NAV_BRANDED_MOBILE); este
 // sheet es el OVERFLOW del resto, en DOS secciones bajo UN solo botón "Más":
-//   - "Operativo" (TODOS los roles): Salidas + Reservas — viven en NAV_BRANDED
-//     pero quedan fuera del slice(0,5) del bottom-nav. PR-3 las hace alcanzables
-//     en móvil sin amontonar la barra de 5 (decisión CEO s53 opción b).
+//   - "Operativo" (TODOS los roles): Excursiones/Contenido/Proveedores — el setup
+//     no-diario que salió del bar de daily-4 (corte 2b s60). Alcanzables en móvil
+//     sin amontonar la barra (decisión CEO).
 //   - "Solo dueño" (dueño-only, INTACTO vs pre-PR-3): Finanzas/Módulos/Plan — la
 //     relación con la plataforma; datos sensibles no son para empleados. Un
 //     no-dueño NO recibe esta sección.
@@ -38,10 +39,13 @@ type SheetItem = {
   soon?: boolean;
 };
 
-// Operativo: espejo del overflow de NAV_BRANDED (lo que cae fuera del slice 5).
+// Operativo: espejo del overflow de NAV_BRANDED (corte 2b — lo que cae fuera del
+// bar de daily-4). Salidas/Reservas subieron al bar; el setup no-diario
+// (Excursiones/Contenido/Proveedores) bajó acá.
 const OPERATIONAL: SheetItem[] = [
-  { href: "/agency/departures", label: "Salidas", Icon: CalendarCheck },
-  { href: "/agency/reservas", label: "Reservas", Icon: Ticket },
+  { href: "/agency/excursions", label: "Excursiones", Icon: Mountains },
+  { href: "/site/content", label: "Contenido", Icon: PencilSimpleLine },
+  { href: "/agency/providers", label: "Proveedores", Icon: Handshake },
 ];
 
 // Dueño-only: espejo de NAV_BRANDED_OWNER + NAV_BRANDED_ACCOUNT. INTACTO — PR-3

@@ -85,25 +85,25 @@ type BrandedNavItem = {
   ownerOnly?: boolean;
 };
 
-// Operativo/logística: todos los roles.
+// Operativo DIARIO (todos los roles) — FLAT a la vista. Corte 2b (s60, decisión
+// CEO): solo lo que la agencia toca todos los días; Excursiones/Contenido/
+// Proveedores pasaron a "Otros" (setup, no diario). Esta lista alimenta el
+// desktop flat Y el bottom-nav mobile (NAV_BRANDED_MOBILE = los daily-4).
 const NAV_BRANDED: BrandedNavItem[] = [
   { href: "/dashboard", label: "Inicio", Icon: House },
-  { href: "/agency/excursions", label: "Excursiones", Icon: Mountains },
   { href: "/agency/rates", label: "Tarifas", Icon: CurrencyCircleDollar },
-  { href: "/agency/providers", label: "Proveedores", Icon: Handshake },
-  { href: "/site/content", label: "Contenido", Icon: PencilSimpleLine },
-  // R1: posición post-Contenido = NAV_BRANDED_MOBILE (primeros 5 vivos)
-  // intacto; Salidas desktop-only v1 (ver TODO mobile en NAV_OPERATIVO).
-  { href: "/agency/departures", label: "Salidas", Icon: CalendarCheck },
-  // R3: ídem Salidas — bottom-nav branded intacto (primeros 5 vivos).
+  { href: "/agency/departures", label: "Salidas y cupos", Icon: CalendarCheck },
   { href: "/agency/reservas", label: "Reservas", Icon: Ticket },
 ];
 
-// CORTE 2 (s60): "Otros" desplegable del desktop branded — lo NO-diario. Consultas
-// (todos los roles) + (abajo, gateado) el bloque dueño-only + Plan. Consultas sale
-// de NAV_BRANDED → NAV_BRANDED_MOBILE (filter !soon .slice(0,5)) queda INTACTO; el
-// mobile no cambia (MoreSheet ya agrupa lo dueño-only/overflow con constantes propias).
+// "Otros" desplegable del desktop branded — lo NO-diario. Corte 2b (s60): Excursiones/
+// Contenido/Proveedores (setup) + Consultas, todos los roles; + (abajo, gateado) el
+// bloque dueño-only + Plan. El mobile espeja esto: estos 3 operativos pasan al "Más"
+// (MoreSheet); el bottom-nav muestra los daily-4 (NAV_BRANDED_MOBILE).
 const NAV_BRANDED_OTROS: BrandedNavItem[] = [
+  { href: "/agency/excursions", label: "Excursiones", Icon: Mountains },
+  { href: "/site/content", label: "Contenido", Icon: PencilSimpleLine },
+  { href: "/agency/providers", label: "Proveedores", Icon: Handshake },
   { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
 ];
 
@@ -127,10 +127,9 @@ const NAV_BRANDED_ACCOUNT: BrandedNavItem[] = [
   },
 ];
 
-// Mobile bottom-nav branded: los primeros 5 operativos vivos. El overflow
-// (Salidas/Reservas) + los dueño-only viven en el 6º slot "Más" (MoreSheet,
-// secciones "Operativo" todos-los-roles + "Solo dueño" dueño-only) — ejecutado
-// PR-3 s53 (reemplaza la PROPUESTA al CEO del corte 3).
+// Mobile bottom-nav branded (corte 2b): los daily-4 vivos. El setup no-diario
+// (Excursiones/Contenido/Proveedores) + los dueño-only viven en el 5º slot "Más"
+// (MoreSheet, secciones "Operativo" todos-los-roles + "Solo dueño" dueño-only).
 const NAV_BRANDED_MOBILE = NAV_BRANDED.filter((n) => !n.soon).slice(0, 5);
 
 // basePath (B-Fase2): "" en app.impluxa.com (árbol /app) | "/admin" en el
@@ -390,12 +389,12 @@ export function Sidebar({
           </div>
         </aside>
 
-        {/* Mobile bottom-nav branded: 5 operativas vivas (NAV_BRANDED_MOBILE) +
-            6º slot "Más" para TODOS los roles (PR-3 s53). El sheet tiene una
-            sección "Operativo" (Salidas/Reservas, todos los roles — overflow del
-            slice 5) + "Solo dueño" (Finanzas/Módulos/Plan, solo dueño, intacto). */}
+        {/* Mobile bottom-nav branded (corte 2b): los daily-4 (NAV_BRANDED_MOBILE) +
+            5º slot "Más" para TODOS los roles. El sheet tiene "Operativo"
+            (Excursiones/Contenido/Proveedores — el setup que salió del bar) +
+            "Solo dueño" (Finanzas/Cobros/Módulos/Plan, solo dueño, intacto). */}
         <nav
-          className={`fixed right-0 bottom-0 left-0 z-30 grid grid-cols-6 gap-1 px-1 pt-2 pb-2.5 md:hidden`}
+          className={`fixed right-0 bottom-0 left-0 z-30 grid grid-cols-5 gap-1 px-1 pt-2 pb-2.5 md:hidden`}
           style={{
             background: primary,
             borderTop: `1px solid color-mix(in srgb, ${background} 14%, transparent)`,
