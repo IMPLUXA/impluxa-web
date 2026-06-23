@@ -119,7 +119,7 @@ function renderVoucherHtml(d: VoucherData): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EFE9DB;padding:24px 12px">
 <tr><td align="center">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:${CREAM};border:1px solid ${LINE};border-radius:18px;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
-    <tr><td style="background:linear-gradient(135deg,${PINE},#0d2026);padding:26px 24px;text-align:center;border-bottom:3px solid ${COPPER}">
+    <tr><td bgcolor="${PINE}" style="background-color:${PINE};background-image:linear-gradient(135deg,${PINE},#0d2026);padding:26px 24px;text-align:center;border-bottom:3px solid ${COPPER}">
       ${letterhead}
       ${addr ? `<div style="color:#cfd8d6;font-size:11.5px;margin-top:10px">${addr}</div>` : ""}
     </td></tr>
