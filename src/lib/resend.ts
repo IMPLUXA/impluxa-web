@@ -24,7 +24,7 @@ export async function sendLeadNotification(lead: {
   // El SDK de Resend NO tira en errores de API (4xx): los devuelve en `error`. Hay que chequearlo
   // o el fallo queda SILENCIOSO (causa raíz del voucher s59). Logueamos rubro + id (sin PII del lead).
   const { data, error } = await resend.emails.send({
-    from: "Impluxa <hola@impluxa.com>",
+    from: "Impluxa <hola@mail.impluxa.com>",
     to,
     subject: `Nuevo lead — ${lead.industry} — ${lead.name}`,
     text: `Nombre: ${lead.name}\nEmail: ${lead.email}\nWhatsApp: ${lead.whatsapp ?? "-"}\nRubro: ${lead.industry}\nMensaje: ${lead.message ?? "-"}`,
@@ -53,10 +53,10 @@ export async function sendLeadNotification(lead: {
 // F4 — Voucher de confirmación por email (Resend). Disparado por el webhook al confirmar el
 // pago de una reserva ANÓNIMA. 100% datos del tenant (ver loadVoucherData): cero dato de terceros.
 //
-// from: dominio de la plataforma impluxa.com (mismo mailbox que los leads) con el NOMBRE del
-// tenant como display. ⚠️ impluxa.com DEBE estar verificado en Resend (SPF+DKIM publicados en DNS)
-// para que el mail llegue a destinatarios externos; si no, Resend lo rechaza con 4xx (causa raíz
-// s59). El from por-dominio-de-tenant (reservas@<tenant>) es follow-up BACKLOG (verifica cada dominio).
+// from: mail.impluxa.com — el dominio VERIFICADO en Resend (SPF+DKIM+DMARC publicados; el mismo
+// que usa el email-hook de auth, auth@mail.impluxa.com). El NOMBRE del tenant va como display
+// (safeFromName). Histórico: estaba en la raíz impluxa.com (NO verificada) → Resend devolvía 403
+// (causa raíz del voucher s59). from por-dominio-de-tenant (reservas@<tenant>) = follow-up BACKLOG.
 // ============================================================================
 
 function esc(s: string): string {
@@ -219,7 +219,7 @@ export async function sendReservationConfirmation(
   // fallo queda SILENCIOSO — fue la causa raíz del voucher que no llegó (s59). Logueamos el código
   // de reserva (correlacionable, sin PII del turista) + el id/error de Resend.
   const { data, error } = await resend.emails.send({
-    from: `${safeFromName(d.tenantName)} <hola@impluxa.com>`,
+    from: `${safeFromName(d.tenantName)} <hola@mail.impluxa.com>`,
     to: d.holderEmail,
     subject: `Tu reserva en ${d.tenantName} — ${d.code}`,
     html: renderVoucherHtml(d),
