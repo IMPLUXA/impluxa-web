@@ -505,7 +505,10 @@ export function ReservasManager({
                             : "—"}
                         </td>
                         {canCharge && (
-                          <td className="px-3 py-2">
+                          <td
+                            className="px-3 py-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {r.status === "pre_reserva" && !vencido ? (
                               <div className="flex flex-wrap items-center gap-2">
                                 <button
