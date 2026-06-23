@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   RESERVA_STATUS_LABELS,
   type DepartureRow,
@@ -89,9 +90,15 @@ export function ReservasManager({
   paymentMethods: { code: string; label: string }[];
   isVendedor: boolean;
 }) {
+  const router = useRouter();
   const [reservas, setReservas] = useState<ReservaRow[]>(initialReservas);
   const [view, setView] = useState<"lista" | "calendario">("lista");
   const [filterDep, setFilterDep] = useState<string>("all");
+  // Drill del calendario (v1.1): excursion+fecha desde el day-detail del calendario.
+  const [drill, setDrill] = useState<{
+    excursionId: string;
+    fecha: string;
+  } | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -167,9 +174,28 @@ export function ReservasManager({
   const availInfo = availLabel(avail);
   const availBlocked = availBlocks(avail);
 
-  const visible = reservas.filter(
-    (r) => filterDep === "all" || r.departure_id === filterDep,
-  );
+  // Con drill activo (v1.1) filtramos por excursion+fecha: robusto a multi-departure
+  // legacy (matchea TODAS las reservas de esa excursion ese dia). Sin drill, el filtro
+  // por departure_id del dropdown queda igual.
+  const visible = reservas.filter((r) => {
+    if (drill) {
+      const dep = depById.get(r.departure_id);
+      return (
+        !!dep &&
+        dep.excursion_id === drill.excursionId &&
+        dep.departure_date === drill.fecha
+      );
+    }
+    return filterDep === "all" || r.departure_id === filterDep;
+  });
+
+  const detailHref = (id: string) => `${adminBase}/agency/reservas/${id}`;
+
+  function handleDrill(excursionId: string, fecha: string) {
+    setDrill({ excursionId, fecha });
+    setFilterDep("all");
+    setView("lista");
+  }
 
   const totalPax = Object.values(pax).reduce(
     (acc, v) => acc + (Number(v) || 0),
@@ -337,13 +363,16 @@ export function ReservasManager({
       </header>
 
       {view === "calendario" ? (
-        <AggregatedCalendar mode="sales" />
+        <AggregatedCalendar mode="sales" onDrillToList={handleDrill} />
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={filterDep}
-              onChange={(ev) => setFilterDep(ev.target.value)}
+              onChange={(ev) => {
+                setDrill(null);
+                setFilterDep(ev.target.value);
+              }}
               className="border-stone rounded border px-3 py-1.5 text-sm"
             >
               <option value="all">Todas las salidas</option>
@@ -360,6 +389,23 @@ export function ReservasManager({
             )}
           </div>
 
+          {drill && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="bg-bone text-onyx inline-flex items-center gap-2 rounded-full px-3 py-1">
+                Mostrando: {excursionName(drill.excursionId)} ·{" "}
+                {fmtDate(drill.fecha)}
+                <button
+                  type="button"
+                  onClick={() => setDrill(null)}
+                  aria-label="Quitar filtro"
+                  className="font-bold"
+                >
+                  ✕
+                </button>
+              </span>
+            </div>
+          )}
+
           {createdCode && (
             <div className="border-stone rounded-lg border p-4 text-sm">
               Reserva creada. Código:{" "}
@@ -373,8 +419,11 @@ export function ReservasManager({
 
           {visible.length === 0 ? (
             <p className="text-ash text-sm">
-              No hay reservas{filterDep !== "all" ? " de esta salida" : ""}.
-              {canCreate ? " Creá la primera con “+ Nueva reserva”." : ""}
+              No hay reservas
+              {filterDep !== "all" || drill ? " de esta salida" : ""}.
+              {canCreate && filterDep === "all" && !drill
+                ? " Creá la primera con “+ Nueva reserva”."
+                : ""}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -397,11 +446,13 @@ export function ReservasManager({
                     return (
                       <tr
                         key={r.id}
-                        className={`border-stone/30 border-b ${r.status === "cancelada" ? "opacity-50" : ""}`}
+                        onClick={() => router.push(detailHref(r.id))}
+                        className={`border-stone/30 hover:bg-stone/10 cursor-pointer border-b transition-colors ${r.status === "cancelada" ? "opacity-50" : ""}`}
                       >
                         <td className="px-3 py-2 font-mono font-semibold">
                           <Link
-                            href={`${adminBase}/agency/reservas/${r.id}`}
+                            href={detailHref(r.id)}
+                            onClick={(e) => e.stopPropagation()}
                             className="hover:underline"
                           >
                             {r.reservation_code}
@@ -458,13 +509,19 @@ export function ReservasManager({
                             {r.status === "pre_reserva" && !vencido ? (
                               <div className="flex flex-wrap items-center gap-2">
                                 <button
-                                  onClick={() => openPay(r)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPay(r);
+                                  }}
                                   className="bg-onyx text-bone rounded px-3 py-1 text-xs hover:opacity-90"
                                 >
                                   Registrar pago
                                 </button>
                                 <button
-                                  onClick={() => setMpRes(r)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMpRes(r);
+                                  }}
                                   className={styles.rowCta}
                                 >
                                   <svg
