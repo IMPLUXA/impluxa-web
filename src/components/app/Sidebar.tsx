@@ -18,6 +18,7 @@ import {
   CreditCard,
   LockSimple,
   Money,
+  CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import type { AgencyRole } from "@/lib/agency/role";
 import { isAgencyOwner } from "@/lib/agency/role";
@@ -96,6 +97,13 @@ const NAV_BRANDED: BrandedNavItem[] = [
   { href: "/agency/departures", label: "Salidas", Icon: CalendarCheck },
   // R3: ídem Salidas — bottom-nav branded intacto (primeros 5 vivos).
   { href: "/agency/reservas", label: "Reservas", Icon: Ticket },
+];
+
+// CORTE 2 (s60): "Otros" desplegable del desktop branded — lo NO-diario. Consultas
+// (todos los roles) + (abajo, gateado) el bloque dueño-only + Plan. Consultas sale
+// de NAV_BRANDED → NAV_BRANDED_MOBILE (filter !soon .slice(0,5)) queda INTACTO; el
+// mobile no cambia (MoreSheet ya agrupa lo dueño-only/overflow con constantes propias).
+const NAV_BRANDED_OTROS: BrandedNavItem[] = [
   { href: "/leads", label: "Consultas", Icon: ChatCircleText, soon: true },
 ];
 
@@ -305,9 +313,27 @@ export function Sidebar({
                 ownerBadgeStyle={ownerBadgeStyle}
               />
             ))}
-            {/* Bloque dueño-only dentro de "Tu agencia" */}
-            {owner &&
-              NAV_BRANDED_OWNER.map((n) => (
+          </nav>
+
+          {/* CORTE 2 (s60): "Otros" desplegable NATIVO (<details>/<summary>, sin
+              JS → el Sidebar sigue server component, accesible por construcción).
+              Default CERRADO: despeja el nav y deja a la vista solo lo operativo
+              diario. El gate dueño-only (NAV_BRANDED_OWNER + Plan) se MANTIENE
+              adentro — la visibilidad nunca fue la autoridad (guard server
+              requireAgencyOwner + RLS intactos). */}
+          <details className="group mt-2">
+            <summary
+              className="flex cursor-pointer list-none items-center gap-2 rounded-[9px] px-3 py-2 text-sm font-medium hover:bg-white/5 [&::-webkit-details-marker]:hidden"
+              style={{ color: sideMuted }}
+            >
+              <CaretRight
+                size={14}
+                className="transition-transform duration-150 group-open:rotate-90"
+              />
+              <span>Otros</span>
+            </summary>
+            <nav className="mt-0.5 space-y-0.5">
+              {NAV_BRANDED_OTROS.map((n) => (
                 <BrandedNavEntry
                   key={n.href}
                   item={n}
@@ -317,20 +343,8 @@ export function Sidebar({
                   ownerBadgeStyle={ownerBadgeStyle}
                 />
               ))}
-          </nav>
-
-          {/* Sección "Tu cuenta Impluxa" — dueño-only (la relación con la
-              plataforma; datos sensibles no son para empleados). */}
-          {owner && (
-            <>
-              <div
-                className="mt-6 mb-2 px-3 text-[10px] font-semibold tracking-[0.14em] uppercase"
-                style={{ color: sideMuted }}
-              >
-                Tu cuenta Impluxa
-              </div>
-              <nav className="space-y-0.5">
-                {NAV_BRANDED_ACCOUNT.map((n) => (
+              {owner &&
+                NAV_BRANDED_OWNER.map((n) => (
                   <BrandedNavEntry
                     key={n.href}
                     item={n}
@@ -340,9 +354,19 @@ export function Sidebar({
                     ownerBadgeStyle={ownerBadgeStyle}
                   />
                 ))}
-              </nav>
-            </>
-          )}
+              {owner &&
+                NAV_BRANDED_ACCOUNT.map((n) => (
+                  <BrandedNavEntry
+                    key={n.href}
+                    item={n}
+                    basePath={basePath}
+                    mutedColor={sideMuted}
+                    badgeStyle={badgeStyle}
+                    ownerBadgeStyle={ownerBadgeStyle}
+                  />
+                ))}
+            </nav>
+          </details>
 
           <div className="flex-1" />
           <a
