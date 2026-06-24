@@ -102,7 +102,7 @@ export async function POST(
   // currency derivada server-side del snapshot (RLS-scoped; no se confia en el cliente).
   const { data: reserva, error: readErr } = await sb
     .from("reservas")
-    .select("snapshot_currency")
+    .select("snapshot_currency, snapshot_gross")
     .eq("id", id)
     .maybeSingle();
   if (readErr) {
@@ -129,11 +129,26 @@ export async function POST(
     );
   }
   const currency = reserva.snapshot_currency as string;
+  // MONTO = TOTAL de la reserva (snapshot_gross), derivado server-side. Decisión CEO s60: el link
+  // MP presencial cobra SIEMPRE el total (no seña) → 1 pago aprobado = 1 voucher (sin duplicados).
+  // El amount del body (parsed.data.amount) se IGNORA: la autoridad es el snapshot, igual que la
+  // currency. El webhook re-valida el pago contra snapshot_gross.
+  const amount = Number(reserva.snapshot_gross);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error_code: "RESERVA_SIN_SNAPSHOT",
+        message: "la reserva no tiene un total válido",
+      },
+      { status: 409 },
+    );
+  }
 
   // (1) Inserta la fila pendiente via RPC (autoridad de plata). Cliente AUTENTICADO.
   const { data, error } = await sb.rpc(
     "agency_iniciar_pago_mp",
-    buildIniciarPagoMpArgs(id, currency, parsed.data),
+    buildIniciarPagoMpArgs(id, currency, { amount }),
   );
   if (error) {
     console.error(
@@ -185,7 +200,7 @@ export async function POST(
       creds.accessToken,
       buildCheckoutProPreferenceBody({
         reservaId: id,
-        amount: parsed.data.amount,
+        amount,
         currency: currency as MpCurrency,
         title: `Reserva ${id.slice(0, 8)}`,
         backUrls: {

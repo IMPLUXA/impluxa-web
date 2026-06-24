@@ -249,7 +249,7 @@ export function ReservasManager({
         excursion_id: formExcursion,
         departure_date: formFecha,
         holder_name: holderName,
-        holder_email: holderEmail.trim() || undefined,
+        holder_email: holderEmail.trim(),
         holder_phone: holderPhone.trim() || undefined,
         holder_lodging: holderLodging.trim() || undefined,
         pasajeros,
@@ -619,10 +619,12 @@ export function ReservasManager({
             </label>
             <div className="flex gap-3">
               <label className="block flex-1 text-sm">
-                Email (opcional)
+                Email
                 <input
+                  type="email"
                   value={holderEmail}
                   onChange={(e) => setHolderEmail(e.target.value)}
+                  placeholder="cliente@email.com"
                   className="border-stone mt-1 w-full rounded border px-3 py-2"
                 />
               </label>
@@ -681,6 +683,7 @@ export function ReservasManager({
                   formFecha === "" ||
                   availBlocked ||
                   holderName.trim() === "" ||
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(holderEmail.trim()) ||
                   totalPax < 1
                 }
                 className="bg-onyx text-bone rounded px-4 py-2 text-sm disabled:opacity-50"

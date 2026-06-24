@@ -26,12 +26,14 @@ afterEach(() => {
 });
 
 describe("MpChargeModal", () => {
-  it("monto default = total + CTA presente; NO afirma 'pagado'/'confirmado'", () => {
+  it("monto = total FIJO (no editable) + CTA presente; NO afirma 'pagado'/'confirmado'", () => {
     const { container } = render(
       <MpChargeModal reserva={reserva} onClose={() => {}} />,
     );
-    const input = screen.getByLabelText("Monto a cobrar") as HTMLInputElement;
-    expect(input.value).toBe("72000");
+    // s60: el monto ya NO es editable (el link cobra el total fijo). Display, no input.
+    const amountEl = screen.getByLabelText("Monto a cobrar");
+    expect(amountEl.textContent?.trim()).toBe("72.000");
+    expect(screen.queryByRole("spinbutton")).toBeNull();
     expect(screen.getByText("Generar link de pago")).toBeTruthy();
     expect(container.textContent).not.toMatch(/pagad[oa]|confirmad[oa]/i);
   });

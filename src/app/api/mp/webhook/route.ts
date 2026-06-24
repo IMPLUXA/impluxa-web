@@ -357,7 +357,7 @@ export async function POST(req: NextRequest) {
     );
     // F4 — voucher por email (ADITIVO; NO toca el confirm ni la RPC v030_007). Solo en la PRIMERA
     // confirmación 'approved' (no en replays → evita emails duplicados por los reintentos de MP).
-    // loadVoucherData gatea anon (seller_staff_id null) + holder_email + status 'reserva'; un fallo
+    // loadVoucherData gatea status 'reserva' + holder_email (online anónimo Y presencial, s60); un fallo
     // de email se loguea y JAMÁS voltea el ack (si fallara y 200-ackeáramos, MP no reintenta — el
     // voucher se reenvía manual; el código ya quedó en el panel y en el retorno on-site).
     if (cls.rpcStatus === "approved" && !env.idempotent_replay) {

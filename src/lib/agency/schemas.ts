@@ -160,7 +160,10 @@ export const ReservaCreateSchema = z.object({
   excursion_id: z.string().uuid(),
   departure_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "fecha YYYY-MM-DD"),
   holder_name: z.string().trim().min(1).max(200),
-  holder_email: z.string().trim().max(320).optional(),
+  // Email OBLIGATORIO + formato válido (decisión CEO s60: la carga presencial requiere email
+  // para el voucher). Agency-only (ReservaCreateSchema NO la usa el online anónimo, que tiene su
+  // propio schema en reserva-actions.ts → public_crear_reserva).
+  holder_email: z.string().trim().max(320).email("Ingresá un email válido"),
   holder_phone: z.string().trim().max(50).optional(),
   holder_lodging: z.string().trim().max(200).optional(),
   pasajeros: z.array(ReservaPasajeroInputSchema).min(1).max(20),

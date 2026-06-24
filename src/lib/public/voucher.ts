@@ -6,8 +6,9 @@ import { getSupabaseServiceClient } from "@/lib/supabase/service";
 // SCOPE/SEGURIDAD:
 //   * Lee SOLO la reserva (reservaId + tenantId): cero leak de otras reservas (todas las queries
 //     filtran por la fila puntual / su tenant).
-//   * Gate ANÓNIMO: devuelve null si seller_staff_id NO es null (reserva de back-office agency:
-//     ese flujo maneja sus comprobantes aparte; el voucher email es SOLO para el self-service).
+//   * Gate: status 'reserva' + holder_email presente. Aplica a online ANÓNIMO Y a PRESENCIAL
+//     (s60: el link MP presencial cobra el total → 1 pago aprobado = 1 voucher). Ya NO excluye
+//     por seller_staff_id (el presencial con email también recibe su voucher).
 //   * Devuelve null si falta holder_email (sin destinatario) o si la reserva no quedó en 'reserva'.
 //   * 100% datos del tenant (PV): nombre del tenant + contacto del sitio (dirección/tel/WhatsApp).
 //     Cero dato de terceros.
@@ -63,16 +64,18 @@ export async function loadVoucherData(
   const { data: reserva, error: rErr } = await sb
     .from("reservas")
     .select(
-      "id, tenant_id, status, seller_staff_id, holder_name, holder_email, reservation_code, departure_id, snapshot_gross, snapshot_currency",
+      "id, tenant_id, status, holder_name, holder_email, reservation_code, departure_id, snapshot_gross, snapshot_currency",
     )
     .eq("id", reservaId)
     .eq("tenant_id", tenantId)
     .maybeSingle();
   if (rErr || !reserva) return null;
 
-  // Gates: solo reserva confirmada, ANÓNIMA (sin vendedor), con email destinatario.
+  // Gates: reserva confirmada (status 'reserva' — excluye pre_reserva/cancelada) + con email
+  // destinatario. Aplica a online ANÓNIMO y a PRESENCIAL (decisión CEO s60: el link MP presencial
+  // cobra el total → 1 pago aprobado = 1 voucher, igual que el online). Ya NO se excluye por
+  // seller_staff_id (el presencial con email también recibe su voucher).
   if (reserva.status !== "reserva") return null;
-  if (reserva.seller_staff_id != null) return null;
   const holderEmail = (reserva.holder_email as string | null)?.trim();
   if (!holderEmail) return null;
   if (!reserva.departure_id) return null;
