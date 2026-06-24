@@ -1,0 +1,435 @@
+/* Wizard de alta presencial branded (island PV). Espeja el look del wizard
+   publico (Cinzel/Hanken, pine/copper/sand) DENTRO del panel agency. Tokens
+   PV-pinned (mismo patron que resend.ts para el voucher email); las fonts
+   salen de las vars que el layout admin branded ya emite (--font-cinzel /
+   --font-hanken). ponytail: si el agency va multi-tenant-branded, leer
+   design_json en vez de constantes. */
+
+.overlay {
+  --pine: #143038;
+  --copper: #b48448;
+  --cream: #fbf7ee;
+  --border: #e6dcc4;
+  --green: #3f7d5a;
+  --ink: #1e2b2c;
+  --muted: #6b6256;
+  --heading: var(--font-cinzel), Georgia, serif;
+  --body: var(--font-hanken), system-ui, sans-serif;
+
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+  background: rgba(20, 48, 56, 0.62);
+  font-family: var(--body);
+  color: var(--ink);
+}
+
+.modal {
+  width: 100%;
+  max-width: 640px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 40px 90px -28px rgba(20, 48, 56, 0.72);
+  overflow: hidden;
+}
+
+/* header */
+.head {
+  background: linear-gradient(135deg, var(--pine), #0d2026);
+  border-bottom: 3px solid var(--copper);
+  padding: 18px 24px 16px;
+  color: #fff;
+  position: relative;
+}
+.brand {
+  font: 700 13px/1 var(--heading);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #e9dcc0;
+}
+.close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.excRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.excRow label {
+  font: 600 12px/1 var(--body);
+  color: #bcd0cf;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.excRow select {
+  flex: 1;
+  font: 600 15px/1 var(--body);
+  color: var(--pine);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+/* stepper */
+.steps {
+  display: flex;
+  gap: 6px;
+  padding: 14px 24px 0;
+}
+.step {
+  flex: 1;
+  text-align: center;
+}
+.bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.stepDone .bar,
+.stepActive .bar {
+  background: var(--copper);
+}
+.lbl {
+  font: 600 10.5px/1.3 var(--body);
+  color: var(--muted);
+  margin-top: 6px;
+}
+.stepActive .lbl {
+  color: var(--pine);
+}
+
+.pane {
+  padding: 22px 24px 8px;
+}
+.pane h2 {
+  font: 600 22px/1.15 var(--heading);
+  color: var(--pine);
+  margin: 0 0 4px;
+}
+.sub {
+  font: 400 14px/1.4 var(--body);
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+
+/* calendar */
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.mon {
+  font: 600 16px/1 var(--heading);
+  color: var(--pine);
+  text-transform: capitalize;
+}
+.navBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--pine);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.dow span {
+  text-align: center;
+  font: 600 11px/1 var(--body);
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.day {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--pine);
+  font: 600 14px/1 var(--body);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+}
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.dayLast {
+  border-color: #d9a24a;
+}
+.dayLast .dot {
+  background: #d9a24a;
+}
+.dayOff {
+  background: #ece8e0;
+  color: #a8a192;
+  border-color: transparent;
+  cursor: default;
+}
+.dayOff .dot {
+  display: none;
+}
+.daySel {
+  background: var(--copper);
+  border-color: var(--copper);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(180, 132, 72, 0.22);
+}
+.daySel .dot {
+  background: #fff;
+}
+.empty {
+  visibility: hidden;
+}
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  font: 500 12px/1 var(--body);
+  color: var(--muted);
+}
+.legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.calMsg {
+  padding: 22px 4px;
+  text-align: center;
+  font: 500 14px/1.4 var(--body);
+  color: var(--muted);
+}
+
+/* passengers */
+.cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--border);
+}
+.catNm {
+  font: 600 15px/1.2 var(--body);
+  color: var(--pine);
+}
+.catPr {
+  font: 400 12.5px/1.2 var(--body);
+  color: var(--muted);
+  margin-top: 3px;
+}
+.spin {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rmStep {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--copper);
+  background: #fff;
+  color: var(--copper);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rmStep:disabled {
+  border-color: #b7b0a1;
+  color: #b7b0a1;
+  cursor: default;
+}
+.num {
+  min-width: 22px;
+  text-align: center;
+  font: 700 16px/1 var(--body);
+  color: var(--pine);
+}
+.totBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--pine);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin-top: 18px;
+}
+.t1 {
+  font: 500 13px/1.3 var(--body);
+  opacity: 0.85;
+}
+.t2 {
+  font: 600 14px/1.3 var(--heading);
+  text-align: right;
+}
+
+/* form */
+.field {
+  margin-bottom: 14px;
+}
+.field label {
+  display: block;
+  font: 600 12.5px/1 var(--body);
+  color: var(--pine);
+  margin-bottom: 6px;
+}
+.opt {
+  color: var(--muted);
+  font-weight: 500;
+}
+.field input {
+  width: 100%;
+  font: 400 15px/1.2 var(--body);
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(180, 132, 72, 0.16);
+}
+
+/* confirmation */
+.vletter {
+  background: linear-gradient(135deg, var(--pine), #0d2026);
+  border-bottom: 3px solid var(--copper);
+  margin: -22px -24px 18px;
+  padding: 26px 24px 22px;
+  text-align: center;
+  color: #fff;
+}
+.vletter h2 {
+  color: #fff;
+  margin: 10px 0 4px;
+}
+.vletter p {
+  font: 400 13.5px/1.45 var(--body);
+  color: #cfe0df;
+  margin: 0 auto;
+  max-width: 82%;
+}
+.vrow {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--border);
+  font: 500 14px/1.2 var(--body);
+}
+.k {
+  color: var(--muted);
+}
+.v {
+  color: var(--pine);
+  font-weight: 700;
+}
+.v.copper {
+  color: var(--copper);
+}
+.vcode {
+  background: var(--pine);
+  color: #fff;
+  border-radius: 14px;
+  text-align: center;
+  padding: 14px;
+  margin-top: 16px;
+}
+.l {
+  font: 500 11px/1 var(--body);
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.c {
+  font: 700 30px/1.1 var(--heading);
+  letter-spacing: 0.1em;
+  margin-top: 6px;
+}
+
+/* footer */
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px 22px;
+}
+.err {
+  color: #b3261e;
+  font: 500 13px/1.4 var(--body);
+  padding: 0 24px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font: 700 14.5px/1 var(--body);
+  cursor: pointer;
+}
+.btnPrimary {
+  background: var(--copper);
+  color: #fff;
+}
+.btnGhost {
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--pine);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
