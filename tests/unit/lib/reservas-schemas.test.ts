@@ -10,6 +10,7 @@ const base = {
   excursion_id: UUID,
   departure_date: "2026-09-15",
   holder_name: "Titular Test",
+  holder_email: "cliente@test.com", // s60: email obligatorio en el alta presencial.
   pasajeros: [{ categoria: "adulto", qty: 2 }],
 };
 
@@ -44,7 +45,7 @@ describe("ReservaCreateSchema", () => {
     ).toBe(false);
   });
 
-  it("caps de holder_* opcionales (espejo de la RPC: 320/50/200)", () => {
+  it("caps de holder_* (espejo de la RPC: 320/50/200)", () => {
     expect(
       ReservaCreateSchema.safeParse({
         ...base,
@@ -63,6 +64,25 @@ describe("ReservaCreateSchema", () => {
         holder_lodging: "h".repeat(201),
       }).success,
     ).toBe(false);
+  });
+
+  it("holder_email REQUERIDO + formato válido (s60 alta presencial)", () => {
+    // s60: email obligatorio para el voucher. Falta, vacío o formato inválido → rechazo.
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, holder_email: undefined })
+        .success,
+    ).toBe(false);
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, holder_email: "" }).success,
+    ).toBe(false);
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, holder_email: "noesunmail" })
+        .success,
+    ).toBe(false);
+    expect(
+      ReservaCreateSchema.safeParse({ ...base, holder_email: "ok@mail.com" })
+        .success,
+    ).toBe(true);
   });
 
   it("pasajeros: vacío, >20 items, qty 0, qty decimal rechazados", () => {

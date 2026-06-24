@@ -6,9 +6,10 @@ import type { ReservaRow } from "@/lib/agency/schemas";
 // C2 — modal de cobro MercadoPago (piel premium dir. B, oscuro). Self-contained: maneja su
 // submit a /api/agency/reservas/{id}/pago-mp, el estado de carga ("Abriendo Checkout Pro") y el
 // mapa de errores. On ok redirige a init_point (Checkout Pro). La confirmación real es ASÍNCRONA
-// vía webhook -> esta UI NO afirma "pagado"/"confirmado". El monto es editable, default = total;
-// el techo de saldo lo enforza el RPC (MONTO_EXCEDE_SALDO), NO validación client-side frágil
-// (sólo piso > 0). NOTA money: la plata va 100% a la cuenta del dueño (sin marketplace_fee).
+// vía webhook -> esta UI NO afirma "pagado"/"confirmado". El monto es SIEMPRE el total de la
+// reserva (snapshot_gross): decisión CEO s60, el link cobra el total (no seña) → 1 pago = 1
+// voucher. El route IGNORA el amount del body y usa el snapshot (autoridad de plata). NOTA money:
+// la plata va 100% a la cuenta del dueño (sin marketplace_fee).
 
 const ERR: Record<string, string> = {
   MP_NO_CONECTADO:
@@ -43,11 +44,13 @@ export function MpChargeModal({
   reserva: ReservaRow;
   onClose: () => void;
 }) {
-  const [amount, setAmount] = useState(String(Number(reserva.snapshot_gross)));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const amountValid = Number.isFinite(Number(amount)) && Number(amount) > 0;
+  // Monto FIJO = total de la reserva (sin edición; decisión CEO s60). El route igual lo deriva del
+  // snapshot server-side; acá sólo mostramos y mandamos el total.
+  const total = Number(reserva.snapshot_gross);
+  const totalValid = Number.isFinite(total) && total > 0;
 
   async function submit() {
     setBusy(true);
@@ -56,7 +59,7 @@ export function MpChargeModal({
       const res = await fetch(`/api/agency/reservas/${reserva.id}/pago-mp`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ amount: Number(amount) }),
+        body: JSON.stringify({ amount: total }),
       });
       const body = (await res.json().catch(() => ({}))) as Record<
         string,
@@ -112,31 +115,21 @@ export function MpChargeModal({
         </p>
 
         <div className={styles.amountWrap}>
-          <span className={styles.amountLbl}>Monto a cobrar</span>
+          <span className={styles.amountLbl}>Monto a cobrar (total)</span>
           <div className={styles.amountRow}>
             <span className={styles.cur}>ARS</span>
-            <input
-              className={styles.amountInput}
-              type="number"
-              min={0}
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              disabled={busy}
-              aria-label="Monto a cobrar"
-            />
+            <span className={styles.amountInput} aria-label="Monto a cobrar">
+              {fmtTotal(reserva.snapshot_gross)}
+            </span>
           </div>
         </div>
         <p className={styles.help}>
-          Pre-cargado con el total. Editable para cobrar una seña/parcial; el
-          servidor rechaza si supera el saldo.
+          Se cobra el total de la reserva. Un solo pago aprobado la confirma y
+          envía el voucher por email al cliente.
         </p>
 
-        {/* Eco del monto PARSEADO: si tipean "72.000" (separador de miles), Number()=72;
-            mostrar el valor real evita el undercharge silencioso (Two-Pass cold C2). */}
         <p className={styles.confirm}>
-          Se generará un cobro por{" "}
-          <b>ARS {fmtTotal(amountValid ? Number(amount) : 0)}</b>
+          Se generará un cobro por <b>ARS {fmtTotal(reserva.snapshot_gross)}</b>
         </p>
 
         {error && <div className={styles.err}>{error}</div>}
@@ -158,7 +151,7 @@ export function MpChargeModal({
             <button
               className={styles.cta}
               onClick={submit}
-              disabled={!amountValid}
+              disabled={!totalValid}
             >
               Generar link de pago
             </button>
