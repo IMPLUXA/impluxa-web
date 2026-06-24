@@ -29,6 +29,11 @@ export type VoucherData = {
   phone: string | null;
   whatsapp: string | null;
   logoUrl: string | null; // logo del tenant para la banda oscura del voucher (blanco sobre oscuro)
+  // s60 — pago real (suma de pagos confirmados de ESTA reserva): el voucher muestra método + saldo
+  // reales en vez de literales. paidArs/saldoArs en la misma moneda que totalArs.
+  paidArs: number;
+  saldoArs: number;
+  method: string | null; // method_code del pago más reciente (mercadopago/transferencia/efectivo)
 };
 
 const dateFmt = new Intl.DateTimeFormat("es-AR", {
@@ -88,7 +93,7 @@ export async function loadVoucherData(
     .maybeSingle();
   if (!dep) return null;
 
-  const [{ data: exc }, { data: tenant }, { data: site }, paxRes] =
+  const [{ data: exc }, { data: tenant }, { data: site }, paxRes, pagosRes] =
     await Promise.all([
       sb
         .from("excursions")
@@ -107,6 +112,15 @@ export async function loadVoucherData(
         .select("qty, passenger_category_id")
         .eq("reserva_id", reservaId)
         .eq("tenant_id", tenantId),
+      // s60 — pagos CONFIRMADOS de ESTA reserva (scoped reservaId+tenantId, cero leak), más
+      // reciente primero. Para mostrar método + saldo reales (la seña ya no miente "Saldo $0").
+      sb
+        .from("pagos")
+        .select("method_code, amount, confirmed_at")
+        .eq("reserva_id", reservaId)
+        .eq("tenant_id", tenantId)
+        .eq("status", "confirmado")
+        .order("confirmed_at", { ascending: false }),
     ]);
 
   // Desglose de pasajeros con label de categoría (solo de ESTA reserva).
@@ -148,6 +162,21 @@ export async function loadVoucherData(
   const rawLogo = media.logo_url_dark ?? media.logo_url_light ?? null;
   const logoUrl = rawLogo && /^https:\/\//i.test(rawLogo) ? rawLogo : null;
 
+  // Pago real: suma de pagos CONFIRMADOS + método del más reciente + saldo (clamp a 0 para el
+  // display; un snapshot de test podría dar negativo). amount es numeric → Number(String()) (P0 s49).
+  const pagoRows = (pagosRes.data ?? []) as Array<{
+    method_code: string | null;
+    amount: number | string | null;
+    confirmed_at: string | null;
+  }>;
+  const totalArs = Number(reserva.snapshot_gross ?? 0);
+  const paidArs = pagoRows.reduce((acc, p) => {
+    const n = Number(String(p.amount ?? 0));
+    return acc + (Number.isFinite(n) ? n : 0);
+  }, 0);
+  const method = pagoRows[0]?.method_code ?? null; // más reciente (order confirmed_at desc)
+  const saldoArs = Math.max(0, totalArs - paidArs);
+
   return {
     code: reserva.reservation_code as string,
     holderName: (reserva.holder_name as string) ?? "",
@@ -158,11 +187,14 @@ export async function loadVoucherData(
     timeLabel: fmtTime((dep.departure_time as string | null) ?? null),
     paxLines,
     paxTotal,
-    totalArs: Number(reserva.snapshot_gross ?? 0),
+    totalArs,
     currency: (reserva.snapshot_currency as string) ?? "ARS",
     address: contacto.address ?? null,
     phone: contacto.phone ?? null,
     whatsapp: contacto.whatsapp ?? null,
     logoUrl,
+    paidArs,
+    saldoArs,
+    method,
   };
 }
