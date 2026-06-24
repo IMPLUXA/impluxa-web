@@ -51,6 +51,7 @@ export default async function ReservasPage() {
     { data: excursions },
     { data: categories },
     { data: paymentMethods },
+    { data: rates },
   ] = await Promise.all([
     sb
       .from("reservas")
@@ -88,7 +89,23 @@ export default async function ReservasPage() {
       .eq("tenant_id", tenant.id)
       .eq("active", true)
       .order("code", { ascending: true }),
+    // Tarifa vigente por excursión (valid_to IS NULL): base_price para el total
+    // vivo del wizard (replica el calc del server en lib/agency/pricing).
+    sb
+      .from("excursion_rates")
+      .select("excursion_id,base_price")
+      .eq("tenant_id", tenant.id)
+      .is("valid_to", null),
   ]);
+
+  // base_price por excursión (ARS) -> total vivo del wizard. number|string del
+  // numeric de PostgREST (lesson P0 s49) -> Number(String()).
+  const excursionRates: Record<string, number> = Object.fromEntries(
+    (rates ?? []).map((r) => [
+      r.excursion_id as string,
+      Number(String(r.base_price)),
+    ]),
+  );
 
   return (
     <ReservasManager
@@ -97,6 +114,7 @@ export default async function ReservasPage() {
       departures={(departures ?? []) as DepartureRow[]}
       excursions={(excursions ?? []) as ExcursionRow[]}
       categories={(categories ?? []) as PassengerCategoryRow[]}
+      excursionRates={excursionRates}
       canCreate={canCreate}
       canCharge={canCharge}
       paymentMethods={(paymentMethods ?? []).map((m) => ({

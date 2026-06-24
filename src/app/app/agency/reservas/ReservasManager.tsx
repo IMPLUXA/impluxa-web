@@ -13,6 +13,7 @@ import { MpChargeModal } from "./MpChargeModal";
 import { NuevaReservaModal } from "./NuevaReservaModal";
 import { AggregatedCalendar } from "../departures/AggregatedCalendar";
 import styles from "./mp-cobro.module.css";
+import nrm from "./NuevaReservaModal.module.css";
 
 // R3 reservas. La ÚNICA escritura es POST /api/agency/reservas → RPC
 // agency_crear_reserva (#24): jamás INSERT directo (contrato del ancla).
@@ -63,6 +64,7 @@ export function ReservasManager({
   departures,
   excursions,
   categories,
+  excursionRates,
   canCreate,
   canCharge,
   paymentMethods,
@@ -73,6 +75,7 @@ export function ReservasManager({
   departures: DepartureRow[];
   excursions: ExcursionRow[];
   categories: PassengerCategoryRow[];
+  excursionRates: Record<string, number>;
   canCreate: boolean;
   canCharge: boolean;
   paymentMethods: { code: string; label: string }[];
@@ -141,6 +144,7 @@ export function ReservasManager({
 
   function openPay(r: ReservaRow) {
     setPayRes(r);
+    setPayBusy(false); // reset: si el dialog anterior se cerró mid-flight, no dejar el submit trabado.
     setPayMethod(paymentMethods[0]?.code ?? "");
     // boundary number|string del snapshot (lesson P0 s49); el monto autoritativo es
     // snapshot_gross, B1 lo valida server-side.
@@ -426,66 +430,81 @@ export function ReservasManager({
         <NuevaReservaModal
           excursions={activeExcursions}
           categories={categories}
+          excursionRates={excursionRates}
           onClose={() => setWizardOpen(false)}
           onCreated={() => window.location.reload()}
         />
       )}
 
       {payRes && (
-        <div className="bg-onyx/70 fixed inset-0 z-40 flex items-center justify-center p-4">
-          {/* Card hereda el color del shell (lesson R1). */}
-          <div className="bg-marble w-full max-w-md space-y-4 rounded-lg p-6">
-            <h2 className="text-lg font-bold">Registrar pago</h2>
-            <p className="text-ash text-sm">
-              {payRes.reservation_code} · {payRes.holder_name} · total{" "}
-              {fmtMoney(payRes.snapshot_gross)}
-            </p>
-            <label className="block text-sm">
-              Método
-              <select
-                value={payMethod}
-                onChange={(e) => setPayMethod(e.target.value)}
-                className="border-stone mt-1 w-full rounded border px-3 py-2"
-              >
-                {paymentMethods.map((m) => (
-                  <option key={m.code} value={m.code}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              Monto
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
-                className="border-stone mt-1 w-full rounded border px-3 py-2"
-              />
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={payConfirm}
-                onChange={(e) => setPayConfirm(e.target.checked)}
-              />
-              Confirmar la reserva (pre-reserva → reserva)
-            </label>
-            {payStatus && <div className="text-sm">{payStatus}</div>}
-            <div className="flex justify-end gap-2">
+        <div className={nrm.overlay} role="dialog" aria-modal="true">
+          <div className={`${nrm.modal} ${nrm.modalSm}`}>
+            <div className={nrm.head}>
+              <div className={nrm.brand}>Registrar pago</div>
               <button
+                className={nrm.close}
+                onClick={() => setPayRes(null)}
+                aria-label="Cerrar"
+              >
+                &#215;
+              </button>
+            </div>
+            <div className={nrm.pane}>
+              <p className={nrm.payLine}>
+                {payRes.reservation_code} · {payRes.holder_name} · total{" "}
+                {fmtMoney(payRes.snapshot_gross)}
+              </p>
+              <div className={nrm.field}>
+                <label htmlFor="rp-method">Método</label>
+                <select
+                  id="rp-method"
+                  value={payMethod}
+                  onChange={(e) => setPayMethod(e.target.value)}
+                >
+                  {paymentMethods.map((m) => (
+                    <option key={m.code} value={m.code}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={nrm.field}>
+                <label htmlFor="rp-amount">Monto</label>
+                <input
+                  id="rp-amount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                />
+              </div>
+              <label className={nrm.toggle}>
+                <input
+                  type="checkbox"
+                  checked={payConfirm}
+                  onChange={(e) => setPayConfirm(e.target.checked)}
+                />
+                Confirmar la reserva (pre-reserva → reserva)
+              </label>
+              {payStatus && (
+                <div style={{ color: "#b3261e", fontSize: 13, marginTop: 6 }}>
+                  {payStatus}
+                </div>
+              )}
+            </div>
+            <div className={nrm.foot}>
+              <button
+                className={`${nrm.btn} ${nrm.btnGhost}`}
                 onClick={() => setPayRes(null)}
                 disabled={payBusy}
-                className="rounded px-4 py-2 text-sm"
               >
                 Cancelar
               </button>
               <button
+                className={`${nrm.btn} ${nrm.btnPrimary}`}
                 onClick={submitPay}
                 disabled={payBusy || payMethod === "" || Number(payAmount) <= 0}
-                className="bg-onyx text-bone rounded px-4 py-2 text-sm disabled:opacity-50"
               >
                 {payBusy ? "Registrando…" : "Registrar pago"}
               </button>
