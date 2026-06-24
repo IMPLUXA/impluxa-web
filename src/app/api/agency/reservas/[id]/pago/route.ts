@@ -7,6 +7,8 @@ import {
   buildAgencyConfirmarReservaArgs,
 } from "@/lib/agency/pago";
 import { badRequest } from "@/lib/agency/route-helpers";
+import { loadVoucherData } from "@/lib/public/voucher";
+import { sendReservationConfirmation } from "@/lib/resend";
 
 // C7.2 — cobro manual presencial. POST registra un pago (efectivo/transferencia)
 // y opcionalmente confirma la reserva, ÚNICAMENTE vía RPC agency_confirmar_reserva
@@ -131,11 +133,35 @@ export async function POST(
     ok: boolean;
     error_code?: string;
     idempotent_replay?: boolean;
+    confirmada?: boolean;
   };
   if (!envelope.ok) {
     const status = STATUS_BY_CODE[envelope.error_code ?? ""] ?? 400;
     return NextResponse.json(envelope, { status });
   }
+
+  // Voucher por email — ADITIVO, best-effort (un fallo de email JAMÁS voltea el cobro ya hecho).
+  // GATE confirmada===true (NO `ok` pelado): el cobro manual admite seña → un 2do pago (saldo) llega
+  // con status='reserva' pero confirmada=false; confirmada=true sale SOLO en la confirmación que
+  // flipeó pre_reserva→reserva (RPC v_rows=1) → EXACTAMENTE 1 voucher por reserva. Replay idempotente
+  // no trae confirmada. Espeja el webhook MP (mp/webhook). loadVoucherData gatea status='reserva' +
+  // holder_email (reservas viejas sin email → null → skip limpio). aquí envelope.ok ya es true.
+  if (envelope.confirmada === true) {
+    try {
+      const voucher = await loadVoucherData(id, guard.tenantId);
+      if (voucher) await sendReservationConfirmation(voucher);
+    } catch (e) {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          event: "agency_pago_voucher_email_failed",
+          reserva_id: id,
+          message: e instanceof Error ? e.message : "unknown",
+        }),
+      );
+    }
+  }
+
   // ok (incluye idempotent_replay=true = ya aplicado a ESTA reserva) → 200.
   return NextResponse.json(envelope, { status: 200 });
 }
