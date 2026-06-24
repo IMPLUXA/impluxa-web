@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Alta presencial branded (paridad web) · s61</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --pine:#143038; --copper:#B48448; --cream:#FBF7EE; --cream2:#F0E6D2;
+    --border:#E6DCC4; --green:#3F7D5A; --red:#b3261e; --ink:#1E2B2C;
+    --muted:#6b6256; --overlay:rgba(20,48,56,.62);
+    --heading:"Cinzel",serif; --body:"Hanken Grotesk",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(130% 90% at 50% -10%, #1c4148 0%, #0d2026 58%, #08161a 100%) fixed;font-family:var(--body);color:var(--ink);min-height:100dvh}
+
+  /* spec banner */
+  .specbar{position:fixed;top:0;left:0;right:0;z-index:50;background:#0d2026;color:#cdbf9b;font:600 12.5px/1.4 var(--body);padding:7px 14px;border-bottom:1px solid var(--copper);text-align:center}
+  .specbar b{color:#fff}
+
+  .overlay{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:center;padding:54px 20px 40px;min-height:100dvh}
+  .modal{width:100%;max-width:640px;background:var(--cream);border:1px solid var(--border);border-radius:22px;box-shadow:0 40px 90px -28px rgba(20,48,56,.72);overflow:hidden}
+
+  /* header */
+  .head{background:linear-gradient(135deg,var(--pine),#0d2026);border-bottom:3px solid var(--copper);padding:18px 24px 16px;color:#fff}
+  .head .brand{font:700 13px/1 var(--heading);letter-spacing:.28em;text-transform:uppercase;color:#e9dcc0}
+  .head .exc{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .head .exc label{font:600 12px/1 var(--body);color:#bcd0cf;text-transform:uppercase;letter-spacing:.06em}
+  .head .exc select{flex:1;font:600 15px/1 var(--body);color:var(--pine);background:#fff;border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+
+  /* stepper */
+  .steps{display:flex;gap:6px;padding:14px 24px 0}
+  .steps .s{flex:1;text-align:center}
+  .steps .bar{height:4px;border-radius:999px;background:#E6DCC4}
+  .steps .s.done .bar,.steps .s.active .bar{background:var(--copper)}
+  .steps .lbl{font:600 10.5px/1.3 var(--body);color:var(--muted);margin-top:6px;letter-spacing:.02em}
+  .steps .s.active .lbl{color:var(--pine)}
+
+  .pane{padding:22px 24px 8px}
+  .pane h2{font:600 22px/1.15 var(--heading);color:var(--pine);margin:0 0 4px}
+  .pane .sub{font:400 14px/1.4 var(--body);color:var(--muted);margin:0 0 18px}
+
+  /* calendar */
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .calhead .mon{font:600 16px/1 var(--heading);color:var(--pine);text-transform:capitalize}
+  .navbtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--pine);cursor:pointer;font-size:15px}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+  .dow span{text-align:center;font:600 11px/1 var(--body);color:var(--muted);text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day{aspect-ratio:1;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--pine);font:600 14px/1 var(--body);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .day .dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+  .day.last{border-color:#D9A24A}
+  .day.last .dot{background:#D9A24A}
+  .day.off{background:#ECE8E0;color:#A8A192;border-color:transparent;cursor:default}
+  .day.off .dot{display:none}
+  .day.sel{background:var(--copper);border-color:var(--copper);color:#fff;box-shadow:0 0 0 3px rgba(180,132,72,.22)}
+  .day.sel .dot{background:#fff}
+  .legend{display:flex;gap:16px;margin-top:14px;font:500 12px/1 var(--body);color:var(--muted)}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+  /* passengers */
+  .cat{display:flex;align-items:center;justify-content:space-between;padding:14px 2px;border-bottom:1px solid var(--border)}
+  .cat .nm{font:600 15px/1.2 var(--body);color:var(--pine)}
+  .cat .pr{font:400 12.5px/1.2 var(--body);color:var(--muted);margin-top:3px}
+  .spin{display:flex;align-items:center;gap:14px}
+  .rmstep{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--copper);background:#fff;color:var(--copper);font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .rmstep:disabled{border-color:#B7B0A1;color:#B7B0A1;cursor:default}
+  .spin .n{min-width:22px;text-align:center;font:700 16px/1 var(--body);color:var(--pine)}
+  .totbox{display:flex;align-items:center;justify-content:space-between;background:var(--pine);color:#fff;padding:14px 18px;border-radius:14px;margin-top:18px}
+  .totbox .t1{font:500 13px/1 var(--body);opacity:.85}
+  .totbox .t2{font:700 22px/1 var(--heading)}
+
+  /* form */
+  .field{margin-bottom:14px}
+  .field label{display:block;font:600 12.5px/1 var(--body);color:var(--pine);margin-bottom:6px}
+  .field label .opt{color:var(--muted);font-weight:500}
+  .field input{width:100%;font:400 15px/1.2 var(--body);color:var(--ink);background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+  .field input:focus{outline:none;border-color:var(--copper);box-shadow:0 0 0 3px rgba(180,132,72,.16)}
+
+  /* payment methods */
+  .methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+  .m{border:1.5px solid var(--border);background:#fff;border-radius:14px;padding:13px 14px;cursor:pointer;text-align:left;display:flex;gap:10px;align-items:flex-start}
+  .m .ic{font-size:18px;line-height:1.1}
+  .m .mt{display:block;font:700 14px/1.15 var(--body);color:var(--pine)}
+  .m .md{display:block;font:400 11.5px/1.35 var(--body);color:var(--muted);margin-top:3px}
+  .m.sel{border-color:var(--copper);box-shadow:0 0 0 3px rgba(180,132,72,.16)}
+  .amt{margin-top:16px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px}
+  .amt .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .amt .row:last-child{margin-bottom:0}
+  .amt .k{font:600 13px/1 var(--body);color:var(--pine)}
+  .amt .v{font:700 15px/1 var(--heading);color:var(--pine)}
+  .amt input[type=number]{width:150px;font:600 15px/1 var(--body);color:var(--ink);background:#fff;border:1px solid var(--border);border-radius:10px;padding:9px 11px;text-align:right}
+  .amt .saldo{color:var(--copper)}
+  .toggle{display:flex;align-items:center;gap:9px;margin-top:4px;font:600 13px/1.2 var(--body);color:var(--pine);cursor:pointer}
+  .toggle input{width:17px;height:17px;accent-color:var(--copper)}
+  .mpnote{margin-top:14px;background:#fff;border:1px dashed var(--copper);border-radius:14px;padding:14px;font:400 13px/1.45 var(--body);color:var(--ink)}
+  .qr{width:120px;height:120px;border-radius:12px;background:repeating-conic-gradient(var(--pine) 0 25%, #fff 0 50%) 0/22px 22px;margin:12px auto 4px;border:6px solid #fff;box-shadow:0 0 0 1px var(--border)}
+
+  /* decision callout */
+  .dec{border:1px dashed #c9962f;background:#fdf6e6;border-radius:12px;padding:11px 13px;margin-top:14px;font:500 12.5px/1.5 var(--body);color:#5d4a17}
+  .dec b{font-weight:800;color:#7a5a10;display:block;margin-bottom:2px;letter-spacing:.02em;text-transform:uppercase;font-size:11px}
+
+  /* confirmation / voucher */
+  .vletter{background:linear-gradient(135deg,var(--pine),#0d2026);border-bottom:3px solid var(--copper);margin:-22px -24px 18px;padding:26px 24px 22px;text-align:center;color:#fff}
+  .vletter .ic{font-size:40px;line-height:1}
+  .vletter h2{color:#fff;margin:10px 0 4px}
+  .vletter p{font:400 13.5px/1.45 var(--body);color:#cfe0df;margin:0;max-width:80%;margin-inline:auto}
+  .vrow{display:flex;justify-content:space-between;padding:11px 2px;border-bottom:1px solid var(--border);font:500 14px/1.2 var(--body)}
+  .vrow .k{color:var(--muted)} .vrow .v{color:var(--pine);font-weight:700}
+  .vrow .v.green{color:var(--green)} .vrow .v.copper{color:var(--copper)}
+  .vcode{background:var(--pine);color:#fff;border-radius:14px;text-align:center;padding:14px;margin-top:16px}
+  .vcode .l{font:500 11px/1 var(--body);opacity:.8;text-transform:uppercase;letter-spacing:.14em}
+  .vcode .c{font:700 30px/1.1 var(--heading);letter-spacing:.1em;margin-top:6px}
+
+  /* footer nav */
+  .foot{display:flex;justify-content:space-between;gap:12px;padding:16px 24px 22px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 24px;font:700 14.5px/1 var(--body);cursor:pointer}
+  .btn.primary{background:var(--copper);color:#fff}
+  .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--pine)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .wa{background:#25D366;color:#fff}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="specbar">MOCKUP — spec visual, sin backend. <b>Alta presencial branded (paridad web)</b> · refleja SOLO estados que el backend ya soporta (#96/#97/#98). Las cajas <b style="color:#e6c869">DECISIÓN</b> son para el walk.</div>
+
+<div class="overlay">
+  <div class="modal">
+    <div class="head">
+      <div class="brand">Patagonia Viva · Reserva presencial</div>
+      <div class="exc">
+        <label for="exc">Excursión</label>
+        <select id="exc">
+          <option>Circuito Chico — medio día</option>
+          <option>Cerro Tronador — día completo</option>
+          <option>Isla Victoria y Bosque de Arrayanes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="steps" id="stepper">
+      <div class="s" data-s="1"><div class="bar"></div><div class="lbl">Fecha</div></div>
+      <div class="s" data-s="2"><div class="bar"></div><div class="lbl">Pasajeros</div></div>
+      <div class="s" data-s="3"><div class="bar"></div><div class="lbl">Datos</div></div>
+      <div class="s" data-s="4"><div class="bar"></div><div class="lbl">Pago</div></div>
+      <div class="s" data-s="5"><div class="bar"></div><div class="lbl">Voucher</div></div>
+    </div>
+
+    <!-- STEP 1 FECHA -->
+    <section class="pane" data-pane="1">
+      <h2>Elegí la fecha de la salida</h2>
+      <p class="sub">Disponibilidad en vivo para la excursión elegida.</p>
+      <div class="calhead">
+        <button class="navbtn">&lsaquo;</button>
+        <span class="mon">Julio 2026</span>
+        <button class="navbtn">&rsaquo;</button>
+      </div>
+      <div class="dow"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span></div>
+      <div class="grid" id="cal"></div>
+      <div class="legend">
+        <span><i style="background:var(--green)"></i>Disponible</span>
+        <span><i style="background:#D9A24A"></i>Últimos lugares</span>
+        <span><i style="background:#ECE8E0"></i>Sin cupo</span>
+      </div>
+    </section>
+
+    <!-- STEP 2 PASAJEROS -->
+    <section class="pane hidden" data-pane="2">
+      <h2>¿Quiénes viajan?</h2>
+      <p class="sub">Cargá la cantidad por categoría. El total se actualiza solo.</p>
+      <div id="cats"></div>
+      <div class="totbox"><span class="t1"><span id="paxN">0</span> pasajeros</span><span class="t2" id="totLbl">$0</span></div>
+    </section>
+
+    <!-- STEP 3 DATOS -->
+    <section class="pane hidden" data-pane="3">
+      <h2>Datos del titular</h2>
+      <p class="sub">El email es obligatorio: ahí le llega el voucher al pasajero.</p>
+      <div class="field"><label>Nombre y apellido</label><input id="fName" value="María González" /></div>
+      <div class="field"><label>Email <span style="color:var(--red)">*</span></label><input id="fMail" type="email" value="maria.g@gmail.com" /></div>
+      <div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input id="fTel" value="+54 9 294 4..." /></div>
+      <div class="field"><label>Alojamiento <span class="opt">(opcional)</span></label><input id="fLodge" value="Hotel Llao Llao" /></div>
+      <div class="dec"><b>Diferencia vs web</b>El alta presencial la hace el operador logueado → <b style="display:inline">SIN captcha/Turnstile</b> (eso es solo del flujo anónimo público). Mismos campos, sin el paso de verificación humana.</div>
+    </section>
+
+    <!-- STEP 4 PAGO -->
+    <section class="pane hidden" data-pane="4">
+      <h2>Cobro</h2>
+      <p class="sub">Elegí cómo cobra el operador. Total de la reserva: <b id="totIn">$0</b>.</p>
+      <div class="methods">
+        <button class="m" data-m="efectivo"><span class="ic">💵</span><span><span class="mt">Efectivo</span><span class="md">Total o seña parcial</span></span></button>
+        <button class="m" data-m="transferencia"><span class="ic">🏦</span><span><span class="mt">Transferencia</span><span class="md">Total o seña parcial</span></span></button>
+        <button class="m" data-m="mercadopago"><span class="ic">🔗</span><span><span class="mt">MercadoPago (link)</span><span class="md">Cobra el total · paga el cliente</span></span></button>
+        <button class="m" data-m="sinpago"><span class="ic">🕓</span><span><span class="mt">Cobrar después</span><span class="md">Crear sin pago (pre-reserva)</span></span></button>
+      </div>
+
+      <!-- efectivo / transferencia: monto + seña -->
+      <div class="amt hidden" id="amtManual">
+        <div class="row"><span class="k">Total de la reserva</span><span class="v" id="amtTot">$0</span></div>
+        <label class="toggle"><input type="checkbox" id="senaChk" /> Es una seña (pago parcial)</label>
+        <div class="row hidden" id="senaRow" style="margin-top:12px"><span class="k">Monto que cobrás ahora</span><input type="number" id="senaIn" min="0" step="1000" /></div>
+        <div class="row hidden" id="saldoRow"><span class="k saldo">Saldo pendiente</span><span class="v saldo" id="saldoOut">$0</span></div>
+      </div>
+
+      <!-- mercadopago: total fijo + link/qr async -->
+      <div class="mpnote hidden" id="amtMp">
+        <div class="row" style="display:flex;justify-content:space-between"><span class="k">Monto (fijo, el total)</span><span class="v" id="mpTot">$0</span></div>
+        <div class="qr"></div>
+        <div style="text-align:center;color:var(--muted);font-size:12px">Link / QR de MercadoPago — el cliente paga desde su teléfono.</div>
+        <div class="dec"><b>Decisión CEO · MP es asíncrono</b>El link MP cobra <b style="display:inline">siempre el total</b> (no admite seña — backend #96). El cliente paga después, y el voucher sale <b style="display:inline">solo cuando MercadoPago confirma</b> (webhook). Entonces el Paso 5 de este caso NO es un voucher confirmado, es un estado <b style="display:inline">"pendiente"</b>. ¿OK ese cierre, o preferís que MP sea "cobrar después" y listo?</div>
+      </div>
+
+      <!-- sin pago -->
+      <div class="mpnote hidden" id="amtNone">
+        La reserva se crea <b>sin pago</b>, queda como <b>pre-reserva</b> y el saldo queda en el total. Cobrás después desde la lista de reservas (Registrar pago / Cobrar MP).
+        <div class="dec"><b>Decisión CEO · estado final sin pago</b>Hoy crear SIEMPRE crea sin pago (no hay botón "crear sin pago"; el cobro es posterior). En este wizard lo hago explícito. El Paso 5 de este caso muestra "pre-reserva creada, cobrá después" (no voucher). ¿Va así?</div>
+      </div>
+
+      <div class="dec" id="decConfirm"><b>Decisión CEO · registrar = confirmar</b>En efectivo/transferencia, registrar el pago (total o seña) <b style="display:inline">confirma la reserva</b> (pre_reserva → reserva) y dispara el voucher #98. Con seña, el voucher dice "Seña $X / Saldo pendiente $Y". El backend tiene un check "confirmar" separado y permite seña sin confirmar; en el wizard lo colapso (cobrar = confirmar). ¿Lo dejo colapsado o querés exponer "seña sin confirmar todavía"?</div>
+    </section>
+
+    <!-- STEP 5 VOUCHER -->
+    <section class="pane hidden" data-pane="5">
+      <div id="voucher"></div>
+    </section>
+
+    <div class="foot">
+      <button class="btn ghost" id="back">Volver</button>
+      <button class="btn primary" id="next">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRICES=[["Adulto",45000],["Menor (4-11)",30000],["Jubilado",38000]];
+const FMT=n=>"$"+n.toLocaleString("es-AR");
+let step=1, counts=[2,0,0], method=null;
+
+// calendar (static demo July 2026, starts Wed)
+const cal=document.getElementById("cal");
+const offset=2; // Jul 1 2026 = Wednesday (Lu=0)
+for(let i=0;i<offset;i++){cal.appendChild(document.createElement("div"));}
+const states={5:"off",6:"off",13:"off",18:"last",19:"last",26:"off"};
+for(let d=1;d<=31;d++){
+  const b=document.createElement("button");
+  b.className="day"+(states[d]?" "+states[d]:"")+(d===11?" sel":"");
+  b.innerHTML=d+(states[d]==="off"?"":'<span class="dot"></span>');
+  if(states[d]!=="off") b.onclick=()=>{document.querySelectorAll(".day.sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");};
+  cal.appendChild(b);
+}
+
+// passengers
+const cats=document.getElementById("cats");
+PRICES.forEach(([nm,pr],i)=>{
+  const row=document.createElement("div");row.className="cat";
+  row.innerHTML=`<div><div class="nm">${nm}</div><div class="pr">${FMT(pr)} p/persona</div></div>
+  <div class="spin"><button class="rmstep" data-i="${i}" data-d="-1">−</button><span class="n" id="n${i}">${counts[i]}</span><button class="rmstep" data-i="${i}" data-d="1">+</button></div>`;
+  cats.appendChild(row);
+});
+function total(){return PRICES.reduce((a,[,p],i)=>a+p*counts[i],0);}
+function pax(){return counts.reduce((a,b)=>a+b,0);}
+function refreshPax(){
+  PRICES.forEach((_,i)=>document.getElementById("n"+i).textContent=counts[i]);
+  document.getElementById("paxN").textContent=pax();
+  document.getElementById("totLbl").textContent=FMT(total());
+  document.getElementById("totIn").textContent=FMT(total());
+  document.getElementById("amtTot").textContent=FMT(total());
+  document.getElementById("mpTot").textContent=FMT(total());
+  if(!document.getElementById("senaIn").value) document.getElementById("senaIn").value=Math.round(total()/2);
+  calcSaldo();
+}
+cats.addEventListener("click",e=>{const b=e.target.closest(".rmstep");if(!b)return;
+  const i=+b.dataset.i,d=+b.dataset.d;counts[i]=Math.max(0,counts[i]+d);refreshPax();});
+
+// payment method select
+document.querySelectorAll(".m").forEach(m=>m.onclick=()=>{
+  document.querySelectorAll(".m").forEach(x=>x.classList.remove("sel"));
+  m.classList.add("sel");method=m.dataset.m;
+  const man=method==="efectivo"||method==="transferencia";
+  document.getElementById("amtManual").classList.toggle("hidden",!man);
+  document.getElementById("amtMp").classList.toggle("hidden",method!=="mercadopago");
+  document.getElementById("amtNone").classList.toggle("hidden",method!=="sinpago");
+  document.getElementById("decConfirm").classList.toggle("hidden",!man);
+  setNext();
+});
+document.getElementById("senaChk").onchange=e=>{
+  document.getElementById("senaRow").classList.toggle("hidden",!e.target.checked);
+  document.getElementById("saldoRow").classList.toggle("hidden",!e.target.checked);
+  calcSaldo();
+};
+document.getElementById("senaIn").oninput=calcSaldo;
+function paid(){const s=document.getElementById("senaChk").checked;return s?Math.min(total(),+document.getElementById("senaIn").value||0):total();}
+function calcSaldo(){document.getElementById("saldoOut").textContent=FMT(Math.max(0,total()-paid()));}
+
+// voucher render (4 variants)
+function renderVoucher(){
+  const v=document.getElementById("voucher");const t=total();const code="PV-7K3M9X";
+  const mlabel={efectivo:"Efectivo",transferencia:"Transferencia",mercadopago:"MercadoPago"}[method]||"";
+  let ic,h,p,rows,extra="";
+  if(method==="mercadopago"){
+    ic="⏳";h="Link de pago enviado";p="La reserva queda pendiente. Cuando MercadoPago confirme el pago, el voucher sale solo al email del pasajero.";
+    rows=`<div class="vrow"><span class="k">Total a cobrar</span><span class="v">${FMT(t)}</span></div>
+          <div class="vrow"><span class="k">Estado</span><span class="v copper">Esperando pago del cliente</span></div>`;
+  } else if(method==="sinpago"){
+    ic="🕓";h="Pre-reserva creada";p="Se creó sin pago. Cobrás después desde la lista (Registrar pago / Cobrar MP). El saldo queda en el total.";
+    rows=`<div class="vrow"><span class="k">Total</span><span class="v">${FMT(t)}</span></div>
+          <div class="vrow"><span class="k">Saldo pendiente</span><span class="v copper">${FMT(t)}</span></div>
+          <div class="vrow"><span class="k">Estado</span><span class="v">Pre-reserva</span></div>`;
+  } else {
+    const pd=paid();const saldo=Math.max(0,t-pd);
+    ic="✓";h="¡Reserva confirmada!";p="Le enviamos el voucher con el código al email del pasajero.";
+    if(saldo>0){
+      rows=`<div class="vrow"><span class="k">Total</span><span class="v">${FMT(t)}</span></div>
+            <div class="vrow"><span class="k">Seña (${mlabel})</span><span class="v green">${FMT(pd)} · Pagado</span></div>
+            <div class="vrow"><span class="k">Saldo pendiente</span><span class="v copper">${FMT(saldo)}</span></div>`;
+    } else {
+      rows=`<div class="vrow"><span class="k">Total</span><span class="v green">${FMT(t)} · Pagado</span></div>
+            <div class="vrow"><span class="k">Método</span><span class="v">${mlabel}</span></div>
+            <div class="vrow"><span class="k">Saldo</span><span class="v">$0</span></div>`;
+    }
+  }
+  v.innerHTML=`<div class="vletter"><div class="ic">${ic}</div><h2>${h}</h2><p>${p}</p></div>
+    <div class="vrow"><span class="k">Excursión</span><span class="v">${document.getElementById("exc").value}</span></div>
+    <div class="vrow"><span class="k">Fecha</span><span class="v">Sáb 11 Jul 2026</span></div>
+    <div class="vrow"><span class="k">Pasajeros</span><span class="v">${pax()}</span></div>
+    ${rows}
+    <div class="vcode"><div class="l">Código de reserva</div><div class="c">${code}</div></div>
+    <div style="display:flex;gap:10px;margin-top:16px"><button class="btn wa" style="flex:1;justify-content:center">WhatsApp al pasajero</button></div>`;
+}
+
+// step nav
+const panes=[...document.querySelectorAll("[data-pane]")];
+function setNext(){
+  const n=document.getElementById("next");
+  if(step===4){n.disabled=!method;n.textContent=method==="sinpago"?"Crear pre-reserva":(method==="mercadopago"?"Enviar link":"Cobrar y confirmar");}
+  else if(step===5){n.classList.add("hidden");}
+  else{n.disabled=false;n.textContent="Continuar";n.classList.remove("hidden");}
+}
+function show(){
+  panes.forEach(p=>p.classList.toggle("hidden",+p.dataset.pane!==step));
+  document.querySelectorAll("#stepper .s").forEach(s=>{const n=+s.dataset.s;s.classList.toggle("active",n===step);s.classList.toggle("done",n<step);});
+  document.getElementById("back").classList.toggle("hidden",step===1);
+  if(step===5){renderVoucher();}
+  setNext();
+}
+document.getElementById("next").onclick=()=>{if(step<5){step++;show();}};
+document.getElementById("back").onclick=()=>{if(step>1){step--;show();}};
+refreshPax();show();
+</script>
+</body>
+</html>
