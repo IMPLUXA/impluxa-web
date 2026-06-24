@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   RESERVA_STATUS_LABELS,
@@ -9,13 +9,8 @@ import {
   type PassengerCategoryRow,
   type ReservaRow,
 } from "@/lib/agency/schemas";
-import {
-  type Avail,
-  availBlocks,
-  availFromResponse,
-  availLabel,
-} from "@/lib/agency/alta-availability";
 import { MpChargeModal } from "./MpChargeModal";
+import { NuevaReservaModal } from "./NuevaReservaModal";
 import { AggregatedCalendar } from "../departures/AggregatedCalendar";
 import styles from "./mp-cobro.module.css";
 
@@ -23,8 +18,6 @@ import styles from "./mp-cobro.module.css";
 // agency_crear_reserva (#24): jamás INSERT directo (contrato del ancla).
 // PLATA: snapshot_* llega number|string (lesson P0 s49) → String() boundary.
 // Colores: herencia del shell (lesson contraste branded R1, patrón Rates).
-
-type PaxQty = Record<string, string>; // code -> qty (string para inputs)
 
 const arsPrice = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -51,11 +44,6 @@ function fmtDate(iso: string): string {
 
 function fmtTime(t: string | null): string {
   return t ? t.slice(0, 5) : "Sin horario fijo";
-}
-
-function todayIso(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // Estado a MOSTRAR: pre_reserva con hold vencido se señala derivado en la
@@ -99,10 +87,7 @@ export function ReservasManager({
     excursionId: string;
     fecha: string;
   } | null>(null);
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-  const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   // C7.2 — cobro manual presencial (efectivo/transferencia)
   const [payRes, setPayRes] = useState<ReservaRow | null>(null);
@@ -116,15 +101,6 @@ export function ReservasManager({
   // C2 — cobro MercadoPago (Checkout Pro): qué reserva tiene el modal MP abierto.
   const [mpRes, setMpRes] = useState<ReservaRow | null>(null);
 
-  const [formExcursion, setFormExcursion] = useState("");
-  const [formFecha, setFormFecha] = useState("");
-  const [avail, setAvail] = useState<Avail>({ state: "idle" });
-  const [holderName, setHolderName] = useState("");
-  const [holderEmail, setHolderEmail] = useState("");
-  const [holderPhone, setHolderPhone] = useState("");
-  const [holderLodging, setHolderLodging] = useState("");
-  const [pax, setPax] = useState<PaxQty>({});
-
   const excursionName = useMemo(() => {
     const m = new Map(excursions.map((e) => [e.id, e.name]));
     return (id: string) => m.get(id) ?? "—";
@@ -135,44 +111,10 @@ export function ReservasManager({
     [departures],
   );
 
-  const today = todayIso();
-  const maxDate = useMemo(() => {
-    const d = new Date(`${today}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 365);
-    return d.toISOString().slice(0, 10);
-  }, [today]);
   const activeExcursions = useMemo(
     () => excursions.filter((e) => e.active),
     [excursions],
   );
-
-  // F1c — disponibilidad del (excursion, fecha) elegido: UNA sola fuente, el
-  // read-model compartido (single-day). Pre-aviso de UX; el motor #24 es la
-  // autoridad final (re-chequea bajo su advisory-lock al crear).
-  useEffect(() => {
-    if (!open || !formExcursion || !formFecha) {
-      setAvail({ state: "idle" });
-      return;
-    }
-    let alive = true;
-    setAvail({ state: "loading" });
-    fetch(
-      `/api/agency/departures/calendario?excursion_id=${formExcursion}&from=${formFecha}&to=${formFecha}`,
-    )
-      .then(async (r) => {
-        const body = await r.json().catch(() => ({}));
-        if (alive) setAvail(availFromResponse(body, formFecha, r.ok));
-      })
-      .catch(() => {
-        if (alive) setAvail({ state: "error" });
-      });
-    return () => {
-      alive = false;
-    };
-  }, [open, formExcursion, formFecha]);
-
-  const availInfo = availLabel(avail);
-  const availBlocked = availBlocks(avail);
 
   // Con drill activo (v1.1) filtramos por excursion+fecha: robusto a multi-departure
   // legacy (matchea TODAS las reservas de esa excursion ese dia). Sin drill, el filtro
@@ -195,77 +137,6 @@ export function ReservasManager({
     setDrill({ excursionId, fecha });
     setFilterDep("all");
     setView("lista");
-  }
-
-  const totalPax = Object.values(pax).reduce(
-    (acc, v) => acc + (Number(v) || 0),
-    0,
-  );
-
-  function startCreate() {
-    setFormExcursion("");
-    setFormFecha("");
-    setAvail({ state: "idle" });
-    setHolderName("");
-    setHolderEmail("");
-    setHolderPhone("");
-    setHolderLodging("");
-    setPax({});
-    setStatus(null);
-    setCreatedCode(null);
-    setOpen(true);
-  }
-
-  function errorMessage(
-    body: { error_code?: string; message?: string },
-    httpStatus: number,
-  ): string {
-    if (body.error_code === "CUPO_INSUFICIENTE")
-      return "Cupo insuficiente para esa fecha";
-    if (body.error_code === "SALIDA_NO_DISPONIBLE")
-      return "Ese día no admite reservas (cerrado o sin cupo)";
-    if (body.error_code === "SALIDA_INEXISTENTE")
-      return "La excursión no está disponible";
-    if (body.error_code === "TARIFA_NO_VIGENTE")
-      return "La excursión no tiene tarifa vigente";
-    if (body.error_code === "CATEGORIA_INVALIDA")
-      return "Categoría de pasajero inválida";
-    if (httpStatus === 403) return "Sin permiso para esta acción";
-    return body.message ?? "Error al crear la reserva";
-  }
-
-  async function submit() {
-    setBusy(true);
-    setStatus(null);
-    const pasajeros = categories
-      .map((c) => ({ categoria: c.code, qty: Number(pax[c.code] || 0) }))
-      .filter((p) => p.qty > 0);
-    // F1c: el alta elige (excursion, fecha) DIRECTO sobre el modelo abierto-por-
-    // defecto. El motor #24 materializa el ancla del dia y es la autoridad del cupo.
-    const res = await fetch("/api/agency/reservas", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        excursion_id: formExcursion,
-        departure_date: formFecha,
-        holder_name: holderName,
-        holder_email: holderEmail.trim(),
-        holder_phone: holderPhone.trim() || undefined,
-        holder_lodging: holderLodging.trim() || undefined,
-        pasajeros,
-      }),
-    });
-    const body = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok) {
-      setStatus(errorMessage(body, res.status));
-      return;
-    }
-    // Refrescamos del server (la fila real con snapshot) en vez de armarla
-    // a mano: recarga simple de la page = fuente de verdad.
-    setCreatedCode(body.reservation_code ?? null);
-    setOpen(false);
-    window.location.reload();
   }
 
   function openPay(r: ReservaRow) {
@@ -349,7 +220,7 @@ export function ReservasManager({
           </div>
           {canCreate ? (
             <button
-              onClick={startCreate}
+              onClick={() => setWizardOpen(true)}
               className="bg-bone text-onyx rounded px-4 py-2 text-sm font-medium hover:opacity-90"
             >
               + Nueva reserva
@@ -405,17 +276,6 @@ export function ReservasManager({
               </span>
             </div>
           )}
-
-          {createdCode && (
-            <div className="border-stone rounded-lg border p-4 text-sm">
-              Reserva creada. Código:{" "}
-              <span className="bg-bone text-onyx rounded px-2 py-0.5 font-mono text-base font-bold">
-                {createdCode}
-              </span>
-            </div>
-          )}
-
-          {!open && status && <div className="text-ash text-sm">{status}</div>}
 
           {visible.length === 0 ? (
             <p className="text-ash text-sm">
@@ -562,137 +422,13 @@ export function ReservasManager({
         </>
       )}
 
-      {open && (
-        <div className="bg-onyx/70 fixed inset-0 z-40 flex items-center justify-center p-4">
-          {/* Card SIN color de texto fijo: hereda del shell (lesson R1). */}
-          <div className="bg-marble max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-lg p-6">
-            <h2 className="text-lg font-bold">Nueva reserva</h2>
-            <label className="block text-sm">
-              Excursión
-              <select
-                value={formExcursion}
-                onChange={(e) => setFormExcursion(e.target.value)}
-                className="border-stone mt-1 w-full rounded border px-3 py-2"
-              >
-                <option value="">— Elegí una excursión —</option>
-                {activeExcursions.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              Fecha
-              <input
-                type="date"
-                value={formFecha}
-                min={today}
-                max={maxDate}
-                disabled={formExcursion === ""}
-                onChange={(e) => setFormFecha(e.target.value)}
-                className="border-stone mt-1 w-full rounded border px-3 py-2 disabled:opacity-50"
-              />
-            </label>
-            {formExcursion !== "" && (
-              <div
-                className={`rounded-md px-3 py-2 text-[13px] ${
-                  availInfo.tone === "open"
-                    ? "bg-bone/30 text-onyx font-medium"
-                    : availInfo.tone === "limited"
-                      ? "font-medium text-[#b48448]"
-                      : availInfo.tone === "closed"
-                        ? "bg-stone/20 text-ash"
-                        : "text-ash"
-                }`}
-              >
-                {availInfo.text}
-              </div>
-            )}
-            <label className="block text-sm">
-              Titular
-              <input
-                value={holderName}
-                onChange={(e) => setHolderName(e.target.value)}
-                className="border-stone mt-1 w-full rounded border px-3 py-2"
-              />
-            </label>
-            <div className="flex gap-3">
-              <label className="block flex-1 text-sm">
-                Email
-                <input
-                  type="email"
-                  value={holderEmail}
-                  onChange={(e) => setHolderEmail(e.target.value)}
-                  placeholder="cliente@email.com"
-                  className="border-stone mt-1 w-full rounded border px-3 py-2"
-                />
-              </label>
-              <label className="block flex-1 text-sm">
-                Teléfono (opcional)
-                <input
-                  value={holderPhone}
-                  onChange={(e) => setHolderPhone(e.target.value)}
-                  className="border-stone mt-1 w-full rounded border px-3 py-2"
-                />
-              </label>
-            </div>
-            <label className="block text-sm">
-              Alojamiento (opcional)
-              <input
-                value={holderLodging}
-                onChange={(e) => setHolderLodging(e.target.value)}
-                className="border-stone mt-1 w-full rounded border px-3 py-2"
-              />
-            </label>
-            <fieldset className="border-stone rounded border p-3">
-              <legend className="px-1 text-sm font-medium">Pasajeros</legend>
-              <div className="grid grid-cols-2 gap-3">
-                {categories.map((c) => (
-                  <label key={c.code} className="block text-sm">
-                    {c.label}
-                    <input
-                      type="number"
-                      min={0}
-                      max={999}
-                      value={pax[c.code] ?? ""}
-                      placeholder="0"
-                      onChange={(e) =>
-                        setPax({ ...pax, [c.code]: e.target.value })
-                      }
-                      className="border-stone mt-1 w-full rounded border px-3 py-2"
-                    />
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            {status && <div className="text-sm">{status}</div>}
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setOpen(false)}
-                disabled={busy}
-                className="rounded px-4 py-2 text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={submit}
-                disabled={
-                  busy ||
-                  formExcursion === "" ||
-                  formFecha === "" ||
-                  availBlocked ||
-                  holderName.trim() === "" ||
-                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(holderEmail.trim()) ||
-                  totalPax < 1
-                }
-                className="bg-onyx text-bone rounded px-4 py-2 text-sm disabled:opacity-50"
-              >
-                {busy ? "Reservando…" : "Crear reserva"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {wizardOpen && (
+        <NuevaReservaModal
+          excursions={activeExcursions}
+          categories={categories}
+          onClose={() => setWizardOpen(false)}
+          onCreated={() => window.location.reload()}
+        />
       )}
 
       {payRes && (
