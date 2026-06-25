@@ -79,11 +79,11 @@ begin
     coalesce((select count(*) from jsonb_array_elements(
                case when jsonb_typeof(v_content->'servicios')='array'
                     then v_content->'servicios' else '[]'::jsonb end) e
-             where e->>'excursion_id' = p_excursion_id::text), 0)
+             where lower(e->>'excursion_id') = lower(p_excursion_id::text)), 0)
   + coalesce((select count(*) from jsonb_array_elements(
                case when jsonb_typeof(v_content->'paseos')='array'
                     then v_content->'paseos' else '[]'::jsonb end) e
-             where e->>'excursion_id' = p_excursion_id::text), 0)
+             where lower(e->>'excursion_id') = lower(p_excursion_id::text)), 0)
   into v_matched;
 
   if v_matched = 0 then
@@ -96,7 +96,7 @@ begin
       v_content, '{servicios}',
       coalesce((
         select jsonb_agg(
-                 case when (elem->>'excursion_id') = p_excursion_id::text
+                 case when lower(elem->>'excursion_id') = lower(p_excursion_id::text)
                       then case when p_regular_price is null
                                 then (elem - 'price_regular_ars')
                                 else jsonb_set(elem, '{price_regular_ars}', v_newval) end
@@ -113,7 +113,7 @@ begin
       v_content, '{paseos}',
       coalesce((
         select jsonb_agg(
-                 case when (elem->>'excursion_id') = p_excursion_id::text
+                 case when lower(elem->>'excursion_id') = lower(p_excursion_id::text)
                       then case when p_regular_price is null
                                 then (elem - 'price_regular_ars')
                                 else jsonb_set(elem, '{price_regular_ars}', v_newval) end

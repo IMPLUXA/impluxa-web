@@ -289,6 +289,13 @@ export function RatesManager({
         return next;
       });
       setRegularEdit(null);
+    } catch {
+      // Throw de red en el server action: mostrar status, NO dejar que React
+      // mate el árbol (Two-Pass s62). El write ya pudo entrar a DB; el dueño
+      // recarga para ver el estado real.
+      setStatus(
+        "Error de red al guardar. Recargá la página para ver el estado.",
+      );
     } finally {
       setBusy(false);
     }
