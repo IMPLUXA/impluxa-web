@@ -14,6 +14,7 @@ vi.mock("@/lib/supabase/client", () => ({
 // fn (este test es regresión de RENDER, no ejercita el submit del rate-save).
 vi.mock("@/app/app/agency/rates/actions", () => ({
   setRateAction: vi.fn(async () => ({ ok: true })),
+  setRegularPriceAction: vi.fn(async () => ({ ok: true, matched: 1 })),
 }));
 
 import { RatesManager } from "@/app/app/agency/rates/RatesManager";
@@ -81,6 +82,7 @@ describe("RatesManager con payload numérico real (regresión P0 s49)", () => {
         initialCategories={CATS}
         role="dueno_admin"
         canEdit={true}
+        initialRegularPrices={{}}
         tenantSlug="patagoniaviva"
         tenantCustomDomain={null}
       />,
@@ -98,6 +100,7 @@ describe("RatesManager con payload numérico real (regresión P0 s49)", () => {
         initialCategories={CATS}
         role="dueno_admin"
         canEdit={true}
+        initialRegularPrices={{}}
         tenantSlug="patagoniaviva"
         tenantCustomDomain={null}
       />,

@@ -3,7 +3,11 @@ import { getActiveTenant } from "@/lib/tenants/membership";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { RatesManager } from "./RatesManager";
-import { getCurrentRates, getPassengerCategories } from "@/lib/agency/rates";
+import {
+  getCurrentRates,
+  getPassengerCategories,
+  getRegularPricesByExcursion,
+} from "@/lib/agency/rates";
 import type { ExcursionRow } from "@/lib/agency/schemas";
 
 // F3b CRUD UI tarifas — área interna (back-office). NO toca template público.
@@ -28,22 +32,30 @@ export default async function RatesPage() {
 
   // Cliente AUTENTICADO (no service_role): RLS del caller es la autoridad.
   const sb = await getSupabaseServerClient();
-  const [{ data: excursions }, { data: rates }, { data: categories }, role] =
-    await Promise.all([
-      sb
-        .from("excursions")
-        .select(
-          "id,tenant_id,provider_id,name,description,category,active,default_currency,created_at",
-        )
-        .eq("tenant_id", tenant.id)
-        .eq("active", true)
-        .order("name", { ascending: true }),
-      getCurrentRates(sb, tenant.id),
-      getPassengerCategories(sb, tenant.id),
-      // Rol del caller para gatear la UI de edición (la RLS sigue siendo la
-      // autoridad real; esto solo decide qué controles se renderizan).
-      sb.rpc("current_agency_role").then(({ data }) => data as string | null),
-    ]);
+  const [
+    { data: excursions },
+    { data: rates },
+    { data: categories },
+    role,
+    regularPrices,
+  ] = await Promise.all([
+    sb
+      .from("excursions")
+      .select(
+        "id,tenant_id,provider_id,name,description,category,active,default_currency,created_at",
+      )
+      .eq("tenant_id", tenant.id)
+      .eq("active", true)
+      .order("name", { ascending: true }),
+    getCurrentRates(sb, tenant.id),
+    getPassengerCategories(sb, tenant.id),
+    // Rol del caller para gatear la UI de edición (la RLS sigue siendo la
+    // autoridad real; esto solo decide qué controles se renderizan).
+    sb.rpc("current_agency_role").then(({ data }) => data as string | null),
+    // Precios de lista (tachado) por excursion_id, leídos de content_json (el
+    // regular vive en el content, no en el motor) — para display + pre-fill.
+    getRegularPricesByExcursion(sb, tenant.id),
+  ]);
 
   return (
     <RatesManager
@@ -52,6 +64,7 @@ export default async function RatesPage() {
       initialCategories={categories ?? []}
       role={role}
       canEdit={role === "dueno_admin"}
+      initialRegularPrices={regularPrices}
       tenantSlug={tenant.slug}
       tenantCustomDomain={tenant.custom_domain}
     />
