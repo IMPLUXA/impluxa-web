@@ -270,6 +270,18 @@ export const RateSetInputSchema = z.object({
   currency: z.enum(CURRENCIES),
 });
 
+// Precio de lista (tachado) editable desde el panel Tarifas — OPCIONAL.
+// "" = sin oferta: la action manda null y la RPC BORRA la clave price_regular_ars
+// (jamas 0; el template trata null como "sin oferta"). Si viene, misma cota MONEY
+// que base_price (> 0). El regular vive en content_json (no en el motor); el template
+// lo lee z.number(). La DB valida igual (cota en la RPC); esto es feedback temprano.
+export const RegularPriceInputSchema = z
+  .string()
+  .refine(
+    (v) => v === "" || (MONEY_RE.test(v) && Number(v) > 0),
+    "Hasta 9 digitos y 2 decimales, mayor a 0",
+  );
+
 // Factor de categoría editable (3ra edad): la UI captura PORCENTAJE 0–100
 // (hasta 2 decimales) y lo convierte a factor 0–1 con 4 decimales
 // (numeric(7,4) en DB). Rango UI acotado a 0–100% a propósito.

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   RateSetInputSchema,
+  RegularPriceInputSchema,
   FactorPercentSchema,
   CURRENCIES,
   type Currency,
@@ -11,7 +12,8 @@ import {
   type RateRow,
   type PassengerCategoryRow,
 } from "@/lib/agency/schemas";
-import { setRateAction } from "./actions";
+import { offerPct, OFFER_THRESHOLD } from "@/lib/agency/offer";
+import { setRateAction, setRegularPriceAction } from "./actions";
 
 // F3b CRUD UI tarifas (dueño-only write).
 // ESCRITURA: exclusivamente (a) RPC agency_set_rate vía cliente browser
@@ -79,6 +81,7 @@ export function RatesManager({
   initialCategories,
   role,
   canEdit,
+  initialRegularPrices,
   tenantSlug,
   tenantCustomDomain,
 }: {
@@ -87,6 +90,9 @@ export function RatesManager({
   initialCategories: PassengerCategoryRow[];
   role: string | null;
   canEdit: boolean;
+  // Precio de lista (tachado) por excursion_id, leído de content_json (el regular
+  // vive en el content, no en el motor de tarifas).
+  initialRegularPrices: Record<string, number>;
   // B.2 (R-PUB): destino del revalidatePath de la web pública al guardar un rate.
   tenantSlug: string;
   tenantCustomDomain: string | null;
@@ -103,6 +109,15 @@ export function RatesManager({
   // CEO s49: adulto/niño/infante también, por si el negocio lo necesita).
   const [factorEdit, setFactorEdit] = useState<{
     id: string;
+    value: string;
+  } | null>(null);
+  // Precio de lista (tachado): vive en content_json, edición inline INDEPENDIENTE
+  // del versionado de tarifa (mismo patrón que factorEdit). regularByExc espeja la
+  // tabla sin reload tras guardar.
+  const [regularByExc, setRegularByExc] =
+    useState<Record<string, number>>(initialRegularPrices);
+  const [regularEdit, setRegularEdit] = useState<{
+    excursionId: string;
     value: string;
   } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -233,6 +248,75 @@ export function RatesManager({
     setBusy(false);
   }
 
+  // Guarda (o vacía) el precio de lista (tachado) de una excursión. Write SEPARADO
+  // del versionado de tarifa: va a content_json via setRegularPriceAction (RPC
+  // dueño-only) + revalidate de la web. clearTo === "" vacía la oferta.
+  async function saveRegular(clearTo?: string) {
+    if (regularEdit === null || busy) return;
+    setStatus(null);
+    const raw = clearTo !== undefined ? clearTo : regularEdit.value;
+    const parsed = RegularPriceInputSchema.safeParse(String(raw).trim());
+    if (!parsed.success) {
+      setStatus(parsed.error.issues[0]?.message ?? "Valor inválido.");
+      return;
+    }
+    const excursionId = regularEdit.excursionId;
+    setBusy(true);
+    try {
+      const result = await setRegularPriceAction({
+        excursion_id: excursionId,
+        regular_price: parsed.data,
+        tenantSlug,
+        tenantCustomDomain,
+      });
+      if (!result.ok) {
+        setStatus(rpcErrorMessage(result.code));
+        return;
+      }
+      if (result.matched === 0) {
+        // El write entró pero ningún item de content matchea: la excursión no está
+        // publicada en el sitio → el tachado no se aplica. No lo reflejamos.
+        setStatus(
+          "Esta excursión no está publicada en el sitio, así que el precio de lista no se muestra.",
+        );
+        setRegularEdit(null);
+        return;
+      }
+      setRegularByExc((prev) => {
+        const next = { ...prev };
+        if (parsed.data === "") delete next[excursionId];
+        else next[excursionId] = Number(parsed.data);
+        return next;
+      });
+      setRegularEdit(null);
+    } catch {
+      // Throw de red en el server action: mostrar status, NO dejar que React
+      // mate el árbol (Two-Pass s62). El write ya pudo entrar a DB; el dueño
+      // recarga para ver el estado real.
+      setStatus(
+        "Error de red al guardar. Recargá la página para ver el estado.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Texto de ayuda en vivo mientras el dueño edita el precio de lista: muestra cómo
+  // se verá en la web (tachado + -X% sobre el umbral, o "sin oferta" por debajo).
+  function regularPreviewNote(value: string, r: RateRow | undefined): string {
+    const v = value.trim();
+    if (v === "") return "Vacío = sin oferta (no se tacha en la web).";
+    const reg = Number(v);
+    if (!Number.isFinite(reg) || reg <= 0) return "Ingresá un número válido.";
+    const promo = r ? Number(r.base_price) : null;
+    if (promo == null) return "Esta excursión no tiene precio vigente cargado.";
+    const pct = offerPct(promo, reg);
+    if (pct >= OFFER_THRESHOLD) {
+      return `En la web: ${fmtMoney(reg, r?.currency ?? "ARS")} tachado, -${pct}%.`;
+    }
+    return `Sin oferta: no llega al ${OFFER_THRESHOLD}% sobre el precio al turista; en la web se muestra sin tachado.`;
+  }
+
   const formExcursion = excursions.find((x) => x.id === form.excursionId);
 
   return (
@@ -259,6 +343,7 @@ export function RatesManager({
             <tr className="border-stone text-ash border-b">
               <th className="px-4 py-3 font-normal">Excursión</th>
               <th className="px-4 py-3 font-normal">Precio vigente</th>
+              <th className="px-4 py-3 font-normal">Precio de lista</th>
               <th className="px-4 py-3 font-normal">Costo proveedor</th>
               <th className="px-4 py-3 font-normal">Desde</th>
               <th className="px-4 py-3 font-normal" />
@@ -267,7 +352,7 @@ export function RatesManager({
           <tbody>
             {excursions.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-ash px-4 py-8 text-center">
+                <td colSpan={6} className="text-ash px-4 py-8 text-center">
                   No hay excursiones activas. Cargalas en Excursiones.
                 </td>
               </tr>
@@ -280,6 +365,100 @@ export function RatesManager({
                   <td className="px-4 py-3">{x.name}</td>
                   <td className="px-4 py-3 font-medium">
                     {r ? fmtMoney(r.base_price, r.currency) : "Sin tarifa"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {regularEdit?.excursionId === x.id ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            value={regularEdit.value}
+                            onChange={(e) =>
+                              setRegularEdit({
+                                excursionId: x.id,
+                                value: e.target.value,
+                              })
+                            }
+                            inputMode="decimal"
+                            placeholder="50000"
+                            aria-label={`Precio de lista (tachado) para ${x.name}`}
+                            className="border-stone w-24 rounded border bg-transparent px-2 py-1 text-sm"
+                          />
+                          <button
+                            onClick={() => saveRegular()}
+                            disabled={busy}
+                            className="bg-bone text-onyx rounded px-2 py-1 text-xs font-medium disabled:opacity-50"
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            onClick={() => setRegularEdit(null)}
+                            className="text-ash text-xs underline"
+                          >
+                            Cancelar
+                          </button>
+                          {regularEdit.value.trim() !== "" && (
+                            <button
+                              onClick={() => saveRegular("")}
+                              disabled={busy}
+                              className="text-ash text-xs underline disabled:opacity-50"
+                            >
+                              Quitar
+                            </button>
+                          )}
+                        </div>
+                        <span
+                          className="text-ash text-xs"
+                          role="status"
+                          aria-live="polite"
+                        >
+                          {regularPreviewNote(regularEdit.value, r)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        {(() => {
+                          const reg = regularByExc[x.id];
+                          if (reg == null)
+                            return <span className="text-ash">—</span>;
+                          const promo = r ? Number(r.base_price) : null;
+                          const pct = offerPct(promo, reg);
+                          const shown = pct >= OFFER_THRESHOLD;
+                          return (
+                            <>
+                              <span
+                                className={shown ? "text-ash line-through" : ""}
+                              >
+                                {fmtMoney(reg, r?.currency ?? "ARS")}
+                              </span>
+                              {shown ? (
+                                <span className="bg-stone/40 text-ash rounded-full px-2 py-0.5 text-xs">
+                                  -{pct}%
+                                </span>
+                              ) : (
+                                <span className="text-ash text-xs">
+                                  (sin oferta)
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
+                        {canEdit && (
+                          <button
+                            onClick={() => {
+                              setStatus(null);
+                              const reg = regularByExc[x.id];
+                              setRegularEdit({
+                                excursionId: x.id,
+                                value: reg != null ? String(reg) : "",
+                              });
+                            }}
+                            className="text-ash text-xs underline"
+                          >
+                            Editar
+                          </button>
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {r ? fmtMoney(r.provider_cost, r.currency) : "—"}

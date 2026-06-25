@@ -74,3 +74,44 @@ export function priceForFactor(
   const resultCents = Math.round((cents * factorBp) / 10000);
   return (resultCents / 100).toFixed(2);
 }
+
+/**
+ * Precios de lista (price_regular_ars) por excursion_id, leidos de content_json
+ * (tabla sites). El "tachado" de la oferta vive en el content, NO en el motor de
+ * tarifas; este reader lo trae para el DISPLAY del panel Tarifas (tachado + -X%)
+ * y el pre-fill del modal. Cliente AUTENTICADO (RLS member-select del caller; el
+ * dueno es member). Devuelve solo items con regular numerico positivo. NUNCA lanza:
+ * sin sitio / shape inesperado -> objeto vacio.
+ * Boundary (lesson tipos-boundary s49): price_regular_ars puede llegar number o
+ * string segun el camino -> Number() y se descarta lo no-finito.
+ */
+export async function getRegularPricesByExcursion(
+  sb: SupabaseClient,
+  tenantId: string,
+): Promise<Record<string, number>> {
+  const out: Record<string, number> = {};
+  const { data } = await sb
+    .from("sites")
+    .select("content_json")
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  const content = (data?.content_json ?? null) as {
+    servicios?: {
+      excursion_id?: string;
+      price_regular_ars?: number | string;
+    }[];
+    paseos?: { excursion_id?: string; price_regular_ars?: number | string }[];
+  } | null;
+  if (!content) return out;
+  for (const arr of [content.servicios, content.paseos]) {
+    if (!Array.isArray(arr)) continue;
+    for (const it of arr) {
+      const id = it?.excursion_id;
+      if (typeof id !== "string" || id === "") continue;
+      if (it?.price_regular_ars == null) continue;
+      const reg = Number(it.price_regular_ars);
+      if (Number.isFinite(reg) && reg > 0) out[id] = reg;
+    }
+  }
+  return out;
+}
