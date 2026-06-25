@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { offerPct, offerShown, OFFER_THRESHOLD } from "@/lib/agency/offer";
+import { offerPct, OFFER_THRESHOLD } from "@/lib/agency/offer";
 
-// offerPct/offerShown REPLICAN la formula del template publico (Servicios.tsx
-// offerPct + gate pct>=10). Estos tests fijan la equivalencia 1:1 para que un drift
-// del panel vs el sitio se cace en CI. Valores = ofertas REALES vivas de PV.
+// offerPct REPLICA la formula del template publico (Servicios.tsx offerPct + gate
+// pct>=10). Estos tests fijan la equivalencia 1:1 para que un drift del panel vs el
+// sitio se cace en CI. Valores = ofertas REALES vivas de PV.
 describe("offer (replica template eventos offerPct + umbral 10%)", () => {
   it("calcula el % de descuento (ofertas reales PV)", () => {
     expect(offerPct(72000, 100000)).toBe(28); // Cerro Tronador / Circuito Grande
@@ -22,13 +22,12 @@ describe("offer (replica template eventos offerPct + umbral 10%)", () => {
     expect(offerPct(90000, 80000)).toBe(0); // regular < promo = sin oferta
   });
 
-  it("offerShown gatea exacto en el umbral del 10% (espeja pct>=10 del render)", () => {
+  it("el umbral 10% gatea el tachado (espeja pct>=10 del render)", () => {
     expect(OFFER_THRESHOLD).toBe(10);
-    expect(offerPct(90000, 100000)).toBe(10); // exactamente 10%
-    expect(offerShown(90000, 100000)).toBe(true); // 10% -> se tacha
-    expect(offerPct(91000, 100000)).toBe(9); // 9%
-    expect(offerShown(91000, 100000)).toBe(false); // < 10% -> render limpio
-    expect(offerShown(72000, 100000)).toBe(true); // 28% -> se tacha
-    expect(offerShown(72000, null)).toBe(false); // sin regular -> no se tacha
+    expect(offerPct(90000, 100000)).toBe(10); // exactamente 10% -> se tacha
+    expect(offerPct(90000, 100000) >= OFFER_THRESHOLD).toBe(true);
+    expect(offerPct(91000, 100000)).toBe(9); // 9% -> render limpio
+    expect(offerPct(91000, 100000) >= OFFER_THRESHOLD).toBe(false);
+    expect(offerPct(72000, null) >= OFFER_THRESHOLD).toBe(false); // sin regular
   });
 });

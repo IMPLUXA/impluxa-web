@@ -20,11 +20,3 @@ export function offerPct(
   if (regular == null || promo == null || regular <= promo) return 0;
   return Math.round((1 - promo / regular) * 100);
 }
-
-/** true si la oferta supera el umbral (se muestra tachado + badge en el sitio). */
-export function offerShown(
-  promo: number | null | undefined,
-  regular: number | null | undefined,
-): boolean {
-  return offerPct(promo, regular) >= OFFER_THRESHOLD;
-}
