@@ -1,0 +1,35 @@
+name: Canary byte-id (post-deploy RED)
+
+# Reja del tenant CONGELADO (Hakuna). Corre DESPUES de cada deploy de PRODUCCION
+# (evento deployment_status que postea la integracion Vercel-GitHub) y pega
+# directo a los hosts prod: si la huella canon-v4 de Hakuna deja de ser 9364a04c,
+# el job falla (exit 1) -> red visible para rollback. PV es informativo (cambia
+# a proposito; su seguridad es el walk intencional).
+#
+# ALCANCE DE ESTE CORTE = FALLBACK post-deploy (RED), NO un gate pre-merge.
+# El required check que bloquea el merge sigue siendo "build" (branch protection).
+# El pre-merge contra el PREVIEW del PR es follow-up: necesita el secret
+# VERCEL_PROTECTION_BYPASS (preview protegido 401) + validar Host override +
+# paridad de datos del preview. Detalle en el PR de este corte.
+
+on:
+  deployment_status: {}
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    # Solo deploys de PRODUCCION ya READY. Previews y estados intermedios NO
+    # disparan el canary en este corte.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Canary byte-id (Hakuna FAIL / PV INFORM)
+        run: node scripts/canary-byte-id.mjs

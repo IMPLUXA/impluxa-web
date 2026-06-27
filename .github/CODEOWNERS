@@ -1,0 +1,22 @@
+# CODEOWNERS — paths COMPARTIDOS (cross-tenant / afectan prod) que exigen
+# review del CEO. Render del byte-id de Hakuna: Site.tsx + structure.ts +
+# index.ts viven bajo /src/templates/eventos/ y registry.ts esta listado
+# explicito -> los archivos que determinan la huella congelada quedan cubiertos.
+#
+# PREPARATORIO (s62): hoy NO bloquea todavia. En branch protection el toggle
+# "Require review from Code Owners" esta OFF y required approvals = 0 (el CEO es
+# el unico colaborador). Se activa cuando entre un 2do reviewer (Mica) + el CEO
+# prenda ese toggle. Hasta entonces CODEOWNERS solo documenta la intencion.
+#
+# NO se protege aca un futuro template propio de OTRO tenant
+# (src/templates/<otro>/): ese puede tener su propio owner. Solo lo COMPARTIDO.
+
+/src/templates/eventos/      @IMPLUXA
+/src/templates/registry.ts   @IMPLUXA
+/src/lib/                     @IMPLUXA
+/src/middleware.ts           @IMPLUXA
+/src/app/tenant/             @IMPLUXA
+/supabase/migrations/        @IMPLUXA
+/.github/                    @IMPLUXA
+/package.json                @IMPLUXA
+/package-lock.json           @IMPLUXA
