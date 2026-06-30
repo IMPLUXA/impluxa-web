@@ -24,7 +24,7 @@ const TENANTS = [
 // canon-v4: stripea <script> y <link> (ruido de build: chunks Turbopack +
 // flight RSC) -> sha256 del visible-DOM, primeros 8 hex. IDENTICO a s53.
 const canonV4 = (html) =>
-  html.replace(/<script\b[\s\S]*?<\/script>/g, "").replace(/<link\b[^>]*>/g, "");
+  html.replace(/<script\b[\s\S]*?<\/script>/g, "").replace(/<link\b[^>]*>/g, "").replace(/ data-dpl-id="[^"]*"/g, "");
 const fp = (html) =>
   createHash("sha256").update(canonV4(html), "utf8").digest("hex").slice(0, 8);
 
